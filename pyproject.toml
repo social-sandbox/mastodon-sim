@@ -186,3 +186,12 @@ convention = "numpy"
 
     [[tool.poe.tasks.test.sequence]]
     cmd = "coverage xml"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^7.0.1"
+sphinx-rtd-theme = "^1.2.0"
+myst-parser = "^2.0.0"
+sphinx-material = "^0.0.36"

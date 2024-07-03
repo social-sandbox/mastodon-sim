@@ -1,4 +1,4 @@
-## Contributing
+# Contributing
 
 <details>
 <summary>Prerequisites</summary>
@@ -10,7 +10,7 @@
 1. Configure SSH to automatically load your SSH keys:
     ```sh
     cat << EOF >> ~/.ssh/config
-    
+
     Host *
       AddKeysToAgent yes
       IgnoreUnknown UseKeychain
@@ -29,7 +29,7 @@
         - Export your user's user id and group id so that [files created in the Dev Container are owned by your user](https://github.com/moby/moby/issues/3206):
             ```sh
             cat << EOF >> ~/.bashrc
-            
+
             export UID=$(id --user)
             export GID=$(id --group)
             EOF
