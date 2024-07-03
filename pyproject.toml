@@ -1,0 +1,188 @@
+[build-system]  # https://python-poetry.org/docs/pyproject/#poetry-and-pep-517
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]  # https://python-poetry.org/docs/pyproject/
+name = "mastodon-sim"
+version = "0.0.0"
+description = "Generative Agent simulation of a Mastodon social network"
+authors = ["Austin Welch <austinmw89@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/social-sandbox/mastodon-sim"
+
+[tool.commitizen]  # https://commitizen-tools.github.io/commitizen/config/
+name = "cz_gitmoji"
+bump_message = "bump(release): v$current_version → v$new_version"
+tag_format = "v$version"
+update_changelog_on_bump = true
+version_provider = "poetry"
+
+[tool.poetry.scripts]  # https://python-poetry.org/docs/pyproject/#scripts
+mastodon-sim = "mastodon_sim.cli:app"
+
+[tool.poetry.dependencies]  # https://python-poetry.org/docs/dependency-specification/
+coloredlogs = ">=15.0.1"
+fastapi = { extras = ["all"], version = ">=0.110.1" }
+gunicorn = ">=21.2.0"
+poethepoet = ">=0.25.0"
+python = ">=3.11,<4.0"
+typer = { extras = ["all"], version = ">=0.12.0" }
+uvicorn = { extras = ["standard"], version = ">=0.29.0" }
+gdm-concordia = "^1.6.0"
+sentence-transformers = "^3.0.1"
+mastodon-py = "^1.8.1"
+isort = "^5.13.2"
+loguru = "^0.7.2"
+commitizen = "^3.27.0"
+cz-conventional-gitmoji = "^0.3.2"
+
+[tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
+commitizen = ">=3.21.3"
+coverage = { extras = ["toml"], version = ">=7.4.4" }
+mypy = ">=1.9.0"
+pre-commit = ">=3.7.0"
+pytest = ">=8.1.1"
+pytest-mock = ">=3.14.0"
+pytest-xdist = ">=3.5.0"
+ruff = ">=0.3.5"
+
+[tool.poetry.group.dev.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
+cruft = ">=2.15.0"
+ipykernel = ">=6.29.4"
+ipywidgets = ">=8.1.2"
+pdoc = ">=14.4.0"
+
+[tool.coverage.report]  # https://coverage.readthedocs.io/en/latest/config.html#report
+precision = 1
+show_missing = true
+skip_covered = true
+
+[tool.coverage.run]  # https://coverage.readthedocs.io/en/latest/config.html#run
+branch = true
+command_line = "--module pytest"
+data_file = "reports/.coverage"
+source = ["src"]
+
+[tool.coverage.xml]  # https://coverage.readthedocs.io/en/latest/config.html#xml
+output = "reports/coverage.xml"
+
+[tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
+junit_xml = "reports/mypy.xml"
+plugins = "pydantic.mypy"
+ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
+addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
+testpaths = ["src", "tests"]
+xfail_strict = true
+
+[tool.ruff]  # https://github.com/charliermarsh/ruff
+fix = true
+line-length = 100
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+ignore-init-module-imports = true
+select = ["A", "ASYNC", "B", "C4", "C90", "D", "DTZ", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT"]
+ignore = ["D203", "D213", "E501", "PGH002", "PGH003", "RET504", "S101", "S307"]
+unfixable = ["F401", "F841"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.poe.tasks]  # https://github.com/nat-n/poethepoet
+
+  [tool.poe.tasks.api]
+  help = "Serve the REST API"
+  shell = """
+    if [ $dev ]
+    then {
+      uvicorn \
+        --host $host \
+        --port $port \
+        --reload \
+        mastodon_sim.api:app
+    } else {
+      gunicorn \
+        --access-logfile - \
+        --bind $host:$port \
+        --graceful-timeout 10 \
+        --keep-alive 10 \
+        --log-file - \
+        --timeout 30 \
+        --worker-class uvicorn.workers.UvicornWorker \
+        --worker-tmp-dir /dev/shm \
+        --workers 2 \
+        mastodon_sim.api:app
+    } fi
+    """
+
+    [[tool.poe.tasks.api.args]]
+    help = "Bind socket to this host (default: 0.0.0.0)"
+    name = "host"
+    options = ["--host"]
+    default = "0.0.0.0"
+
+    [[tool.poe.tasks.api.args]]
+    help = "Bind socket to this port (default: 8000)"
+    name = "port"
+    options = ["--port"]
+    default = "8000"
+
+    [[tool.poe.tasks.api.args]]
+    help = "Enable development mode"
+    type = "boolean"
+    name = "dev"
+    options = ["--dev"]
+
+  [tool.poe.tasks.docs]
+  help = "Generate this app's docs"
+  cmd = """
+    pdoc
+      --docformat $docformat
+      --output-directory $outputdirectory
+      mastodon_sim
+    """
+
+    [[tool.poe.tasks.docs.args]]
+    help = "The docstring style (default: numpy)"
+    name = "docformat"
+    options = ["--docformat"]
+    default = "numpy"
+
+    [[tool.poe.tasks.docs.args]]
+    help = "The output directory (default: docs)"
+    name = "outputdirectory"
+    options = ["--output-directory"]
+    default = "docs"
+
+  [tool.poe.tasks.lint]
+  help = "Lint this app"
+
+    [[tool.poe.tasks.lint.sequence]]
+    cmd = """
+      pre-commit run
+        --all-files
+        --color always
+      """
+
+  [tool.poe.tasks.test]
+  help = "Test this app"
+
+    [[tool.poe.tasks.test.sequence]]
+    cmd = "coverage run"
+
+    [[tool.poe.tasks.test.sequence]]
+    cmd = "coverage report"
+
+    [[tool.poe.tasks.test.sequence]]
+    cmd = "coverage xml"
