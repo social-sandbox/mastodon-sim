@@ -4,6 +4,14 @@
 
 Generative Agent simulation of a Mastodon social network
 
+> [!WARNING]
+> **Work in Progress**
+> 
+> This README is currently under development. The information provided here may be incomplete, subject to change, and may not yet reflect the current state of the codebase. We appreciate your patience as we work on improving our documentation to accurately represent the project.
+> 
+> **Last updated:** [Insert Date Here]
+
+
 ## Installing
 
 To install this package, run:
