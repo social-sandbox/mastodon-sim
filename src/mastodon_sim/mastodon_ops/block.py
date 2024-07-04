@@ -20,12 +20,11 @@ def block_user(login_user: str, target_user: str) -> None:
 
     try:
         access_token = login(login_user)
-
-        logger.debug(f"{login_user} attempting to block {target_user}...")
         mastodon = get_client()
         mastodon.access_token = access_token
 
         # Search for the user to block and get their ID
+        logger.debug(f"{login_user} attempting to block {target_user}...")
         account = mastodon.account_search(target_user, limit=1)
         if account:
             target_user_id = account[0]["id"]

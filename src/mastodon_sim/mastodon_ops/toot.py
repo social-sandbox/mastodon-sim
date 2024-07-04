@@ -3,10 +3,9 @@
 import argparse
 
 from dotenv import find_dotenv, load_dotenv
-from mastodon import Mastodon
 
 from mastodon_sim.logging_config import logger
-from mastodon_sim.mastodon_ops.env_utils import get_env_variable
+from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.login import login
 
 
@@ -21,12 +20,11 @@ def toot(login_user: str, message: str) -> None:
 
     try:
         access_token = login(login_user)
-
-        logger.debug(f"{login_user} attempting to post a message...")
-        api_base_url = get_env_variable("API_BASE_URL")
-        mastodon = Mastodon(access_token=access_token, api_base_url=api_base_url)
+        mastodon = get_client()
+        mastodon.access_token = access_token
 
         # Post the message
+        logger.debug(f"{login_user} attempting to post a message...")
         mastodon.toot(message)
         logger.info(f"{login_user} successfully posted the message.")
     except ValueError as e:

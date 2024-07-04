@@ -3,10 +3,9 @@
 import argparse
 
 from dotenv import find_dotenv, load_dotenv
-from mastodon import Mastodon
 
 from mastodon_sim.logging_config import logger
-from mastodon_sim.mastodon_ops.env_utils import get_env_variable
+from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.login import login
 
 
@@ -21,12 +20,11 @@ def follow(login_user: str, follow_user: str) -> None:
 
     try:
         access_token = login(login_user)
-
-        logger.debug(f"{login_user} attempting to follow {follow_user}...")
-        api_base_url = get_env_variable("API_BASE_URL")
-        mastodon = Mastodon(access_token=access_token, api_base_url=api_base_url)
+        mastodon = get_client()
+        mastodon.access_token = access_token
 
         # Search for the user to follow and get their ID
+        logger.debug(f"{login_user} attempting to follow {follow_user}...")
         account = mastodon.account_search(follow_user, limit=1)
         if account:
             mastodon.account_follow(account[0]["id"])
