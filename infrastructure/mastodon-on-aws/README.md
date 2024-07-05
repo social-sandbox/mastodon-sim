@@ -1,5 +1,7 @@
 # Mastodon on AWS
 
+**Note:** This README and infrastructure template are adapted from [widdix/mastodon-on-aws](https://github.com/widdix/mastodon-on-aws/).
+
 Want to host your own Mastodon instance on AWS? Here you go.
 
 The architecture consists of the following building blocks:
@@ -18,7 +20,7 @@ The architecture consists of the following building blocks:
 
 ![Mastodon on AWS: Architecture](architecture.png)
 
-Check out our blog post [Mastodon on AWS: Host your own instance](https://cloudonaut.io/mastodon-on-aws/) for more details.
+Check out this blog post [Mastodon on AWS: Host your own instance](https://cloudonaut.io/mastodon-on-aws/) for more details.
 
 ## Prerequisites
 
