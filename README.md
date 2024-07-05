@@ -10,7 +10,7 @@ Generative Agent simulation of a Mastodon social network
 > 
 > This README is currently under development. The information provided here may be incomplete, subject to change, and may not yet reflect the current state of the codebase. We appreciate your patience as we work on improving our documentation to accurately represent the project.
 > 
-> **Last updated:** [Insert Date Here]
+> **Last updated:** July 04, 2024
 
 
 ## Installing
