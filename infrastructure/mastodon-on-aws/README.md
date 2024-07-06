@@ -166,6 +166,60 @@ Ensure the following are installed and configured on your system:
     RAILS_ENV=production bin/tootctl accounts modify $ADMIN_USERNAME --enable --confirm --approve
     ```
 
+### Install Python on web server
+
+```bash
+# Update the package list
+apt-get update
+
+# Install python3-venv if it's not already installed
+apt-get install python3-venv
+
+# Create a virtual environment in the /opt/mastodon directory
+python3 -m venv /opt/mastodon/venv
+
+# Activate the virtual environment
+source /opt/mastodon/venv/bin/activate
+
+# Install the Mastodon.py package within the virtual environment
+pip install Mastodon.py
+
+# Verify the installation (optional)
+pip show Mastodon.py
+```
+
+### Register an app
+
+1. Create a new app to generate a client ID and secret
+
+Note: This only needs to be done once per server.
+
+```python
+export DOMAIN_NAME=social-sandbox.com
+source /opt/mastodon/venv/bin/activate && python -c "from mastodon import Mastodon; Mastodon.create_app('MyMastodonApp', api_base_url='https://$DOMAIN_NAME', to_file='clientcred.secret')" && deactivate
+cat clientcred.secret
+```
+
+This should output something like the following:
+
+```
+*************************0
+*********************************o
+https://social-sandbox.com
+MyMastodonApp
+```
+
+2. Create a `.env` file in the root directory of your project repository (`mastodon-sim/`, likely on your local system rather than the webserver).
+
+3. Add the API base URL, email prefix for admin, client ID and the secret to the `.env` file. For example:
+
+```
+API_BASE_URL=https://social-sandbox.com
+EMAIL_PREFIX=austinmw89
+MASTODON_CLIENT_ID=*************************0
+MASTODON_CLIENT_SECRET=*********************************o
+```
+
 ### Test Website and Admin Login
 
 1. Go to the domain name, e.g., `https://$DOMAIN_NAME`.
