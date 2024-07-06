@@ -39,19 +39,30 @@ def get_public_timeline(limit: None | int = 10) -> mastodon.utility.AttribAccess
 
 
 def get_own_timeline(
-    login_user: str, limit: None | int = 10
+    login_user: str, limit: int | None = 10, filter_type: str = "all"
 ) -> mastodon.utility.AttribAccessList | list:
     """Retrieve posts from the authenticated user's timeline on Mastodon.
 
     Args:
         login_user (str): The user to log in with.
-        limit (int): The number of posts to retrieve. Default is 10.
+        limit (int | None): The number of posts to retrieve. Default is 10. Use None for no limit.
+        filter_type (str): Type of filtering to apply. Options are:
+            'all': No filtering (default)
+            'self': Only posts by the login user
+            'others': Only posts not by the login user
 
     Returns
     -------
-        list: A list of posts from the authenticated user's timeline.
+        mastodon.utility.AttribAccessList | list: A list of posts from the authenticated user's timeline.
+
+    Raises
+    ------
+        ValueError: If an invalid filter_type is provided.
     """
     load_dotenv(find_dotenv())  # Load environment variables from .env file
+
+    if filter_type not in ["all", "self", "others"]:
+        raise ValueError("Invalid filter_type. Must be 'all', 'self', or 'others'.")
 
     try:
         access_token = login(login_user)
@@ -62,14 +73,23 @@ def get_own_timeline(
 
         # Retrieve the authenticated user's timeline
         timeline = mastodon.timeline_home(limit=limit)
-        logger.info(f"{login_user} retrieved {len(timeline)} posts from their own timeline.")
+
+        # Apply filtering based on filter_type
+        if filter_type == "self":
+            timeline = [post for post in timeline if post["account"]["acct"] == login_user]
+        elif filter_type == "others":
+            timeline = [post for post in timeline if post["account"]["acct"] != login_user]
+
+        logger.info(
+            f"{login_user} retrieved {len(timeline)} posts from their timeline (filter: {filter_type})."
+        )
         return timeline
     except ValueError as e:
         logger.error(f"Error: {e}")
-        return []
+        raise e
     except Exception as e:
         logger.exception(f"An unexpected error occurred: {e}")
-        return []
+        raise e
 
 
 def get_user_timeline(
