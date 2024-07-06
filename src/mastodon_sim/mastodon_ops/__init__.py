@@ -2,6 +2,8 @@
 
 from mastodon_sim.mastodon_ops.block import block_user
 from mastodon_sim.mastodon_ops.boost import boost_toot
+from mastodon_sim.mastodon_ops.create_app import create_app
+from mastodon_sim.mastodon_ops.create_env_file import create_app_and_env_if_not_exists
 from mastodon_sim.mastodon_ops.env_utils import check_env, get_env_variable
 from mastodon_sim.mastodon_ops.follow import follow
 from mastodon_sim.mastodon_ops.get_client import get_client
@@ -23,6 +25,8 @@ __all__ = [
     "block_user",
     "boost_toot",
     "check_env",
+    "create_app",
+    "create_app_and_env_if_not_exists",
     "get_env_variable",
     "follow",
     "get_client",

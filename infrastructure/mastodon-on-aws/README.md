@@ -150,7 +150,7 @@ Ensure the following are installed and configured on your system:
 
 ### Create a User and Give Admin Privileges
 
-1. Create a new user and grant admin privileges:
+While on the web server, create a new user and grant admin privileges.
 
     ```bash
     export ADMIN_USERNAME=austinmw
@@ -168,57 +168,27 @@ Ensure the following are installed and configured on your system:
 
 ### Install Python on web server
 
-```bash
-# Update the package list
-apt-get update
+While on the web server, install Python and Mastodon package
 
-# Install python3-venv if it's not already installed
-apt-get install python3-venv
+    ```bash
+    # Update the package list
+    apt-get update
 
-# Create a virtual environment in the /opt/mastodon directory
-python3 -m venv /opt/mastodon/venv
+    # Install python3-venv if it's not already installed
+    apt-get install python3-venv
 
-# Activate the virtual environment
-source /opt/mastodon/venv/bin/activate
+    # Create a virtual environment in the /opt/mastodon directory
+    python3 -m venv /opt/mastodon/venv
 
-# Install the Mastodon.py package within the virtual environment
-pip install Mastodon.py
+    # Activate the virtual environment
+    source /opt/mastodon/venv/bin/activate
 
-# Verify the installation (optional)
-pip show Mastodon.py
-```
+    # Install packages within the virtual environment
+    pip install Mastodon.py loguru tqdm
 
-### Register an app
-
-1. Create a new app to generate a client ID and secret
-
-Note: This only needs to be done once per server.
-
-```python
-export DOMAIN_NAME=social-sandbox.com
-source /opt/mastodon/venv/bin/activate && python -c "from mastodon import Mastodon; Mastodon.create_app('MyMastodonApp', api_base_url='https://$DOMAIN_NAME', to_file='clientcred.secret')" && deactivate
-cat clientcred.secret
-```
-
-This should output something like the following:
-
-```
-*************************0
-*********************************o
-https://social-sandbox.com
-MyMastodonApp
-```
-
-2. Create a `.env` file in the root directory of your project repository (`mastodon-sim/`, likely on your local system rather than the webserver).
-
-3. Add the API base URL, email prefix for admin, client ID and the secret to the `.env` file. For example:
-
-```
-API_BASE_URL=https://social-sandbox.com
-EMAIL_PREFIX=austinmw89
-MASTODON_CLIENT_ID=*************************0
-MASTODON_CLIENT_SECRET=*********************************o
-```
+    # Verify the installation (optional)
+    pip show Mastodon.py
+    ```
 
 ### Test Website and Admin Login
 
@@ -226,6 +196,56 @@ MASTODON_CLIENT_SECRET=*********************************o
 2. Sign in with the email address used above and the generated password.
 3. Click the settings button, then go to Preferences.
 4. Click on Administration to open the admin dashboard.
+
+### Register an app and create a `.env` file
+
+On local machine, register a new app and create a `.env` file:
+
+**Note:** This only needs to be done once per server.
+
+    ```bash
+    cd mastodon-sim
+    # See create_env_file.py -h for usage
+    poetry run python src/mastodon_sim/mastodon_ops/create_env_file.py
+    ```
+
+This should output the following:
+
+```
+2024-07-06T07:41:45.608299-0400 INFO Creating new Mastodon app...
+2024-07-06T07:41:45.608993-0400 INFO App name: MyMastodonApp
+2024-07-06T07:41:45.609070-0400 INFO API base URL: https://social-sandbox.com
+2024-07-06T07:41:45.609116-0400 INFO Scopes: ['read', 'write', 'follow']
+2024-07-06T07:41:45.792379-0400 INFO Created new Mastodon app
+2024-07-06T07:41:45.793279-0400 INFO Created new .env file at /Users/austinwelch/Desktop/mastodon-sim/.env
+2024-07-06T07:41:45.793401-0400 INFO Added API_BASE_URL=https://social-sandbox.com
+2024-07-06T07:41:45.793498-0400 INFO Added EMAIL_PREFIX=austinmw89
+2024-07-06T07:41:45.793774-0400 INFO Adding new MASTODON_CLIENT_ID
+2024-07-06T07:41:45.793870-0400 INFO Adding new MASTODON_CLIENT_SECRET
+2024-07-06T07:41:45.794207-0400 INFO Updated .env file at /Users/austinwelch/Desktop/mastodon-sim/.env
+```
+
+## Create users
+
+1. Log in to the web server
+2. Copy/create the `infrastructure/mastodon-on-aws/webserver_scripts/create_users.py` script on the web server.
+3. Activate the Python environment
+
+    ```bash
+    source /opt/mastodon/venv/bin/activate
+    ```
+
+4. Try a dry run first
+
+    ```bash
+    python3 create_users.py testemail -n 3 --dry-run
+    ```
+
+5. Run the creation script
+
+    ```bash
+    python3 create_users.py austinmw89 -n 5
+    ```
 
 ## Costs for Running Mastodon on AWS
 
