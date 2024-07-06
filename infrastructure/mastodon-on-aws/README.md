@@ -152,43 +152,43 @@ Ensure the following are installed and configured on your system:
 
 While on the web server, create a new user and grant admin privileges.
 
-    ```bash
-    export ADMIN_USERNAME=austinmw
-    export EMAIL_ADDRESS=austinmw89@gmail.com
+```bash
+export ADMIN_USERNAME=austinmw
+export EMAIL_ADDRESS=austinmw89@gmail.com
 
-    # Create a new user and generate a password (write down the password)
-    RAILS_ENV=production bin/tootctl accounts create $ADMIN_USERNAME --email $EMAIL_ADDRESS --confirmed --role Owner
+# Create a new user and generate a password (write down the password)
+RAILS_ENV=production bin/tootctl accounts create $ADMIN_USERNAME --email $EMAIL_ADDRESS --confirmed --role Owner
 
-    # Change the user to owner
-    RAILS_ENV=production bin/tootctl accounts modify $ADMIN_USERNAME --role Owner
+# Change the user to owner
+RAILS_ENV=production bin/tootctl accounts modify $ADMIN_USERNAME --role Owner
 
-    # Enable/approve the user
-    RAILS_ENV=production bin/tootctl accounts modify $ADMIN_USERNAME --enable --confirm --approve
-    ```
+# Enable/approve the user
+RAILS_ENV=production bin/tootctl accounts modify $ADMIN_USERNAME --enable --confirm --approve
+```
 
 ### Install Python on web server
 
 While on the web server, install Python and Mastodon package
 
-    ```bash
-    # Update the package list
-    apt-get update
+```bash
+# Update the package list
+apt-get update
 
-    # Install python3-venv if it's not already installed
-    apt-get install python3-venv
+# Install python3-venv if it's not already installed
+apt-get install python3-venv
 
-    # Create a virtual environment in the /opt/mastodon directory
-    python3 -m venv /opt/mastodon/venv
+# Create a virtual environment in the /opt/mastodon directory
+python3 -m venv /opt/mastodon/venv
 
-    # Activate the virtual environment
-    source /opt/mastodon/venv/bin/activate
+# Activate the virtual environment
+source /opt/mastodon/venv/bin/activate
 
-    # Install packages within the virtual environment
-    pip install Mastodon.py loguru tqdm
+# Install packages within the virtual environment
+pip install Mastodon.py loguru tqdm
 
-    # Verify the installation (optional)
-    pip show Mastodon.py
-    ```
+# Verify the installation (optional)
+pip show Mastodon.py
+```
 
 ### Test Website and Admin Login
 
@@ -203,15 +203,15 @@ On local machine, register a new app and create a `.env` file:
 
 **Note:** This only needs to be done once per server.
 
-    ```bash
-    cd mastodon-sim
-    # See create_env_file.py -h for usage
-    poetry run python src/mastodon_sim/mastodon_ops/create_env_file.py
-    ```
+```bash
+cd mastodon-sim
+# See create_env_file.py -h for usage
+poetry run python src/mastodon_sim/mastodon_ops/create_env_file.py
+```
 
 This should output the following:
 
-```
+```log
 2024-07-06T07:41:45.608299-0400 INFO Creating new Mastodon app...
 2024-07-06T07:41:45.608993-0400 INFO App name: MyMastodonApp
 2024-07-06T07:41:45.609070-0400 INFO API base URL: https://social-sandbox.com
