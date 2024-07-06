@@ -10,6 +10,7 @@ from mastodon_sim.mastodon_ops.follow import follow
 from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.like import like_toot
 from mastodon_sim.mastodon_ops.login import login
+from mastodon_sim.mastodon_ops.mute import mute_account
 from mastodon_sim.mastodon_ops.notifications import print_notifications, read_notifications
 from mastodon_sim.mastodon_ops.post_status import post_status
 from mastodon_sim.mastodon_ops.read_bio import read_bio
@@ -23,6 +24,7 @@ from mastodon_sim.mastodon_ops.timeline import (
 from mastodon_sim.mastodon_ops.toot import toot
 from mastodon_sim.mastodon_ops.unblock import unblock_user
 from mastodon_sim.mastodon_ops.unfollow import unfollow
+from mastodon_sim.mastodon_ops.unmute import unmute_account
 from mastodon_sim.mastodon_ops.update_bio import update_bio
 
 __all__ = [
@@ -43,6 +45,8 @@ __all__ = [
     "read_notifications",
     "like_toot",
     "post_status",
+    "mute_account",
+    "unmute_account",
     "print_notifications",
     "print_timeline",
     "reset_user",
