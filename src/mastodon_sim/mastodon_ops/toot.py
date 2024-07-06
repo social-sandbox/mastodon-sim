@@ -1,4 +1,4 @@
-"""Post a message on Mastodon."""
+"""Toot (post) a status on Mastodon."""
 
 import argparse
 
@@ -9,12 +9,12 @@ from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.login import login
 
 
-def toot(login_user: str, message: str) -> None:
-    """Post a message on Mastodon.
+def toot(login_user: str, status: str) -> None:
+    """Toot a status on Mastodon.
 
     Args:
         login_user (str): The user to log in with.
-        message (str): The message to post.
+        status (str): The status to toot.
     """
     load_dotenv(find_dotenv())  # Load environment variables from .env file
 
@@ -23,10 +23,10 @@ def toot(login_user: str, message: str) -> None:
         mastodon = get_client()
         mastodon.access_token = access_token
 
-        # Post the message
-        logger.debug(f"{login_user} attempting to post a message...")
-        mastodon.toot(message)
-        logger.info(f"{login_user} successfully posted the message.")
+        # Post the status
+        logger.debug(f"{login_user} attempting to toot a status...")
+        mastodon.toot(status)
+        logger.info(f"{login_user} successfully tooted the status.")
     except ValueError as e:
         logger.error(f"Error: {e}")
     except Exception as e:
@@ -34,9 +34,9 @@ def toot(login_user: str, message: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Post a message on Mastodon.")
+    parser = argparse.ArgumentParser(description="Toot a status on Mastodon.")
     parser.add_argument("login_user", help="The user to log in with.")
-    parser.add_argument("message", help="The message to post.")
+    parser.add_argument("status", help="The status to toot.")
 
     args = parser.parse_args()
-    toot(args.login_user, args.message)
+    toot(args.login_user, args.status)
