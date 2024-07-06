@@ -192,7 +192,7 @@ While on the web server, install Python and Mastodon package
 
 ### Test Website and Admin Login
 
-1. Go to the domain name, e.g., `https://$DOMAIN_NAME`.
+1. Go to the domain name, e.g., `https://social-sandbox.com`.
 2. Sign in with the email address used above and the generated password.
 3. Click the settings button, then go to Preferences.
 4. Click on Administration to open the admin dashboard.
