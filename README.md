@@ -10,8 +10,10 @@ Generative Agent simulation of a Mastodon social network
 > 
 > This README is currently under development. The information provided here may be incomplete, subject to change, and may not yet reflect the current state of the codebase. We appreciate your patience as we work on improving our documentation to accurately represent the project.
 > 
-> **Last updated:** July 04, 2024
+> **Last updated:** July 06, 2024
 
+<!--
+## Hidden Section
 
 ## Installing
 
@@ -21,7 +23,9 @@ To install this package, run:
 pip install mastodon-sim
 ```
 
-## Development
+-->
+
+## Development Installation
 
 1. Clone the repository:
     ```sh
@@ -65,6 +69,9 @@ USER001_PASSWORD=***************************5
 USER002_PASSWORD=***************************8
 ```
 
+<!--
+## Hidden Section
+
 ## Using
 
 To view the CLI help information, run:
@@ -72,3 +79,5 @@ To view the CLI help information, run:
 ```sh
 mastodon-sim --help
 ```
+
+-->
