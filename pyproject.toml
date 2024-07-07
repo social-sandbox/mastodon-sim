@@ -92,6 +92,7 @@ warn_unreachable = true
 
 [tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
 addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
+required_plugins = ["pytest-xdist"]
 testpaths = ["src", "tests"]
 xfail_strict = true
 

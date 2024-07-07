@@ -4,7 +4,7 @@ import html
 import os
 
 import networkx as nx
-from IPython.core.display import HTML, display
+from IPython.display import HTML, display
 from pyvis.network import Network
 
 from mastodon_sim.logging_config import logger
