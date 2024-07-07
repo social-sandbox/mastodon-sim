@@ -14,7 +14,7 @@ from mastodon_sim.mastodon_ops.mute import mute_account
 from mastodon_sim.mastodon_ops.notifications import print_notifications, read_notifications
 from mastodon_sim.mastodon_ops.post_status import post_status
 from mastodon_sim.mastodon_ops.read_bio import read_bio
-from mastodon_sim.mastodon_ops.reset_user import reset_users
+from mastodon_sim.mastodon_ops.reset_users import reset_users
 from mastodon_sim.mastodon_ops.timeline import (
     get_own_timeline,
     get_public_timeline,
