@@ -16,7 +16,7 @@ def get_users_from_env() -> list[str]:
     load_dotenv(find_dotenv())
 
     # Regular expression pattern to match USER*_PASSWORD entries
-    pattern = r"^USER(\d+)_PASSWORD="
+    pattern = r"^USER(\d+)_PASSWORD"
 
     # List to store usernames
     users = []
