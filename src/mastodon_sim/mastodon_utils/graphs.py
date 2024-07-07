@@ -89,10 +89,7 @@ def create_user_graph(users: list[str] | None = None) -> None:
             )
 
         for edge in G.edges():
-            if G.has_edge(edge[1], edge[0]):  # Check for mutual relationship
-                net.add_edge(edge[0], edge[1], color="red")
-            else:
-                net.add_edge(edge[0], edge[1], color="gray")
+            net.add_edge(edge[0], edge[1], color="gray")
 
         # Set options for better visualization
         net.set_options("""
