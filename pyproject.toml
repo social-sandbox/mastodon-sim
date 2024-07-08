@@ -49,6 +49,9 @@ nbformat = "^5.10.4"
 pyvis = "0.3.1"
 jinja2 = "^3.1.4"
 ipympl = "^0.9.4"
+python-louvain = "^0.16"
+powerlaw = "^1.5"
+pyproject-toml = "^0.0.10"
 
 [tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
 commitizen = ">=3.21.3"
