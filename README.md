@@ -7,9 +7,9 @@ Generative Agent simulation of a Mastodon social network
 
 > [!WARNING]
 > **Work in Progress**
-> 
+>
 > This README is currently under development. The information provided here may be incomplete, subject to change, and may not yet reflect the current state of the codebase. We appreciate your patience as we work on improving our documentation to accurately represent the project.
-> 
+>
 > **Last updated:** July 06, 2024
 
 <!--
@@ -28,19 +28,28 @@ pip install mastodon-sim
 ## Development Installation
 
 1. Clone the repository:
+
     ```sh
     git clone https://github.com/social-sandbox/mastodon-sim.git
     cd mastodon-sim
     ```
+
 2. Install Poetry (for managing dependencies):
+
     ```sh
     curl -sSL https://install.python-poetry.org | python3 -
     ```
+
+    Note that poetry offers several [alternative installation methods](<https://python-poetry.org/docs/#installation}>).
+
 3. Configure Poetry to create virtual environments within the project directory:
+
     ```sh
     poetry config virtualenvs.in-project true
     ```
+
 4. Install the dependencies:
+
     ```sh
     poetry install
     ```
