@@ -1278,13 +1278,12 @@ version = "1.6.0"
 description = "A library for building a generative model of social interacions."
 optional = false
 python-versions = ">=3.11"
-files = [
-    {file = "gdm_concordia-1.6.0-py3-none-any.whl", hash = "sha256:405c5c978c9e6257e4e973e5022d3ee0798c04deea952477bfd27d3241b048e8"},
-    {file = "gdm_concordia-1.6.0.tar.gz", hash = "sha256:ffba4a308224f1029ae6399b5c719474d9f297841e9c39670aac144668265bd8"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 absl-py = "*"
+boto3 = "*"
 google-cloud-aiplatform = "*"
 google-generativeai = "*"
 ipython = "*"
@@ -1304,6 +1303,12 @@ typing-extensions = "*"
 
 [package.extras]
 dev = ["build", "isort", "jupyter", "pip-tools", "pipreqs", "pyink", "pylint", "pytest-xdist", "pytype", "twine"]
+
+[package.source]
+type = "git"
+url = "https://github.com/austinmw/concordia.git"
+reference = "fix-calendar-example"
+resolved_reference = "2842ae3980fac6bdc82210e8e8e26e7b426c80a4"
 
 [[package]]
 name = "gitdb"
@@ -2604,8 +2609,8 @@ langchain-core = ">=0.2.10,<0.3.0"
 langchain-text-splitters = ">=0.2.0,<0.3.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
-    {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
     {version = ">=1,<2", markers = "python_version < \"3.12\""},
+    {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
 ]
 pydantic = ">=1,<3"
 PyYAML = ">=5.3"
@@ -2629,8 +2634,8 @@ jsonpatch = ">=1.33,<2.0"
 langsmith = ">=0.1.75,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
-    {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
     {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
+    {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
 ]
 PyYAML = ">=5.3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
@@ -2663,8 +2668,8 @@ files = [
 [package.dependencies]
 orjson = ">=3.9.14,<4.0.0"
 pydantic = [
-    {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
     {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
+    {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
 ]
 requests = ">=2,<3"
 
@@ -4128,8 +4133,8 @@ files = [
 annotated-types = ">=0.4.0"
 pydantic-core = "2.20.1"
 typing-extensions = [
-    {version = ">=4.12.2", markers = "python_version >= \"3.13\""},
     {version = ">=4.6.1", markers = "python_version < \"3.13\""},
+    {version = ">=4.12.2", markers = "python_version >= \"3.13\""},
 ]
 
 [package.extras]
@@ -6809,4 +6814,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<4.0"
-content-hash = "4c6c74fb7f23cc0261b5ab90293808401f9c93da4049ae6a53fc9c1d15b97727"
+content-hash = "2b6b9dd7b90755397b70eb461b2907919dd25e3026c18240110fcfb704ca2c03"
