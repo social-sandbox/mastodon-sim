@@ -178,6 +178,20 @@ class ActionDescriptor:
       param2: value2
 
       For optional parameters you don't want to use, you should omit them rather than provide an empty value.
+
+      Critically important: If an argument is message or a post (e.g. `status`), make sure it is
+      from first person perspective and makes sense as a realistic user post based on their information.
+
+      Bad examples:
+        `bio`: "Updated my bio and checking notifications!"
+        `status`: "I'm updating my status and posting a message"
+
+      Good examples:
+        `bio`: "I'm a software engineer with a passion for building great apps. Let's connect!"
+        `status`: "Just finished writing a chapter of my book. Feeling productive!"
+
+      Also, don't post a message that says replying to a post unless you know a real toot_id for the post
+      and are using the `in_reply_to_id` parameter. You can read posts by using the `get_public_timeline` action.
       """)
 
         return instructions
