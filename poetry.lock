@@ -1306,9 +1306,9 @@ dev = ["build", "isort", "jupyter", "pip-tools", "pipreqs", "pyink", "pylint", "
 
 [package.source]
 type = "git"
-url = "https://github.com/austinmw/concordia.git"
-reference = "fix-calendar-example"
-resolved_reference = "2842ae3980fac6bdc82210e8e8e26e7b426c80a4"
+url = "https://github.com/google-deepmind/concordia.git"
+reference = "main"
+resolved_reference = "2bdbec97054a518a8030c1c2bccb7f6965bf1cd5"
 
 [[package]]
 name = "gitdb"
@@ -6814,4 +6814,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<4.0"
-content-hash = "2b6b9dd7b90755397b70eb461b2907919dd25e3026c18240110fcfb704ca2c03"
+content-hash = "df998a7092ae5fff386b3ecb68c0921bc47acc8652b97812aab1fe0edb9988bf"

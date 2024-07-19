@@ -119,10 +119,19 @@ class _PhoneComponent(component.Component):
     def terminate_episode(self) -> bool:
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(f"Interaction with phone:\n{self._state}")
-
         did_conclude = chain_of_thought.yes_no_question(
-            "Has the user achieved their goal with their phone or are they still"
-            " actively in the process of completing a phone task?"
+            "Has the user achieved their initial goal with their phone, or are they still "
+            "actively in the process of completing a phone task? Consider the following:\n"
+            "1. If they just checked notifications or scrolled through a social media feed, "
+            "they might want to follow up on what they've seen.\n"
+            "2. Following up could involve actions like responding to messages, liking posts, "
+            "sharing content, or even taking actions outside the app based on what they've read.\n"
+            "3. The user might have started with one task (e.g., checking notifications) but "
+            "transitioned into another task (e.g., responding to a friend's post).\n"
+            "4. A task is concluded if the user has completed their original intention and any "
+            "reasonable follow-up actions.\n"
+            "Based on these considerations, has the user truly concluded their phone-related "
+            "task, or are they likely to continue engaging with their device?"
         )
         return did_conclude
 
