@@ -106,3 +106,5 @@ packaged.yml
 
 parameters.json
 bkup/
+
+*.txt
