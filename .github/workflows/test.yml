@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -50,13 +52,16 @@ jobs:
       - name: Install project
         run: poetry install --no-interaction --with test,dev,docs
 
-      - name: Verify Ruff installation
-        run: poetry run which ruff
+      - name: Verify Git installation
+        run: git --version
+
+      - name: Verify pre-commit installation
+        run: poetry run pre-commit --version
 
       - name: Run pre-commit hooks
-        uses: pre-commit/action@v3.0.0
-        env:
-          PATH: ${{ env.PATH }}:${{ github.workspace }}/.venv/bin
+        run: |
+          poetry run pre-commit install
+          poetry run pre-commit run --all-files
 
       - name: Run tests
         run: poetry run pytest
