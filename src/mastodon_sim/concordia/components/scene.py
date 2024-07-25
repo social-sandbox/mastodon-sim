@@ -17,6 +17,7 @@
 import textwrap
 from typing import Literal
 
+import termcolor
 from concordia.agents import basic_agent
 from concordia.associative_memory import blank_memories
 from concordia.clocks import game_clock
@@ -28,14 +29,43 @@ from concordia.typing import agent, component
 from concordia.typing.entity import OutputType
 
 from mastodon_sim.concordia.components import apps, logging
+from mastodon_sim.concordia.components.apps import COLOR_TYPE
+
+# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
+#   What action is {name} currently performing or has just performed
+#   with their smartphone to best achieve their goal?
+#   Consider their plan, but deviate if necessary.
+#   Give a specific activity using one app. For example:
+#   {name} uses/used the Chat app to send "hi, what's up?" to George.
+#   """)
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-  What action is {name} currently performing or has just performed
-  with their smartphone to best achieve their goal?
-  Consider their plan, but deviate if necessary.
-  Give a specific activity using one app. For example:
-  {name} uses/used the Chat app to send "hi, what's up?" to George.
+    Based on {name}'s current goal and recent observations, what specific action would they likely perform on their phone right now?
+
+    Guidelines:
+    1. Choose a single, specific action that can be performed using one app.
+    2. The action should align with {name}'s plan, but deviate if a more suitable option presents itself.
+    3. Ensure the action is contextually appropriate, considering recent observations.
+    4. Provide a detailed description of the action, including the app used and any relevant content.
+
+    Examples of contextually appropriate actions:
+    - Using the Mastodon app to read their feed: {name} opens the Mastodon app and reads their feed.
+    - Posting a toot: {name} opens the Mastodon app and posts a toot, saying "Can't wait to go to the movies tonight!".
+    - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
+    - Liking a Mastodon post: {name} likes a post they have recently read with Toot ID 112824928711726972.
+    - Replying to a Mastodon post: {name} replies to a post they have recently read with Toot ID 112824928711726972 about dinner plans. They say "Sure, 7 PM at Luigi's works for me!".
+    - Using the Mastodon app to send a message: {name} opens the Mastodon app and send a direct message to George.
+
+    Remember:
+    - Consider current observations so as not to repeat actions that have already been performed.
+        For example, if George already sees "Mastodon timeline:" in recent observations, don't suggest reading their feed again unless some time has passed.
+    - Certain actions require prior knowledge (e.g., liking or replying to a specific post) which would require reading that information recently
+    - Don't suggest reading notifications or feeds if they've already been checked recently.
+    - Consider the time of day and the agent's current situation when suggesting actions.
+    - If the action is a post or message, a direct quote of that post or message should be included.
+    - If reading from a timeline or notifications, just state that — don't fabricate what has been read.
   """)
+
 
 _PHONE_ACTION_SPEC = agent.ActionSpec(_PHONE_CALL_TO_ACTION, OutputType.FREE, tag="phone")
 
@@ -116,27 +146,29 @@ class _PhoneComponent(component.Component):
     def name(self) -> str:
         return "PhoneComponent"
 
+    def _print(
+        self,
+        entry: str,
+        emoji: str = "",
+        color: COLOR_TYPE = None,
+    ) -> None:
+        formatted_entry = f"{emoji} {entry}" if emoji else entry
+        print(termcolor.colored(formatted_entry, color or self._log_color))
+
     def terminate_episode(self) -> bool:
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(f"Interaction with phone:\n{self._state}")
         did_conclude = chain_of_thought.yes_no_question(
-            "Has the user achieved their initial goal with their phone, or are they still "
-            "actively in the process of completing a phone task? Consider the following:\n"
-            "1. If they just checked notifications or scrolled through a social media feed, "
-            "they might want to follow up on what they've seen.\n"
-            "2. Following up could involve actions like responding to messages, liking posts, "
-            "sharing content, or even taking actions outside the app based on what they've read.\n"
-            "3. The user might have started with one task (e.g., checking notifications) but "
-            "transitioned into another task (e.g., responding to a friend's post).\n"
-            "4. A task is concluded if the user has completed their original intention and any "
-            "reasonable follow-up actions.\n"
-            "Based on these considerations, has the user truly concluded their phone-related "
-            "task, or are they likely to continue engaging with their device?"
+            "Has the user achieved their goal with their phone or are they still"
+            " actively in the process of completing a phone task?"
         )
         return did_conclude
 
     def update_after_event(self, event_statement: str):
-        self._state += "\n" + event_statement
+        # print(f"Player state:\n{self._player.state()}")
+        # TODO: May want to add player state to the transcript
+
+        self._state += "\n" + event_statement.strip()
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
         chain_of_thought.statement(self._phone.description())
@@ -155,8 +187,31 @@ class _PhoneComponent(component.Component):
         action = app.actions()[action_index]
 
         try:
-            argument_text = chain_of_thought.open_question(action.instructions(), terminators=[])
+            argument_text = chain_of_thought.open_question(
+                action.instructions(),
+                terminators=[],
+                # Roughly, Mastodon has 500 char limit -> 125 tokens + 100 tokens for other params
+                max_tokens=500 // 4 + 100,
+                # print_prompt=True,  # TODO: add this arg to the open_question method
+            )
+            self._print(
+                f"Attempting to invoke action '{action.name}'"
+                f" with the argument_text:\n{argument_text}",
+                color="yellow",
+            )
             result = app.invoke_action(action, argument_text)
+
+            # TODO: verify if this makes sense
+            if isinstance(result, str):
+                try:
+                    self._player.observe(result)
+                    self._print("Phone action result observed.", color="yellow")
+                except Exception as e:
+                    self._print(f"Error while observing result: {e}", color="red")
+
             return [result]
         except apps.ActionArgumentError:
+            return []
+        except Exception as e:
+            self._print("Error while invoking action: " + str(e), color="red")
             return []

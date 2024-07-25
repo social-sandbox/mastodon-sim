@@ -6,34 +6,34 @@ media uploads, polls, content warnings, and more.
 Usage examples:
 
 1. Post a simple status:
-   python post_status.py user001 "Hello, Mastodon!"
+   python post_status.py user0001 "Hello, Mastodon!"
 
 2. Post a status with custom visibility:
-   python post_status.py user001 "This is a private post" --visibility private
+   python post_status.py user0001 "This is a private post" --visibility private
 
 3. Post a status with a content warning:
-   python post_status.py user001 "Spoiler content" --spoiler-text "Content Warning"
+   python post_status.py user0001 "Spoiler content" --spoiler-text "Content Warning"
 
 4. Schedule a status:
-   python post_status.py user001 "This is a scheduled post" --schedule 60
+   python post_status.py user0001 "This is a scheduled post" --schedule 60
 
 5. Reply to another status:
-   python post_status.py user001 "This is a reply" --in-reply-to 123456
+   python post_status.py user0001 "This is a reply" --in-reply-to 123456
 
 6. Post with media attachments:
-   python post_status.py user001 "Check out these pictures!" --media path/to/image1.jpg path/to/image2.png
+   python post_status.py user0001 "Check out these pictures!" --media path/to/image1.jpg path/to/image2.png
 
 7. Create a poll:
-   python post_status.py user001 "What's your favorite color?" --poll-option "Red" --poll-option "Blue" --poll-option "Green" --poll-expires-in 86400
+   python post_status.py user0001 "What's your favorite color?" --poll-option "Red" --poll-option "Blue" --poll-option "Green" --poll-expires-in 86400
 
 8. Post with a specific language:
-   python post_status.py user001 "Bonjour, Mastodon!" --language fr
+   python post_status.py user0001 "Bonjour, Mastodon!" --language fr
 
 9. Use Markdown formatting (Pleroma-specific):
-   python post_status.py user001 "**Bold** and *italic* text" --content-type text/markdown
+   python post_status.py user0001 "**Bold** and *italic* text" --content-type text/markdown
 
 10. Quote another status (Fedibird-specific):
-    python post_status.py user001 "Interesting point!" --quote 789012
+    python post_status.py user0001 "Interesting point!" --quote 789012
 
 For more information on each option, use the --help flag:
 python post_status.py --help
