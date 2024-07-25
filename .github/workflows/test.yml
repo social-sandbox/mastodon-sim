@@ -1,6 +1,7 @@
 name: Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -22,24 +23,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          node-version: 21
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install @devcontainers/cli
-        run: npm install --location=global @devcontainers/cli@0.58.0
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
 
-      - name: Start Dev Container
-        run: |
-          git config --global init.defaultBranch main
-          PYTHON_VERSION=${{ matrix.python-version }} devcontainer up --workspace-folder .
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Lint app
-        run: devcontainer exec --workspace-folder . poe lint
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
 
-      - name: Test app
-        run: devcontainer exec --workspace-folder . poe test
+      - name: Install project
+        run: poetry install --no-interaction
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.0
+
+      - name: Run tests
+        run: poetry run pytest
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
