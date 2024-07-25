@@ -45,13 +45,18 @@ jobs:
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root --with test,dev,docs
 
       - name: Install project
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --with test,dev,docs
+
+      - name: Verify Ruff installation
+        run: poetry run which ruff
 
       - name: Run pre-commit hooks
         uses: pre-commit/action@v3.0.0
+        env:
+          PATH: ${{ env.PATH }}:${{ github.workspace }}/.venv/bin
 
       - name: Run tests
         run: poetry run pytest
