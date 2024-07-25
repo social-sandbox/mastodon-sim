@@ -104,6 +104,7 @@ fix = true
 line-length = 100
 src = ["src", "tests"]
 target-version = "py311"
+exclude = ["./concordia"]
 
 [tool.ruff.lint]
 ignore-init-module-imports = true
@@ -116,6 +117,7 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
 
 [tool.poe.tasks]  # https://github.com/nat-n/poethepoet
 

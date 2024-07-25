@@ -33,6 +33,7 @@ from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.login import login
 
 
+# TODO: Likely requries pagination handling
 def delete_posts(
     login_user: str,
     post_ids: list[int] | None = None,

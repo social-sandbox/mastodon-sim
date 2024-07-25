@@ -66,7 +66,7 @@ class Rack::Attack
     IpBlock.blocked?(req.remote_ip)
   end
 
-  throttle('throttle_authenticated_api', limit: 1_500, period: 5.minutes) do |req|
+  throttle('throttle_authenticated_api', limit: 1_500, period: 2.minutes) do |req|
     req.authenticated_user_id if req.api_request?
   end
 
@@ -82,7 +82,7 @@ class Rack::Attack
     req.authenticated_user_id if req.post? && req.path.match?(%r{\A/api/v\d+/media\z}i)
   end
 
-  throttle('throttle_media_proxy', limit: 30, period: 10.minutes) do |req|
+  throttle('throttle_media_proxy', limit: 30, period: 2.minutes) do |req|
     req.throttleable_remote_ip if req.path.start_with?('/media_proxy')
   end
 
@@ -133,15 +133,15 @@ class Rack::Attack
     end
   end
 
-  throttle('throttle_login_attempts/ip', limit: 25, period: 5.minutes) do |req|
+  throttle('throttle_login_attempts/ip', limit: 25, period: 1.minutes) do |req|
     req.throttleable_remote_ip if req.post? && req.path_matches?('/auth/sign_in')
   end
 
-  throttle('throttle_login_attempts/email', limit: 25, period: 1.hour) do |req|
+  throttle('throttle_login_attempts/email', limit: 300, period: 1.hour) do |req|
     req.session[:attempt_user_id] || req.params.dig('user', 'email').presence if req.post? && req.path_matches?('/auth/sign_in')
   end
 
-  throttle('throttle_password_change/account', limit: 10, period: 10.minutes) do |req|
+  throttle('throttle_password_change/account', limit: 3, period: 10.minutes) do |req|
     req.warden_user_id if req.put? || (req.patch? && req.path_matches?('/auth'))
   end
 
