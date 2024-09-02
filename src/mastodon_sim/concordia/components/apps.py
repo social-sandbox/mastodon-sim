@@ -47,6 +47,22 @@ COLOR_TYPE = (
     | None
 )
 
+import time
+import functools
+
+def timed_function(tag="general"):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            duration = end_time - start_time
+            with open("time_logger.txt", "a") as f:
+                f.write(f"{tag} - {func.__name__} took {duration:.6f}s on {time.asctime()}\n")
+            return result
+        return wrapper
+    return decorator
 
 def parse_literal(literal_type: type) -> ParserFunc:
     """Parse a literal type."""
@@ -475,8 +491,8 @@ class MastodonSocialNetworkApp(PhoneApp):
         description = (
             "MastodonSocialNetworkApp is a social media application similar to"
             " Twitter that allows users to interact on social media.\n\n    This"
-            " app provides functionality for users to post status updates, follow"
-            " other users, like and boost posts, and manage their"
+            " app provides functionality for users to post status updates (toots), follow"
+            " other users, like, boost, and respond to posts, and manage their"
             " notifications.\n\n    Critically important: Operations such as"
             " liking, boosting, replying, etc. require a `toot_id`. To obtain a"
             " `toot_id`, you must have memory/knowledge of a real `toot_id`. If you"
@@ -497,14 +513,20 @@ class MastodonSocialNetworkApp(PhoneApp):
         if not username:
             raise ValueError(f"No username found for display name: {display_name}")
         return username
+    def public_get_username(self, display_name: str) -> str:
+        """Public interface to get the username."""
+        return self._get_username(display_name)
 
+    @timed_function(tag="app_action")
     @app_action
-    def update_profile(self, current_user: str, display_name: str, bio: str) -> str:
-        """Update the user's display name and bio."""
+    def update_profile(self, current_user: str, bio: str) -> str:
+        """Update the user's bio."""
+        current_user = current_user.split()[0]
+
         username = self._get_username(current_user)
-        self._print(f"Updating profile for @{username}: {display_name}", emoji="✏️")
+        self._print(f"Updating profile for @{username}: {current_user}", emoji="✏️")
         if self.perform_operations:
-            self._mastodon_ops.update_bio(username, display_name, bio)
+            self._mastodon_ops.update_bio(username, current_user, bio)
         else:
             self._print(
                 "Skipping real Mastodon API call since perform_operations is set to False",
@@ -512,11 +534,18 @@ class MastodonSocialNetworkApp(PhoneApp):
             )
         bio_message = f'Profile updated successfully: "{bio}"'
         self._print(bio_message, emoji="✅")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} upated their profile.\n")
+
         return bio_message
 
+    @timed_function(tag="app_action")
     @app_action
     def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
         """Read a user's profile on Mastodon social network."""
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
+
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
@@ -529,11 +558,16 @@ class MastodonSocialNetworkApp(PhoneApp):
                 color="light_grey",
             )
         self._print(f"Profile: {display_name} - {bio}", emoji="📄")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} read profile of user: {target_user}\n")
         return display_name, bio
 
+    @timed_function(tag="app_action")
     @app_action
     def follow_user(self, current_user: str, target_user: str) -> str:
         """Follow a user on Mastodon social network."""
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         if self.perform_operations:
@@ -547,11 +581,16 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"current_user (@{current_username}) followed target_user (@{target_username})"
         )
         self._print(follow_message, emoji="➕")  # noqa: RUF001
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} followed user: {target_user}\n")
         return follow_message
 
+    @timed_function(tag="app_action")
     @app_action
     def unfollow_user(self, current_user: str, target_user: str) -> str:
         """Unfollow a user."""
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         self._print(
@@ -569,47 +608,123 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"current_user (@{current_username}) unfollowed target_user (@{target_username})"
         )
         self._print(unfollow_message, emoji="✅")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} unfollowed user: {target_user}\n")
         return unfollow_message
 
+    # @app_action
+    # def post_status(
+    #     self,
+    #     current_user: str,
+    #     status: str,
+    #     visibility: (Literal["private", "public", "unlisted", "direct"] | None) = None,
+    #     sensitive: bool = False,
+    #     spoiler_text: str | None = None,
+    #     language: str | None = None,
+    #     scheduled_at: datetime.datetime | None = None,
+    #     in_reply_to_id: int | None = None,
+    #     media_files: list[str] | None = None,
+    #     idempotency_key: str | None = None,
+    #     content_type: str | None = None,
+    #     poll_options: list[str] | None = None,
+    #     poll_expires_in: int | None = None,
+    #     poll_multiple: bool = False,
+    #     poll_hide_totals: bool = False,
+    #     quote_id: int | None = None,
+    # ) -> str:
+    #     """Post a new status update to the Mastodon-like social network.
+
+    #     Args:
+    #         current_user (str): The username of the user posting the status.
+    #         status (str): The text content of the status update.
+    #         visibility (str | None): The visibility level of the post ('direct', 'private', 'unlisted', or 'public').
+    #         sensitive (bool): Whether the post should be marked as sensitive content.
+    #         spoiler_text (str | None): Text to be shown as a warning before the status.
+    #         language (str | None): The language of the status (ISO 639-1 or 639-3 code).
+    #         scheduled_at (datetime.datetime | None): When to schedule the post for future publishing.
+    #         in_reply_to_id (int | None): The `toot_id` of the status this post is replying to.
+    #         media_files (List[str] | None): List of paths to media files to attach to the post.
+    #         idempotency_key (str | None): A unique key to prevent duplicate posts.
+    #         content_type (str | None): The MIME type of the status content (for Pleroma servers).
+    #         poll_options (List[str] | None): List of options for a poll attached to the post.
+    #         poll_expires_in (int | None): Number of seconds until the poll expires.
+    #         poll_multiple (bool): Whether multiple choices are allowed in the poll.
+    #         poll_hide_totals (bool): Whether to hide poll results until it expires.
+    #         quote_id (int | None): The ID of a status being quoted (Fedibird-specific feature).
+
+    #     Raises
+    #     ------
+    #         ValueError: If the input parameters are invalid.
+    #         Exception: For any other unexpected errors during posting.
+    #     """
+    #     try:
+    #         username = self._get_username(current_user)
+    #         if self.perform_operations:
+    #             self._mastodon_ops.post_status(
+    #                 login_user=username,
+    #                 status=status,
+    #                 visibility=visibility,
+    #                 sensitive=sensitive,
+    #                 spoiler_text=spoiler_text,
+    #                 language=language,
+    #                 scheduled_at=scheduled_at,
+    #                 in_reply_to_id=in_reply_to_id,
+    #                 media_files=media_files,
+    #                 idempotency_key=idempotency_key,
+    #                 content_type=content_type,
+    #                 poll_options=poll_options,
+    #                 poll_expires_in=poll_expires_in,
+    #                 poll_multiple=poll_multiple,
+    #                 poll_hide_totals=poll_hide_totals,
+    #                 quote_id=quote_id,
+    #             )
+    #         else:
+    #             self._print(
+    #                 "Skipping real Mastodon API call since perform_operations is set to False",
+    #                 color="light_grey",
+    #             )
+
+    #         # Log success
+    #         if scheduled_at:
+    #             self._print(
+    #                 "Status scheduled successfully for user:"
+    #                 f' {current_user} ({username}) at {scheduled_at}: "{status}"',
+    #                 emoji="🕒",
+    #             )
+    #         else:
+    #             self._print(
+    #                 f'Status posted for user: {current_user} ({username}): "{status}"',
+    #                 emoji="📝",
+    #             )
+
+    #         if poll_options:
+    #             self._print("Poll attached to the status.", emoji="📊")
+
+    #         if media_files:
+    #             self._print(f"Attached {len(media_files)} media file(s).", emoji="📎")
+
+    #     except ValueError as e:
+    #         self._print(f"Invalid input: {e!s}", emoji="❌")
+    #         raise
+
+    #     except Exception as e:
+    #         self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
+    #         raise
+    #     return_msg = f'Status posted for user: {current_user} ({username}): "{status}"'
+    #     return return_msg
+
+    @timed_function(tag="app_action")
     @app_action
-    def post_status(  # noqa: PLR0913
+    def post_toot(
         self,
         current_user: str,
         status: str,
-        visibility: (Literal["private", "public", "unlisted", "direct"] | None) = None,
-        sensitive: bool = False,
-        spoiler_text: str | None = None,
-        language: str | None = None,
-        scheduled_at: datetime.datetime | None = None,
-        in_reply_to_id: int | None = None,
-        media_files: list[str] | None = None,
-        idempotency_key: str | None = None,
-        content_type: str | None = None,
-        poll_options: list[str] | None = None,
-        poll_expires_in: int | None = None,
-        poll_multiple: bool = False,
-        poll_hide_totals: bool = False,
-        quote_id: int | None = None,
     ) -> str:
-        """Post a new status update to the Mastodon-like social network.
+        """Post a new toot to the Mastodon-like social network.
 
         Args:
             current_user (str): The username of the user posting the status.
             status (str): The text content of the status update.
-            visibility (str | None): The visibility level of the post ('direct', 'private', 'unlisted', or 'public').
-            sensitive (bool): Whether the post should be marked as sensitive content.
-            spoiler_text (str | None): Text to be shown as a warning before the status.
-            language (str | None): The language of the status (ISO 639-1 or 639-3 code).
-            scheduled_at (datetime.datetime | None): When to schedule the post for future publishing.
-            in_reply_to_id (int | None): The `toot_id` of the status this post is replying to.
-            media_files (List[str] | None): List of paths to media files to attach to the post.
-            idempotency_key (str | None): A unique key to prevent duplicate posts.
-            content_type (str | None): The MIME type of the status content (for Pleroma servers).
-            poll_options (List[str] | None): List of options for a poll attached to the post.
-            poll_expires_in (int | None): Number of seconds until the poll expires.
-            poll_multiple (bool): Whether multiple choices are allowed in the poll.
-            poll_hide_totals (bool): Whether to hide poll results until it expires.
-            quote_id (int | None): The ID of a status being quoted (Fedibird-specific feature).
 
         Raises
         ------
@@ -617,25 +732,12 @@ class MastodonSocialNetworkApp(PhoneApp):
             Exception: For any other unexpected errors during posting.
         """
         try:
+            current_user = current_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
                 self._mastodon_ops.post_status(
                     login_user=username,
                     status=status,
-                    visibility=visibility,
-                    sensitive=sensitive,
-                    spoiler_text=spoiler_text,
-                    language=language,
-                    scheduled_at=scheduled_at,
-                    in_reply_to_id=in_reply_to_id,
-                    media_files=media_files,
-                    idempotency_key=idempotency_key,
-                    content_type=content_type,
-                    poll_options=poll_options,
-                    poll_expires_in=poll_expires_in,
-                    poll_multiple=poll_multiple,
-                    poll_hide_totals=poll_hide_totals,
-                    quote_id=quote_id,
                 )
             else:
                 self._print(
@@ -643,24 +745,10 @@ class MastodonSocialNetworkApp(PhoneApp):
                     color="light_grey",
                 )
 
-            # Log success
-            if scheduled_at:
-                self._print(
-                    "Status scheduled successfully for user:"
-                    f' {current_user} ({username}) at {scheduled_at}: "{status}"',
-                    emoji="🕒",
-                )
-            else:
-                self._print(
-                    f'Status posted for user: {current_user} ({username}): "{status}"',
-                    emoji="📝",
-                )
-
-            if poll_options:
-                self._print("Poll attached to the status.", emoji="📊")
-
-            if media_files:
-                self._print(f"Attached {len(media_files)} media file(s).", emoji="📎")
+            self._print(
+                f'Status posted for user: {current_user} ({username}): "{status}"',
+                emoji="📝",
+            )
 
         except ValueError as e:
             self._print(f"Invalid input: {e!s}", emoji="❌")
@@ -669,24 +757,82 @@ class MastodonSocialNetworkApp(PhoneApp):
         except Exception as e:
             self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
             raise
-        return_msg = f'Status posted for user: {current_user} ({username}): "{status}"'
+        return_msg = f'{current_user} posted a toot!: "{status}"'
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} posted\n")
         return return_msg
 
+    @timed_function(tag="app_action")
     @app_action
-    def get_public_timeline(self, limit: int) -> str:
-        """Read the public Mastodon social network feed."""
-        self._print(f"Fetching public timeline (limit: {limit})", emoji="🌐")
-        if self.perform_operations:
-            timeline = self._mastodon_ops.get_public_timeline(limit=limit)
-        else:
+    def reply_to_toot(
+        self,
+        current_user: str,
+        status: str,
+        in_reply_to_id: int,
+    ) -> str:
+        """Post a new status update to the Mastodon-like social network.
+
+        Args:
+            current_user (str): The username of the user posting the status.
+            status (str): The text content of the status update.
+            in_reply_to_id (int): The `toot_id` of the status this post is replying to.
+
+        Raises
+        ------
+            ValueError: If the input parameters are invalid.
+            Exception: For any other unexpected errors during posting.
+        """
+        try:
+            current_user = current_user.split()[0]
+            username = self._get_username(current_user)
+            if self.perform_operations:
+                self._mastodon_ops.post_status(
+                    login_user=username,
+                    status=status,
+                    in_reply_to_id=in_reply_to_id,
+                )
+
+            else:
+                self._print(
+                    "Skipping real Mastodon API call since perform_operations is set to False",
+                    color="light_grey",
+                )
+
             self._print(
-                "Skipping real Mastodon API call since perform_operations is set to False",
-                color="light_grey",
+                f"You replied to a toot with toot id {in_reply_to_id} : {status}",
+                emoji="📝",
             )
-            timeline = []
-        self._print(f"Retrieved {len(timeline)} posts from the public timeline", emoji="📊")
-        str_timeline = self.print_and_return_timeline(timeline)
-        return "Public Mastodon timeline:\n" + str_timeline
+            return_msg = (
+                f"{current_user} replied to a toot with toot id {in_reply_to_id} : {status}"
+            )
+
+        except ValueError as e:
+            self._print(f"Invalid input, regular toot posted: {e!s}", emoji="❌")
+            return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
+
+        except Exception as e:
+            self._print(f"An unexpected error occurred, regular toot posted: {e!s}", emoji="❌")
+            return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
+        
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} replied to Toot ID:{in_reply_to_id}\n")
+        return return_msg
+
+    # @app_action
+    # def get_public_timeline(self, limit: int) -> str:
+    #     """Read the public Mastodon social network feed."""
+    #     self._print(f"Fetching public timeline (limit: {limit})", emoji="🌐")
+    #     if self.perform_operations:
+    #         timeline = self._mastodon_ops.get_public_timeline(limit=limit)
+    #     else:
+    #         self._print(
+    #             "Skipping real Mastodon API call since perform_operations is set to False",
+    #             color="light_grey",
+    #         )
+    #         timeline = []
+    #     self._print(f"Retrieved {len(timeline)} posts from the public timeline", emoji="📊")
+    #     str_timeline = self.print_and_return_timeline(timeline)
+    #     return f"{self._get_username} viewed the Public Mastodon timeline:\n" + str_timeline
 
     def print_timeline(self, timeline: list[dict[str, Any]]) -> None:
         """Print the timeline in a readable format."""
@@ -699,7 +845,6 @@ class MastodonSocialNetworkApp(PhoneApp):
             self._print("----------------------------------------")
             self._print(f"User: {post['account']['display_name']} (@{post['account']['username']})")
             self._print(f"Content: {_clean_html(post['content'])}")
-            self._print(f"Created At: {post['created_at']}")
             self._print(f"Toot ID: {post['id']}")
             self._print(f"Favourites: {post['favourites_count']}, Reblogs: {post['reblogs_count']}")
             # self._print(f"URL: {post['url']}")
@@ -719,7 +864,6 @@ class MastodonSocialNetworkApp(PhoneApp):
                     "----------------------------------------",
                     f"User: {post['account']['display_name']} (@{post['account']['username']})",
                     f"Content: {_clean_html(post['content'])}",
-                    f"Created At: {post['created_at']}",
                     f"Toot ID: {post['id']}",
                     f"Favourites: {post['favourites_count']}, Reblogs: {post['reblogs_count']}",
                     # f"URL: {post['url']}",
@@ -732,18 +876,18 @@ class MastodonSocialNetworkApp(PhoneApp):
         self._print(str_timeline)
         return str_timeline
 
+    @timed_function(tag="app_action")
     @app_action
-    def get_own_timeline(self, current_user: str, filter_type: str, limit: int) -> str:
+    def get_own_timeline(self, current_user: str, limit: int) -> str:
         """Read the Mastodon social network feed for the current user."""
-        username = self._get_username(current_user)
+        current_user = current_user.split()[0]
+        username = self._get_username(current_user.split()[0])
         self._print(
-            f"Fetching @{username}'s timeline (filter: {filter_type}, limit: {limit})",
+            f"Fetching @{username}'s timeline (limit: {limit})",
             emoji="🏠",
         )
         if self.perform_operations:
-            timeline = self._mastodon_ops.get_own_timeline(
-                username, filter_type=filter_type, limit=limit
-            )
+            timeline = self._mastodon_ops.get_own_timeline(username, limit=limit)
         else:
             timeline = []
             self._print(
@@ -755,33 +899,35 @@ class MastodonSocialNetworkApp(PhoneApp):
             emoji="📊",
         )
         str_timeline = self.print_and_return_timeline(timeline)
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} retrieved their own timeline\n")
         return "Own Mastodon Timeline:\n" + str_timeline
 
-    @app_action
-    def get_user_timeline(self, current_user: str, target_user: str, limit: int) -> str:
-        """Read a specific user's timeline on Mastodon social network."""
-        current_username = self._get_username(current_user)
-        target_username = self._get_username(target_user)
-        self._print(
-            f"@{current_username} fetching @{target_username}'s timeline (limit: {limit})",
-            emoji="👥",
-        )
-        if self.perform_operations:
-            timeline = self._mastodon_ops.get_user_timeline(
-                current_username, target_username, limit=limit
-            )
-        else:
-            timeline = []
-            self._print(
-                "Skipping real Mastodon API call since perform_operations is set to False",
-                color="light_grey",
-            )
-        self._print(
-            f"Retrieved {len(timeline)} posts from @{target_username}'s timeline",
-            emoji="📊",
-        )
-        str_timeline = self.print_and_return_timeline(timeline)
-        return f"@{current_username}'s Mastodon Timeline:\n" + str_timeline
+    # @app_action
+    # def get_user_timeline(self, current_user: str, target_user: str, limit: int) -> str:
+    #     """Read a specific user's timeline on Mastodon social network."""
+    #     current_username = self._get_username(current_user)
+    #     target_username = self._get_username(target_user)
+    #     self._print(
+    #         f"@{current_username} fetching @{target_username}'s timeline (limit: {limit})",
+    #         emoji="👥",
+    #     )
+    #     if self.perform_operations:
+    #         timeline = self._mastodon_ops.get_user_timeline(
+    #             current_username, target_username, limit=limit
+    #         )
+    #     else:
+    #         timeline = []
+    #         self._print(
+    #             "Skipping real Mastodon API call since perform_operations is set to False",
+    #             color="light_grey",
+    #         )
+    #     self._print(
+    #         f"Retrieved {len(timeline)} posts from @{target_username}'s timeline",
+    #         emoji="📊",
+    #     )
+    #     str_timeline = self.print_and_return_timeline(timeline)
+    #     return f"@{current_username}'s Mastodon Timeline:\n" + str_timeline
 
     def print_notifications(self, notifications: list[dict[str, Any]]) -> str:
         """Generate a string of important details of notifications, one per line."""
@@ -811,9 +957,12 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         return "\n".join(notification_lines)
 
+    @timed_function(tag="app_action")
     @app_action
     def read_notifications(self, current_user: str, clear: bool, limit: int) -> str:
         """Read Mastodon social network notifications."""
+        current_user = current_user.split()[0]
+
         username = self._get_username(current_user)
         self._print(
             f"Reading notifications for @{username} (clear: {clear}, limit: {limit})",
@@ -836,12 +985,16 @@ class MastodonSocialNetworkApp(PhoneApp):
         notifications_string = self.print_notifications(notifications)
         full_output = f"{retrieval_message}\n{notifications_string}"
         self._print(full_output)
-
+        with open("app_logger.txt", "a") as f:
+                f.write(f"{current_user} read their notifications\n")
         return full_output
 
+    @timed_function(tag="app_action")
     @app_action
     def like_toot(self, current_user: str, target_user: str, toot_id: str) -> str:
         """Like (favorite) a toot."""
+        current_user = current_user.split()[0]
+        target_user  = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         self._print(
@@ -857,6 +1010,8 @@ class MastodonSocialNetworkApp(PhoneApp):
                 color="light_grey",
             )
         self._print(like_message, emoji="✅")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} liked a toot from {target_user} with Toot ID:{toot_id}\n")
         return like_message
 
     # region[additional methods]
