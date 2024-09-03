@@ -47,8 +47,9 @@ COLOR_TYPE = (
     | None
 )
 
-import time
 import functools
+import time
+
 
 def timed_function(tag="general"):
     def decorator(func):
@@ -61,8 +62,11 @@ def timed_function(tag="general"):
             with open("time_logger.txt", "a") as f:
                 f.write(f"{tag} - {func.__name__} took {duration:.6f}s on {time.asctime()}\n")
             return result
+
         return wrapper
+
     return decorator
+
 
 def parse_literal(literal_type: type) -> ParserFunc:
     """Parse a literal type."""
@@ -513,6 +517,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         if not username:
             raise ValueError(f"No username found for display name: {display_name}")
         return username
+
     def public_get_username(self, display_name: str) -> str:
         """Public interface to get the username."""
         return self._get_username(display_name)
@@ -813,7 +818,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         except Exception as e:
             self._print(f"An unexpected error occurred, regular toot posted: {e!s}", emoji="❌")
             return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
-        
+
         with open("app_logger.txt", "a") as f:
             f.write(f"{current_user} replied to Toot ID:{in_reply_to_id}\n")
         return return_msg
@@ -986,7 +991,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         full_output = f"{retrieval_message}\n{notifications_string}"
         self._print(full_output)
         with open("app_logger.txt", "a") as f:
-                f.write(f"{current_user} read their notifications\n")
+            f.write(f"{current_user} read their notifications\n")
         return full_output
 
     @timed_function(tag="app_action")
@@ -994,7 +999,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     def like_toot(self, current_user: str, target_user: str, toot_id: str) -> str:
         """Like (favorite) a toot."""
         current_user = current_user.split()[0]
-        target_user  = target_user.split()[0]
+        target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         self._print(
