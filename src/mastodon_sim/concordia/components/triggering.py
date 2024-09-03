@@ -82,14 +82,7 @@ class SceneTriggeringComponent(component.Component):
             "Did a player engage in or prepare/plan to engage in any activity typically associated"
             " with smartphone use during this event? Consider not only explicit mentions"
             " of phone interaction, but also actions commonly performed using"
-            " mobile apps or smartphone features, as well as preparations or plans to do so. This includes, but is not limited"
-            " to:\n- Communicating (e.g., messaging, calling, emailing)\n-"
-            " Accessing or planning to access information (e.g., browsing the internet, checking or preparing to check social"
-            " media)\n- Using utility apps (e.g., calendar, notes, calculator)\n-"
-            " Navigation or location services\n- Taking photos or videos\n- Using"
-            " mobile payment systems\n- Playing mobile games\nEven if a phone is not"
-            " explicitly mentioned, consider whether the described actions or plans strongly"
-            " imply smartphone use in modern contexts."
+            " mobile apps or smartphone features, as well as preparations or plans to do so. Riverbend.social is a social media platform, so any mentions of it will likely involve phone use."
         )
 
     def _get_player_from_event(self, event_statement: str) -> basic_agent.BasicAgent | None:
@@ -103,34 +96,9 @@ class SceneTriggeringComponent(component.Component):
             is_player_using_phone = helper_functions.filter_copy_as_statement(
                 document
             ).yes_no_question(
-                f"Does the event description indicate that {player.name}, as the main subject of the event, "
-                "personally and directly engaged in, planned, or prepared for any activity typically associated with smartphone use?"
-                f" Consider only actions where {player.name} is the primary user of their own device, or is planning to be. "
-                "If the event mainly describes someone else using or planning to use a phone, answer 'No'. "
-                "Include both explicit mentions of phone interaction and actions commonly "
-                "performed using mobile apps or smartphone features, as well as clear intentions or preparations to do so, such as:\n"
-                "- Actively communicating or planning to communicate (e.g., messaging, calling, emailing)\n"
-                "- Personally accessing, planning to access, or preparing to post on social media (e.g., checking"
-                ' own feeds, planning to post updates, preparing to share/post own "toots" on Mastodon, '
-                "intending to update own status)\n"
-                "- Using or planning to use specific social network apps on their own device (e.g.,"
-                " Mastodon social network app)\n"
-                "- Reading, planning to read their own social media timeline/feed, or preparing to check their notifications\n"
-                "- Actively accessing or planning to access information (e.g., browsing the internet)\n"
-                "- Using or intending to use utility apps on their personal device (e.g., calendar, notes, calculator)\n"
-                "- Using or planning to use navigation or location services on their own phone\n"
-                "- Taking or planning to take photos or videos with their own device\n"
-                "- Using or preparing to use mobile payment systems from their personal account\n"
-                "- Playing or intending to play mobile games on their own device\n"
-                "- Liking, boosting, reacting, or planning to engage with social media posts from their account\n"
-                "- Following, unfollowing, or planning changes to their personal social media accounts\n"
-                f"Even if {player.name} is not explicitly described as using a phone, consider whether "
-                f"their actions, plans, or preparations strongly imply personal smartphone use by {player.name} in modern contexts. "
-                f"Do not include instances where someone else is using or planning to use a phone, even if it's on {player.name}'s behalf, "
-                f"or where {player.name} is merely present while others use or plan to use phones. "
-                f"Critically important: Remember, the focus should be on {player.name}'s direct phone usage, "
-                "planned usage, or preparations for usage as the main subject of the event. "
-                f"If the event primarily describes a person other than {player.name}'s actions, phone usage, or plans for phone usage, answer 'No'."
+                f"""
+                Is {player.name} the main subject performing the action in this event? Only choose yes if {player.name} is explicitly mentioned?
+                """
             )
 
             if is_player_using_phone:
@@ -157,6 +125,7 @@ class SceneTriggeringComponent(component.Component):
         return player
 
     def _run_phone_scene(self, player: basic_agent.BasicAgent):
+        print("Starting phone scene")
         phone_scene = scene.build(
             player,
             self._get_phone(player.name),
@@ -164,6 +133,7 @@ class SceneTriggeringComponent(component.Component):
             model=self._model,
             memory_factory=self._memory_factory,
         )
+        print("Built phone scene")
         with self._clock.higher_gear():
             scene_output = phone_scene.run_episode()
 
