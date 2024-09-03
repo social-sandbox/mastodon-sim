@@ -14,7 +14,19 @@
 
 """A GameMaster that simulates a player's interaction with their phone."""
 
+import functools
+import re
 import textwrap
+
+# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
+#   What action is {name} currently performing or has just performed
+#   with their smartphone to best achieve their goal?
+#   Consider their plan, but deviate if necessary.
+#   Give a specific activity using one app. For example:
+#   {name} uses/used the Chat app to send "hi, what's up?" to George.
+#   """)
+import time
+from html import unescape
 from typing import Literal
 
 import termcolor
@@ -28,42 +40,57 @@ from concordia.thought_chains import thought_chains
 from concordia.typing import agent, component
 from concordia.typing.entity import OutputType
 
+from mastodon_sim import mastodon_ops
 from mastodon_sim.concordia.components import apps, logging
 from mastodon_sim.concordia.components.apps import COLOR_TYPE
 
-# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-#   What action is {name} currently performing or has just performed
-#   with their smartphone to best achieve their goal?
-#   Consider their plan, but deviate if necessary.
-#   Give a specific activity using one app. For example:
-#   {name} uses/used the Chat app to send "hi, what's up?" to George.
-#   """)
+
+def timed_function(tag="general"):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            duration = end_time - start_time
+            with open("time_logger.txt", "a") as f:
+                f.write(f"{tag} - {func.__name__} took {duration:.6f}s on {time.asctime()}\n")
+            return result
+
+        return wrapper
+
+    return decorator
+
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s current goal and recent observations, what specific action would they likely perform on their phone right now?
+    Based on {name}'s current goal and recent observations, what specific action would they likely perform on their phone right now, and what information would they need to perform it?
 
     Guidelines:
-    1. Choose a single, specific action that can be performed using one app.
+    1. Choose a single, specific action that can be performed using one app. There should be a single clear action.
     2. The action should align with {name}'s plan, but deviate if a more suitable option presents itself.
     3. Ensure the action is contextually appropriate, considering recent observations.
-    4. Provide a detailed description of the action, including the app used and any relevant content.
+    4. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
 
     Examples of contextually appropriate actions:
     - Using the Mastodon app to read their feed: {name} opens the Mastodon app and reads their feed.
-    - Posting a toot: {name} opens the Mastodon app and posts a toot, saying "Can't wait to go to the movies tonight!".
+    - Posting a toot: {name} opens the Mastodon app and posts a toot. You can tag other users by adding '@' before mentioning their username.
     - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
-    - Liking a Mastodon post: {name} likes a post they have recently read with Toot ID 112824928711726972.
-    - Replying to a Mastodon post: {name} replies to a post they have recently read with Toot ID 112824928711726972 about dinner plans. They say "Sure, 7 PM at Luigi's works for me!".
+    - Liking a Mastodon post: {name} likes a post they have recently read with a given Toot ID. (Return toot ID of the post you want to like)
+    - Replying to a Mastodon post: {name} replies to a post they have recently read with a given Toot ID.
     - Using the Mastodon app to send a message: {name} opens the Mastodon app and send a direct message to George.
 
     Remember:
     - Consider current observations so as not to repeat actions that have already been performed.
-        For example, if George already sees "Mastodon timeline:" in recent observations, don't suggest reading their feed again unless some time has passed.
     - Certain actions require prior knowledge (e.g., liking or replying to a specific post) which would require reading that information recently
     - Don't suggest reading notifications or feeds if they've already been checked recently.
     - Consider the time of day and the agent's current situation when suggesting actions.
+    - Ensure responses to other toots are done using the Toot Response feature and not in a new toot
     - If the action is a post or message, a direct quote of that post or message should be included.
     - If reading from a timeline or notifications, just state that — don't fabricate what has been read.
+
+    Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
+    {name} should like a toot if they agree with it.
+    {name} should tag other users if referring to them.
   """)
 
 
@@ -93,6 +120,7 @@ def build(
     """
     memory = memory_factory.make_blank_memory()
     phone_component = _PhoneComponent(model, player, phone)
+    # reflectionx =
     return game_master_lib.GameMaster(
         model=model,
         memory=memory,
@@ -134,8 +162,8 @@ class _PhoneComponent(component.Component):
             "white",
         ]
         | None = "yellow",
-        verbose: bool = False,
-        semi_verbose: bool = True,
+        verbose: bool = True,
+        semi_verbose: bool = False,
     ):
         self._model = model
         self._player = player
@@ -164,10 +192,11 @@ class _PhoneComponent(component.Component):
         )
         return did_conclude
 
+    @timed_function(tag="update_phonegamemaster")
     def update_after_event(self, event_statement: str):
         # print(f"Player state:\n{self._player.state()}")
         # TODO: May want to add player state to the transcript
-
+        print("Inside phone_update_after_event")
         self._state += "\n" + event_statement.strip()
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
@@ -183,7 +212,39 @@ class _PhoneComponent(component.Component):
             "In the above transcript, what action did the user perform?",
             answers=action_names,
         )
+        print(action_index)
+        toot_id_required = chain_of_thought.yes_no_question(
+            "In the above transcript, does the user's action require a numeric toot id? (numeric toot id is required for replying, liking etc.)"
+        )
+        print(toot_id_required)
+        if toot_id_required:
+            # find most recent statement
+            print("Processing Toot IDx")
+            p_username = app.public_get_username(self._player.name)
+            print(p_username)
+            timeline = mastodon_ops.get_own_timeline(p_username, limit=10)
+            print("Got ID from Mastodon")
 
+            def _clean_html(html_string):
+                clean_text = re.sub("<[^<]+?>", "", unescape(html_string))
+                return re.sub(r"\s+", " ", clean_text).strip()
+
+            output = []
+            for post in timeline:
+                output.append(
+                    f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])}, Toot ID: {post['id']}"
+                )
+            if len(output) > 0:
+                toot_index = chain_of_thought.multiple_choice_question(
+                    "In the above transcript, which of the following toots is the user liking or responding to? Identify this using the name (if mentioned) and the context of the action and the toots from the timeline below",
+                    answers=output,
+                )
+                responding_id = output[toot_index].split("Toot ID: ")[1]
+                chain_of_thought.statement(
+                    f"The exact Toot ID called for in the above action is: {responding_id}\n"
+                )
+                print(responding_id)
+        print("Continuing action!")
         action = app.actions()[action_index]
 
         try:

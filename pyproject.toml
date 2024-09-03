@@ -28,7 +28,7 @@ poethepoet = ">=0.25.0"
 python = ">=3.11,<4.0"
 typer = { extras = ["all"], version = ">=0.12.0" }
 uvicorn = { extras = ["standard"], version = ">=0.29.0" }
-gdm-concordia = {git = "https://github.com/google-deepmind/concordia.git", rev = "main"}
+gdm-concordia = {git = "https://github.com/google-deepmind/concordia.git", rev = "ae4b7b50064c6ae66b2a2d1c37db5d0c3d99a2bc"} # ae4b7b5: commit after @austinmw89 fixed calendar example
 sentence-transformers = "^3.0.1"
 mastodon-py = "^1.8.1"
 isort = "^5.13.2"
