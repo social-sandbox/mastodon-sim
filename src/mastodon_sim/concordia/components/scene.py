@@ -14,8 +14,18 @@
 
 """A GameMaster that simulates a player's interaction with their phone."""
 
+import functools
 import re
 import textwrap
+
+# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
+#   What action is {name} currently performing or has just performed
+#   with their smartphone to best achieve their goal?
+#   Consider their plan, but deviate if necessary.
+#   Give a specific activity using one app. For example:
+#   {name} uses/used the Chat app to send "hi, what's up?" to George.
+#   """)
+import time
 from html import unescape
 from typing import Literal
 
@@ -34,16 +44,6 @@ from mastodon_sim import mastodon_ops
 from mastodon_sim.concordia.components import apps, logging
 from mastodon_sim.concordia.components.apps import COLOR_TYPE
 
-# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-#   What action is {name} currently performing or has just performed
-#   with their smartphone to best achieve their goal?
-#   Consider their plan, but deviate if necessary.
-#   Give a specific activity using one app. For example:
-#   {name} uses/used the Chat app to send "hi, what's up?" to George.
-#   """)
-
-import time
-import functools
 
 def timed_function(tag="general"):
     def decorator(func):
@@ -56,8 +56,11 @@ def timed_function(tag="general"):
             with open("time_logger.txt", "a") as f:
                 f.write(f"{tag} - {func.__name__} took {duration:.6f}s on {time.asctime()}\n")
             return result
+
         return wrapper
+
     return decorator
+
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     Based on {name}'s current goal and recent observations, what specific action would they likely perform on their phone right now, and what information would they need to perform it?
@@ -84,7 +87,7 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     - Ensure responses to other toots are done using the Toot Response feature and not in a new toot
     - If the action is a post or message, a direct quote of that post or message should be included.
     - If reading from a timeline or notifications, just state that — don't fabricate what has been read.
-                                        
+
     Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
     {name} should like a toot if they agree with it.
     {name} should tag other users if referring to them.
@@ -117,7 +120,7 @@ def build(
     """
     memory = memory_factory.make_blank_memory()
     phone_component = _PhoneComponent(model, player, phone)
-    # reflectionx = 
+    # reflectionx =
     return game_master_lib.GameMaster(
         model=model,
         memory=memory,
@@ -219,10 +222,9 @@ class _PhoneComponent(component.Component):
             print("Processing Toot IDx")
             p_username = app.public_get_username(self._player.name)
             print(p_username)
-            timeline = mastodon_ops.get_own_timeline(
-                p_username, limit=10
-            )
+            timeline = mastodon_ops.get_own_timeline(p_username, limit=10)
             print("Got ID from Mastodon")
+
             def _clean_html(html_string):
                 clean_text = re.sub("<[^<]+?>", "", unescape(html_string))
                 return re.sub(r"\s+", " ", clean_text).strip()

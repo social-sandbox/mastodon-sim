@@ -115,15 +115,13 @@ def parse_output(output: str, username: str) -> tuple[bool, str]:
             logger.success(f"User {username} created successfully")
             logger.info(f"Generated password for {username}: {password}")
             return True, password
-        else:
-            logger.error(f"User created but could not extract password for {username}")
-            return False, "password_not_found"
-    elif "taken" in output:
+        logger.error(f"User created but could not extract password for {username}")
+        return False, "password_not_found"
+    if "taken" in output:
         logger.warning(f"User {username} or email already exists.")
         return False, ""
-    else:
-        logger.error(f"Unexpected output for {username}")
-        return False, ""
+    logger.error(f"Unexpected output for {username}")
+    return False, ""
 
 
 def approve_user(username: str, dry_run: bool = False) -> tuple[bool, str]:
