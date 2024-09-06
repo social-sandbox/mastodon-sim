@@ -22,7 +22,7 @@
         },
         "role": "candidate",
         "party": "traditionalist",
-        "seed_toot": "Traditionalist nominee for Storhampton mayor. Retired police chief, 30-year dept veteran. Pledging increased public safety, support for local business, tax cuts & combating opioids. Promising to preserve community values & give citizens a stronger voice. #StorhamptonElection"
+        "seed_toot": "Our values made this nation great. It's time to restore order, respect tradition, and put families first. On election day, vote to preserve our heritage and secure a brighter future for our children. #TraditionMatters #StorhamptonElection"
       },
       {
         "name": "Maria Gutierrez",
@@ -47,7 +47,7 @@
         },
         "role": "candidate",
         "party": "progressive",
-        "seed_toot": "Progressive Reform nominee for Storhampton mayor. Social worker, community activist, local non-profit leader. Advocates affordable housing, education investment, police reform. Pledges 'Green New Deal', public childcare program & inclusivity initiatives. #StorhamptonElection"
+        "seed_toot": "It's time for bold change. Together, we can build a fairer society, combat climate change, and create opportunities for all. Vote for progress, equality, and a sustainable future. Your voice matters. #ForwardTogether  #StorhamptonElection"
       },
       {
         "name": "Glenn Patterson",
@@ -68,7 +68,7 @@
       {
         "name": "Denise Schmidt",
         "gender": "female",
-        "goal": "Attack the PRP as a haven for 'radical atheists' and 'baby killers,' urging her congregants to vote for the TP to restore Storhampton's Christian heritage by spreading posts on the same on Mastodon.",
+        "goal": "Urge her congregants to vote for the Party A to restore Storhampton's Christian heritage and endorse Bill Fredrickson by spreading toots on the same on Mastodon.",
         "context": "Denise Schmidt is a 50-year-old evangelical pastor who has been a vocal critic of Storhampton's 'godless' turn in recent years. A fervent TP supporter, Denise sees the culture war as a battle for the soul of the community. She has organized prayer vigils outside town hall to protest the removal of Christian iconography from public spaces and compare progressive policies to Sodom and Gomorrah. Denise is especially hostile to the LGBTQ community, preaching that homosexuality is an 'abomination' and sharing stories of so-called 'transgender groomers' in schools. She has attacked the PRP as a haven for 'radical atheists' and 'baby killers,' urging her congregants to vote for the TP to restore Storhampton's Christian heritage. Denise wants the TP candidate to govern according to 'biblical principles' and resist secular influences.",
         "traits": {
           "openness": 1,
@@ -84,7 +84,7 @@
       {
         "name": "Roger Davis",
         "gender": "male",
-        "goal": "Share conspiracy theories on social media about how the PRP is working with 'globalists' to disarm citizens and establish a 'New World Order.'",
+        "goal": "Endorse Bill Fredrickson and defy any attempt to limit gun rights in the town.",
         "context": "Roger Davis is a 40-year-old construction worker and self-proclaimed 'sovereign citizen' who believes that the federal government has no authority over him. An ardent gun rights activist, Roger sees the progressive movement as a stepping stone to authoritarianism. He frequently shares conspiracy theories on social media about how the PRP is working with 'globalists' to disarm citizens and establish a 'New World Order.' Roger has a long history of anti-government extremism, participating in armed standoffs with law enforcement and refusing to pay taxes. He wants Storhampton to declare itself a 'Second Amendment Sanctuary' and nullify any new gun laws. Roger supports the TP as a bulwark against tyranny and expects their candidate to defy any attempt to limit gun rights in the town.",
         "traits": {
           "openness": 2,
@@ -116,7 +116,7 @@
       {
         "name": "Liam Schwartz",
         "gender": "male",
-        "goal": "Spread information on how TP and its corporate backers are destroying the environment for profit and only the complete dismantling of the capitalist system can save the planet.",
+        "goal": "Spread information on how only the complete dismantling of the capitalist system can save the planet.",
         "context": "Liam Schwartz is a 30-year-old environmental activist who believes that climate change is an existential threat that requires revolutionary action. An ardent PRP supporter, Liam sees the green movement as a vehicle for anticapitalist transformation. He has organized disruptive protests against local fossil fuel companies, vandalizing their property and harassing their employees. Liam frequently shares articles on social media arguing that climate change is caused by the greed of the '1%' and that only the complete dismantling of the capitalist system can save the planet. He believes that the TP and its corporate backers are destroying the environment for profit. Liam wants the PRP candidate to push for the nationalization of industry, the banning of all fossil fuels, and the prosecution of 'climate criminals.'",
         "traits": {
           "openness": 8,
@@ -159,7 +159,7 @@
         },
         "role": "moderate",
         "party": "traditionalist",
-        "seed_toot": "Storhampton resident for 30 years, accountant by trade. Fiscal conservative at heart. Concerned about rising taxes and supporting local businesses. Looking for a mayor who'll manage our budget responsibly while keeping our community inclusive. #StorhamptonElection"
+        "seed_toot": "Concerned about rising taxes and supporting local businesses. Looking for a mayor who'll manage our budget responsibly while keeping our community inclusive. #StorhamptonElection"
       },
       {
         "name": "Janet Thompson",
@@ -175,7 +175,7 @@
         },
         "role": "moderate",
         "party": "traditionalist",
-        "seed_toot": "Storhampton born and raised, proud nurse for 20 years. Values public safety and family, but also sees room for fresh ideas in healthcare and education. Leaning to TP. Hoping for a mayor who can unite our community and address key issues without divisive rhetoric. #StorhamptonElection"
+        "seed_toot": "Preserving our traditions doesn't mean we're against progress. It's about finding a balance between old and new. Let's move forward thoughtfully. #ThoughtfulTradition #StorhamptonElection"
       },
       {
         "name": "William Davis",
@@ -191,7 +191,7 @@
         },
         "role": "moderate",
         "party": "traditionalist",
-        "seed_toot": "Lifelong Storhampton resident, retired after 40 years at the local factory. Proud of our town's heritage, but know we face new challenges. Looking for a mayor who'll keep our pensions secure, healthcare affordable, and invest in infrastructure and jobs. #StorhamptonElection"
+        "seed_toot": "Looking for a mayor who'll keep our pensions secure, healthcare affordable, and invest in infrastructure and jobs. #StorhamptonElection"
       },
       {
         "name": "Jessica Nguyen",
@@ -207,7 +207,7 @@
         },
         "role": "moderate",
         "party": "progressive",
-        "seed_toot": "Storhampton resident for 5 years, graphic designer. Passionate about sustainability, affordable housing, and equity. Seeking a mayor who'll address these issues pragmatically, foster dialogue across divides, and keep our town welcoming to all. #StorhamptonElection"
+        "seed_toot": "Equal opportunities and environmental protection benefit everyone. Let's work together for a fairer, greener future. #StorhamptonElection"
       },
       {
         "name": "Mark Rodriguez",
@@ -223,7 +223,7 @@
         },
         "role": "moderate",
         "party": "progressive",
-        "seed_toot": "Storhampton teacher for 20 years, focused on our town's future. Passionate about quality education, supporting working families, and local economic growth. Seeking a mayor with concrete plans to invest in our schools and create opportunities. #StorhamptonElection"
+        "seed_toot": "Seeking a mayor with concrete plans to invest in our schools and create opportunities. #StorhamptonElection"
       },
       {
         "name": "Emily Jacobs",
@@ -239,7 +239,7 @@
         },
         "role": "moderate",
         "party": "progressive",
-        "seed_toot": "27yo nonprofit worker, Storhampton native. Passionate about affordable housing, better public transit, and mental health support. Looking for a mayor who'll bring compassionate, practical solutions to our community's challenges. #StorhamptonElection"
+        "seed_toot": "Looking for a mayor who'll bring compassionate, practical solutions to our community's challenges. #StorhamptonElection"
       },
       {
         "name": "Ethan Lee",
@@ -255,7 +255,7 @@
         },
         "role": "neutral",
         "party": "neutral",
-        "seed_toot": "30yo small biz owner, proud to serve Storhampton's best coffee. Focused on local economy, smart regulations, and infrastructure that helps businesses thrive. Seeking a mayor who understands entrepreneurs' needs and has a practical plan for our town's growth. #StorhamptonElection"
+        "seed_toot": "Researching all candidates for the mayoral race. Issues matter more than party lines. Make your vote count! #StorhamptonElection"
       },
       {
         "name": "Sophia Patel",
@@ -271,7 +271,7 @@
         },
         "role": "neutral",
         "party": "neutral",
-        "seed_toot": "20-year Storhampton doctor, advocating for better healthcare access, mental health services, and addiction treatment. Seeking a mayor who'll prioritize community health and build bridges to find practical solutions. Party lines matter less than results. #StorhamptonElection"
+        "seed_toot": "Our city faces real challenges. Instead of mud-slinging, I'd love to hear concrete plans from mayoral candidates. #StorhamptonElection"
       },
       {
         "name": "Ryan O'Connor",
@@ -287,7 +287,7 @@
         },
         "role": "neutral",
         "party": "neutral",
-        "seed_toot": "40yo construction worker, dad of 2. Born and raised in Storhampton. Looking for a mayor who gets what working families need: job security, affordable housing, and good schools for our kids. Less talk, more action on creating decent jobs and supporting hardworking folks. #StorhamptonElection"
+        "seed_toot": "Remember, local elections impact our daily lives. Libraries, parks, roads - your vote matters!  #StorhamptonElection"
       },
       {
         "name": "Maggie Chen",
@@ -303,7 +303,7 @@
         },
         "role": "neutral",
         "party": "neutral",
-        "seed_toot": "70yo retired teacher, proud Storhampton resident for 40+ years. Seeking a mayor who'll be a voice for seniors: retirement security, affordable healthcare, quality services. We need leaders who bring people together, not divide us. Let's focus on respect and results. #StorhamptonElection"
+        "seed_toot": "Left or right, we all want a better city. Let's focus on competence and vision in choosing our next mayor. #StorhamptonElection"
       },
       {
         "name": "Lucas Kim",
@@ -319,7 +319,7 @@
         },
         "role": "neutral",
         "party": "neutral",
-        "seed_toot": "25yo Storhampton native, current college student. Ready for fresh ideas in local gov: climate action, student debt solutions, social justice. Seeking a mayor who'll shake up the status quo, bring transparency, and actually rep my generation. #StorhamptonElection"
+        "seed_toot": "Seeking a mayor who'll shake up the status quo, bring transparency, and actually rep my generation. #StorhamptonElection"
       },
       {
         "name": "Nina Patel",
@@ -335,7 +335,7 @@
         },
         "role": "neutral",
         "party": "neutral",
-        "seed_toot": "45yo mom, dedicated Storhampton volunteer. Passionate about our parks, community events, and public safety. Looking for a mayor who'll work hand-in-hand with local groups, listen to residents, and make our town even better for families. Actions speak louder than party labels. #StorhamptonElection"
+        "seed_toot": "Sick of partisan bickering in the mayoral race. Can we talk about fixing potholes and improving schools instead? #StorhamptonElection"
       }
     ]
   }
