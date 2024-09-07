@@ -337,6 +337,35 @@
         "party": "neutral",
         "seed_toot": "Sick of partisan bickering in the mayoral race. Can we talk about fixing potholes and improving schools instead? #StorhamptonElection"
       }
-    ]
+    ],
+    "shared_memories":[
+     
+      "You are a user on Storhampton.social, a Mastodon instance created for the residents of Storhampton.",
+      "Storhampton is a small town with a population of approximately 2,500 people. Founded in the early 1800s as a trading post along the banks of the Avonlea River, Storhampton grew into a modest industrial center in the late 19th century. The town's economy was built on manufacturing, with factories producing textiles, machinery, and other goods. Storhampton's population consists of 60%% native-born residents and 40%% immigrants from various countries. Tension sometimes arises between long-time residents and newer immigrant communities. While manufacturing remains important, employing 20%% of the workforce, Storhampton's economy has diversified. However, a significant portion of the population has been left behind as higher-paying blue collar jobs have declined, leading to economic instability for many. The poverty rate stands at 15%.",
+      "The Traditionalist Party (TP) promotes policies that: Prioritize native-born residents in hiring and housing and limit immigration through strict quotas and oppose refugee resettlement in the town, Defend traditional cultural values and religious beliefs, Advocate for local control over issues like education and zoning, Support tax breaks and incentives to attract manufacturing jobs back to the area, Oppose gun control measures and environmental regulations seen as harming business",
+      "The Progressive Reform Party (PRP) advocates for: Inclusive policies to welcome and integrate immigrant communities, permitting asylum seekers to resettle in the town and providing support services, Addressing racial discrimination through diversity initiatives and police reform, Implementing sustainability measures like green energy projects and conservation, Pushing for affordable housing development and rent control to prevent displacement, Funding social services, mental health programs, and substance abuse treatment, Supporting gun control and anti-discrimination ordinances.",
+      "Debates often arise between the two parties over these competing visions for Storhampton. The TP accuses the PRP of putting outsiders ahead of long-time residents and undermining traditional values. The PRP criticizes the TP for divisive rhetoric, disregarding the needs of marginalized groups, and hindering necessary change.",
+      "Hot button issues in recent years have included: A proposal to declare Storhampton a 'sanctuary town' for undocumented immigrants, Disagreement on whether a vacant factory should be redeveloped into luxury condos or a community center, A PRP push to rename a school honoring a historical figure with segregationist views, Disputes over prayer in schools and LGBTQ-inclusive curriculum",
+      "Mayoral Elections: The upcoming mayoral election in Storhampton has become a heated affair, with the town's political divisions on full display.", 
+      "The Traditionalist Party has nominated Bill Fredrickson, a former police chief who is running on a platform of public safety, fiscal responsibility, and preserving Storhampton's heritage.", 
+      "The Progressive Reform Party's candidate is Maria Gutierrez, a local activist and small business owner who is campaigning on issues like affordable housing, immigrant rights, and investing in education and green jobs.",
+      "Social media has emerged as a key battleground in the race, with both candidates actively promoting themselves and engaging with voters. Voters in Storhampton are actively participating in these social media discussions. Supporters of each candidate leave enthusiastic comments and share their posts widely. Critics also chime in, attacking Fredrickson as out-of-touch and beholden to traditional interests, or labeling Gutierrez as a radical who will undermine law and order. The local newspaper even had to disable comments on their election articles due to the incivility.",
+      "To share content on Mastodon, you write a 'toot' (equivalent to a tweet or post).",
+      "Toots can be up to 500 characters long, allowing for more detailed expressions than some other platforms.",
+      "Your home timeline shows toots from people you follow and boosted (reblogged) content.",
+      "You can reply to toots, creating threaded conversations.",
+      "Favorite (like) toots to show appreciation or save them for later.",
+      "Boost (reblog) toots to share them with your followers.",
+      "You can mention other users in your toots using their @username.",
+      "Follow other users to see their public and unlisted toots in your home timeline.",
+      "You can unfollow users if you no longer wish to see their content.",
+      "Your profile can be customized with a display name and bio.",
+      "You can block users to prevent them from seeing your content or interacting with you.",
+      "Unblocking a user reverses the effects of blocking."
+  ],
+  "num_agents":20,
+  "candidate_info": ["Mayoral Elections: The upcoming mayoral election in Storhampton has become a heated affair, with the town's political divisions on full display.",
+                    "The Traditionalist Party has nominated Bill Fredrickson, a former police chief who is running on a platform of public safety, fiscal responsibility, and preserving Storhampton's heritage.", 
+                    "The Progressive Reform Party's candidate is Maria Gutierrez, a local activist and small business owner who is campaigning on issues like affordable housing, immigrant rights, and investing in education and green jobs."]
   }
   
