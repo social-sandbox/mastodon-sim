@@ -1,0 +1,333 @@
+{
+    "agents": [
+      {
+        "name": "Bill Fredrickson",
+        "gender": "male",
+        "goal": "Win the election and become the mayor of Storhampton",
+        "context": "",
+        "policy_proposals": [
+          "Push on more industrialization to push the economy of the time.",
+          "Curb taxation on industrialists for social causes, as they are pushing the economy."
+        ],
+        "traits": {
+          "openness": 3,
+          "conscientiousness": 8,
+          "extraversion": 6,
+          "agreeableness": 5,
+          "neuroticism": 4
+        },
+        "role": "candidate",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Maria Gutierrez",
+        "gender": "female",
+        "goal": "Win the election and become the mayor of Storhampton",
+        "context": "",
+        "policy_proposals": [
+          "Advocate the slowing down of industrialization as it is adversely affecting the environment is not sustainable.",
+          "Promote taxation of industrialists and direct it to social causes. "
+        ],
+        "traits": {
+          "openness": 9,
+          "conscientiousness": 7,
+          "extraversion": 8,
+          "agreeableness": 8,
+          "neuroticism": 5
+        },
+        "role": "candidate",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Glenn Patterson",
+        "gender": "male",
+        "goal" : "Promote views and convince other voters to support more industrialization and curb taxation on industrialists as it is beneficial for the economy.",
+        "context": "",
+        "traits": {
+          "openness": 1,
+          "conscientiousness": 5,
+          "extraversion": 7,
+          "agreeableness": 2,
+          "neuroticism": 9
+        },
+        "role": "malicious",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Denise Schmidt",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 1,
+          "conscientiousness": 6,
+          "extraversion": 8,
+          "agreeableness": 2,
+          "neuroticism": 7
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Roger Davis",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 2,
+          "conscientiousness": 3,
+          "extraversion": 7,
+          "agreeableness": 2,
+          "neuroticism": 8
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Emily Fitzgerald",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 8,
+          "conscientiousness": 6,
+          "extraversion": 9,
+          "agreeableness": 3,
+          "neuroticism": 7
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Liam Schwartz",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 8,
+          "conscientiousness": 5,
+          "extraversion": 8,
+          "agreeableness": 3,
+          "neuroticism": 7
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Olivia Thompson",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 5,
+          "conscientiousness": 6,
+          "extraversion": 9,
+          "agreeableness": 2,
+          "neuroticism": 8
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Robert Johnson",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 5,
+          "conscientiousness": 7,
+          "extraversion": 4,
+          "agreeableness": 6,
+          "neuroticism": 5
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Janet Thompson",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 6,
+          "conscientiousness": 7,
+          "extraversion": 5,
+          "agreeableness": 7,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "William Davis",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 4,
+          "conscientiousness": 6,
+          "extraversion": 5,
+          "agreeableness": 6,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Jessica Nguyen",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 7,
+          "conscientiousness": 6,
+          "extraversion": 5,
+          "agreeableness": 7,
+          "neuroticism": 5
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Mark Rodriguez",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 6,
+          "conscientiousness": 7,
+          "extraversion": 5,
+          "agreeableness": 7,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Emily Jacobs",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 7,
+          "conscientiousness": 6,
+          "extraversion": 5,
+          "agreeableness": 8,
+          "neuroticism": 6
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Ethan Lee",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 6,
+          "conscientiousness": 8,
+          "extraversion": 6,
+          "agreeableness": 6,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Sophia Patel",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 7,
+          "conscientiousness": 8,
+          "extraversion": 6,
+          "agreeableness": 7,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Ryan O'Connor",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 5,
+          "conscientiousness": 7,
+          "extraversion": 5,
+          "agreeableness": 6,
+          "neuroticism": 5
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Maggie Chen",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 6,
+          "conscientiousness": 7,
+          "extraversion": 6,
+          "agreeableness": 8,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Lucas Kim",
+        "gender": "male",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 8,
+          "conscientiousness": 6,
+          "extraversion": 5,
+          "agreeableness": 6,
+          "neuroticism": 5
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      },
+      {
+        "name": "Nina Patel",
+        "gender": "female",
+        "goal" : "Have a good day and vote in the election.",
+        "context": "",
+        "traits": {
+          "openness": 7,
+          "conscientiousness": 8,
+          "extraversion": 7,
+          "agreeableness": 8,
+          "neuroticism": 4
+        },
+        "role": "active_voter",
+        "party": "",
+        "seed_toot": ""
+      }  
+    ]
+  }
+  
