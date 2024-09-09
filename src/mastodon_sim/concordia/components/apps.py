@@ -886,7 +886,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     def get_own_timeline(self, current_user: str, limit: int) -> str:
         """Read the Mastodon social network feed for the current user."""
         current_user = current_user.split()[0]
-        username = self._get_username(current_user.split()[0])
+        username = self._get_username(current_user)  # .split()[0])
         self._print(
             f"Fetching @{username}'s timeline (limit: {limit})",
             emoji="🏠",
