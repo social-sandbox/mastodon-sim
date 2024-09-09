@@ -526,7 +526,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def update_profile(self, current_user: str, bio: str) -> str:
         """Update the user's bio."""
-        # current_user = current_user.split()[0]
+        current_user = current_user.split()[0]
 
         username = self._get_username(current_user)
         self._print(f"Updating profile for @{username}: {current_user}", emoji="✏️")
@@ -548,8 +548,8 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
         """Read a user's profile on Mastodon social network."""
-        # current_user = current_user.split()[0]
-        # target_user = target_user.split()[0]
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
 
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
@@ -571,8 +571,8 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def follow_user(self, current_user: str, target_user: str) -> str:
         """Follow a user on Mastodon social network."""
-        # current_user = current_user.split()[0]
-        # target_user = target_user.split()[0]
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         if self.perform_operations:
@@ -594,8 +594,8 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def unfollow_user(self, current_user: str, target_user: str) -> str:
         """Unfollow a user."""
-        # current_user = current_user.split()[0]
-        # target_user = target_user.split()[0]
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         self._print(
@@ -737,7 +737,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             Exception: For any other unexpected errors during posting.
         """
         try:
-            # current_user = current_user.split()[0]
+            current_user = current_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
                 self._mastodon_ops.post_status(
@@ -788,7 +788,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             Exception: For any other unexpected errors during posting.
         """
         try:
-            # current_user = current_user.split()[0]
+            current_user = current_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
                 self._mastodon_ops.post_status(
@@ -885,7 +885,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def get_own_timeline(self, current_user: str, limit: int) -> str:
         """Read the Mastodon social network feed for the current user."""
-        # current_user = current_user.split()[0]
+        current_user = current_user.split()[0]
         username = self._get_username(current_user)  # .split()[0])
         self._print(
             f"Fetching @{username}'s timeline (limit: {limit})",
@@ -966,7 +966,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def read_notifications(self, current_user: str, clear: bool, limit: int) -> str:
         """Read Mastodon social network notifications."""
-        # current_user = current_user.split()[0]
+        current_user = current_user.split()[0]
 
         username = self._get_username(current_user)
         self._print(
@@ -998,8 +998,8 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def like_toot(self, current_user: str, target_user: str, toot_id: str) -> str:
         """Like (favorite) a toot."""
-        # current_user = current_user.split()[0]
-        # target_user = target_user.split()[0]
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
         self._print(
