@@ -18,7 +18,7 @@
 from collections.abc import Sequence
 from typing import Literal
 
-from concordia.agents import basic_agent
+from concordia.agents import deprecated_agent
 from concordia.associative_memory import associative_memory, blank_memories
 from concordia.clocks import game_clock
 from concordia.document import interactive_document
@@ -34,7 +34,7 @@ class SceneTriggeringComponent(component.Component):
 
     def __init__(  # noqa: PLR0913
         self,
-        players: Sequence[basic_agent.BasicAgent],
+        players: Sequence[deprecated_agent.BasicAgent],
         phones: Sequence[apps.Phone],
         model: language_model.LanguageModel,
         memory: associative_memory.AssociativeMemory,
@@ -85,7 +85,7 @@ class SceneTriggeringComponent(component.Component):
             " mobile apps or smartphone features, as well as preparations or plans to do so. Riverbend.social is a social media platform, so any mentions of it will likely involve phone use."
         )
 
-    def _get_player_from_event(self, event_statement: str) -> basic_agent.BasicAgent | None:
+    def _get_player_from_event(self, event_statement: str) -> deprecated_agent.BasicAgent | None:
         document = interactive_document.InteractiveDocument(self._model)
         document.statement(
             f"Event: {event_statement}. This event states that someone interacted"
@@ -109,7 +109,7 @@ class SceneTriggeringComponent(component.Component):
     def _get_phone(self, player_name: str) -> apps.Phone:
         return next(p for p in self._phones if p.player_name == player_name)
 
-    def _get_player_using_phone(self, event_statement: str) -> basic_agent.BasicAgent | None:
+    def _get_player_using_phone(self, event_statement: str) -> deprecated_agent.BasicAgent | None:
         self._logger.semi_verbose("Checking if the phone was used...")
 
         if not self._is_phone_event(event_statement):
@@ -124,7 +124,7 @@ class SceneTriggeringComponent(component.Component):
             self._logger.semi_verbose(f"Player using the phone: {player.name}")
         return player
 
-    def _run_phone_scene(self, player: basic_agent.BasicAgent):
+    def _run_phone_scene(self, player: deprecated_agent.BasicAgent):
         print("Starting phone scene")
         phone_scene = scene.build(
             player,

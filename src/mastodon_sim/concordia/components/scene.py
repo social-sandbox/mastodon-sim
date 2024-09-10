@@ -30,7 +30,7 @@ from html import unescape
 from typing import Literal
 
 import termcolor
-from concordia.agents import basic_agent
+from concordia.agents import deprecated_agent
 from concordia.associative_memory import blank_memories
 from concordia.clocks import game_clock
 from concordia.document import interactive_document
@@ -94,11 +94,13 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
   """)
 
 
-_PHONE_ACTION_SPEC = agent.ActionSpec(_PHONE_CALL_TO_ACTION, OutputType.FREE, tag="phone")
+_PHONE_ACTION_SPEC = agent.ActionSpec(
+    call_to_action=_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
+)
 
 
 def build(
-    player: basic_agent.BasicAgent,
+    player: deprecated_agent.BasicAgent,
     phone: apps.Phone,
     clock: game_clock.MultiIntervalClock,
     model: language_model.LanguageModel,
@@ -140,7 +142,7 @@ class _PhoneComponent(component.Component):
     def __init__(  # noqa: PLR0913
         self,
         model: language_model.LanguageModel,
-        player: basic_agent.BasicAgent,
+        player: deprecated_agent.BasicAgent,
         phone: apps.Phone,
         log_color: Literal[
             "black",
