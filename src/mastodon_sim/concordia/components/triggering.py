@@ -77,13 +77,13 @@ class SceneTriggeringComponent(component.Component):
     def _is_phone_event(self, event_statement: str) -> bool:
         document = interactive_document.InteractiveDocument(self._model)
         document.statement(f"Event: {event_statement}")
-
-        return document.yes_no_question(
-            "Did a player engage in or prepare/plan to engage in any activity typically associated"
-            " with smartphone use during this event? Consider not only explicit mentions"
-            " of phone interaction, but also actions commonly performed using"
-            " mobile apps or smartphone features, as well as preparations or plans to do so. Riverbend.social is a social media platform, so any mentions of it will likely involve phone use."
-        )
+        return True
+        # return document.yes_no_question(
+        #     "Did a player engage in or prepare/plan to engage in any activity typically associated"
+        #     " with smartphone use during this event? Consider not only explicit mentions"
+        #     " of phone interaction, but also actions commonly performed using"
+        #     " mobile apps or smartphone features, as well as preparations or plans to do so. Riverbend.social is a social media platform, so any mentions of it will likely involve phone use."
+        # )
 
     def _get_player_from_event(self, event_statement: str) -> deprecated_agent.BasicAgent | None:
         document = interactive_document.InteractiveDocument(self._model)
