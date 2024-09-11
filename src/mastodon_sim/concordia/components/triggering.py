@@ -18,7 +18,7 @@
 from collections.abc import Sequence
 from typing import Literal
 
-from concordia.agents import deprecated_agent
+from concordia.agents import deprecated_agent, entity_agent_with_logging
 from concordia.associative_memory import associative_memory, blank_memories
 from concordia.clocks import game_clock
 from concordia.document import interactive_document
@@ -34,7 +34,7 @@ class SceneTriggeringComponent(component.Component):
 
     def __init__(  # noqa: PLR0913
         self,
-        players: Sequence[deprecated_agent.BasicAgent],
+        players: Sequence[entity_agent_with_logging.EntityAgentWithLogging],
         phones: Sequence[apps.Phone],
         model: language_model.LanguageModel,
         memory: associative_memory.AssociativeMemory,

@@ -30,7 +30,7 @@ from html import unescape
 from typing import Literal
 
 import termcolor
-from concordia.agents import deprecated_agent
+from concordia.agents import deprecated_agent, entity_agent_with_logging
 from concordia.associative_memory import blank_memories
 from concordia.clocks import game_clock
 from concordia.document import interactive_document
@@ -100,7 +100,7 @@ _PHONE_ACTION_SPEC = agent.ActionSpec(
 
 
 def build(
-    player: deprecated_agent.BasicAgent,
+    player: entity_agent_with_logging.EntityAgentWithLogging,
     phone: apps.Phone,
     clock: game_clock.MultiIntervalClock,
     model: language_model.LanguageModel,
