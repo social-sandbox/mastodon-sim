@@ -199,15 +199,23 @@ class _PhoneComponent(component.Component):
         # print(f"Player state:\n{self._player.state()}")
         # TODO: May want to add player state to the transcript
         print("Inside phone_update_after_event")
-        self._state += "\n" + event_statement.strip()
+        print(f"Self state: {self._state}")
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
-        chain_of_thought.statement(self._phone.description())
-        app_index = chain_of_thought.multiple_choice_question(
-            "In the above transcript, what app did the user use?",
-            answers=self._phone.app_names(),
+        check_post = chain_of_thought.yes_no_question(
+            "Does the action in the above transcript involve the user posting a toot or replying to a toot?"
         )
-        app = self._phone.apps[app_index]
+        print(check_post)
+        if check_post:
+            check_dup = chain_of_thought.yes_no_question(
+                f"Does the above toot/ reply to another toot have almost exactly the same content as one of the toots in the following list of actions? Answer No if the list is empty.: Actions: {self._state}"
+            )
+            print(check_dup)
+            if check_dup:
+                return []
+        self._state += "\n" + event_statement.strip()
+        assert isinstance(self._phone.apps[0], apps.MastodonSocialNetworkApp)
+        app = self._phone.apps[0]
         action_names = [a.name for a in app.actions()]
         chain_of_thought.statement(app.description())
         action_index = chain_of_thought.multiple_choice_question(
@@ -222,7 +230,7 @@ class _PhoneComponent(component.Component):
         if toot_id_required:
             # find most recent statement
             print("Processing Toot IDx")
-            p_username = app.public_get_username(self._player.name)
+            p_username = app.public_get_username(self._player.name.split()[0])
             print(p_username)
             timeline = mastodon_ops.get_own_timeline(p_username, limit=10)
             print("Got ID from Mastodon")
