@@ -63,10 +63,11 @@ def timed_function(tag="general"):
 
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s current goal and recent observations, what specific action would they likely perform on their phone right now, and what information would they need to perform it?
+    Based on {name}'s current goal, plans and observations, what SINGLE specific action would they likely perform on their phone right now, and what information would they need to perform it?
+    Use your plan for current phone usage, tagged as tagged as [Planned Actions for upcoming Phone Usage] in your observations, alongside your last actiosn conducted in the correct usage, tagged as [Action done on phone] to decide your next single action.
 
     Guidelines:
-    1. Choose a single, specific action that can be performed using one app. There should be a single clear action.
+    1. Choose a single, specific action that can be performed using one app.
     2. If {name} hasn't checked the timeline recently, ensure it is checked so there is context for further actions.
     3. Ensure the action is contextually appropriate, considering recent observations.
     4. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
@@ -74,12 +75,12 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 
     Examples of contextually appropriate actions:
     - Using the Mastodon app to read their feed: {name} opens the Mastodon app and reads their feed.
-    - Posting a toot: {name} opens the Mastodon app and posts a toot. You can tag other users by adding '@' before mentioning their username.
+    - Posting a toot: {name} opens the Mastodon app and posts a toot.
     - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
     - Liking a Mastodon post: {name} likes a post they have recently read with a given Toot ID. (Return toot ID of the post you want to like)
     - Replying to a Mastodon post: {name} replies to a post they have recently read with a given Toot ID.
     - Boosting a Mastodon post: {name} opens the Mastodon app to boost (Retweet) a toot - that shares it with their own followers. (Return Toot ID and the exact contents of the toot to be boosted.)
-    - Read another user's timeline: If you find a user interesting you can view their past activity and timeline:
+    - Read another user's timeline: If you find a user interesting you can view their past activity and timeline (include their first name)
     Remember:
     - Consider current observations so as not to repeat actions that have already been performed.
     - Certain actions require prior knowledge (e.g., liking or replying to a specific post) which would require reading that information recently
@@ -91,8 +92,7 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 
     Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
     {name} should like a toot if they agree with it.
-    {name} should boost a toot if they strongly agree with it.
-    {name} should tag other users if referring to them.
+    {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
   """)
 
 
@@ -277,7 +277,7 @@ class _PhoneComponent(component.Component):
             # TODO: verify if this makes sense
             if isinstance(result, str):
                 try:
-                    self._player.observe(result)
+                    self._player.observe(f"[Action done on phone] : {result}")
                     self._print("Phone action result observed.", color="yellow")
                 except Exception as e:
                     self._print(f"Error while observing result: {e}", color="red")
