@@ -150,3 +150,76 @@ class SceneTriggeringComponent(component.Component):
 
     def partial_state(self, player_name: str):  # noqa: D102
         return self._phones[player_name].description()
+
+
+class BasicSceneTriggeringComponent(component.Component):
+    """Runs the phone scene when a phone action is detected."""
+
+    def __init__(  # noqa: PLR0913
+        self,
+        player: entity_agent_with_logging.EntityAgentWithLogging,
+        phone: apps.Phone,
+        model: language_model.LanguageModel,
+        memory: associative_memory.AssociativeMemory,
+        clock: game_clock.MultiIntervalClock,
+        memory_factory: blank_memories.MemoryFactory,
+        log_color: Literal[
+            "black",
+            "grey",
+            "red",
+            "green",
+            "yellow",
+            "blue",
+            "magenta",
+            "cyan",
+            "light_grey",
+            "dark_grey",
+            "light_red",
+            "light_green",
+            "light_yellow",
+            "light_blue",
+            "light_magenta",
+            "light_cyan",
+            "white",
+        ]
+        | None = "magenta",
+        verbose: bool = False,
+        semi_verbose: bool = True,
+    ):
+        self._player = player
+        self._phone = phone
+        self._model = model
+        self._clock = clock
+        self._memory_factory = memory_factory
+        self._memory = memory
+        self._logger = logging.Logger(log_color, verbose, semi_verbose)
+
+    def name(self):  # noqa: D102
+        return "State of phone"
+
+    def _run_phone_scene(self, player: entity_agent_with_logging.EntityAgentWithLogging):
+        print("Starting phone scene")
+        phone_scene = scene.build(
+            player,
+            self._phone,
+            clock=self._clock,
+            model=self._model,
+            memory_factory=self._memory_factory,
+        )
+        print("Built phone scene")
+        with self._clock.higher_gear():
+            scene_output = phone_scene.run_episode()
+
+        for event in scene_output:
+            player.observe(f"[Conducted action] {event}")
+            self._memory.add(event)
+        return scene_output
+
+    def update_after_event(self, event_statement: str):  # noqa: D102
+        player = self._player
+        player.observe(f"[Planned Actions for upcoming Phone Usage]: {event_statement}")
+        if player is not None:
+            self._run_phone_scene(player)
+
+    def partial_state(self, player_name: str):  # noqa: D102
+        return self.phone.description()
