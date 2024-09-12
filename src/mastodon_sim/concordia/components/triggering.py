@@ -15,7 +15,7 @@
 
 """A component that runs the phone scene when a phone action is detected."""
 
-from collections.abc import Sequence
+import json
 from typing import Literal
 
 from concordia.agents import deprecated_agent, entity_agent_with_logging
@@ -34,8 +34,9 @@ class SceneTriggeringComponent(component.Component):
 
     def __init__(  # noqa: PLR0913
         self,
-        players: Sequence[entity_agent_with_logging.EntityAgentWithLogging],
-        phones: Sequence[apps.Phone],
+        players: dict[str, entity_agent_with_logging.EntityAgentWithLogging],
+        file: str,
+        phones: dict[str, apps.Phone],
         model: language_model.LanguageModel,
         memory: associative_memory.AssociativeMemory,
         clock: game_clock.MultiIntervalClock,
@@ -64,6 +65,7 @@ class SceneTriggeringComponent(component.Component):
         semi_verbose: bool = True,
     ):
         self._players = players
+        self._file = file
         self._phones = phones
         self._model = model
         self._clock = clock
@@ -91,23 +93,22 @@ class SceneTriggeringComponent(component.Component):
             f"Event: {event_statement}. This event states that someone interacted"
             " with their phone."
         )
+        with open(self._file) as f:
+            data = json.load(f)
 
-        for player in self._players:
+        for player in data["agents"]:
             is_player_using_phone = helper_functions.filter_copy_as_statement(
                 document
             ).yes_no_question(
                 f"""
-                Is {player.name} the main subject performing the action in this event? Only choose yes if {player.name} is explicitly mentioned?
+                Is {player["name"]} the main subject performing the action in this event? Only choose yes if {player["name"]} is explicitly mentioned?
                 """
             )
 
             if is_player_using_phone:
-                return player
+                return self._players[player["name"]]
 
         return None
-
-    def _get_phone(self, player_name: str) -> apps.Phone:
-        return next(p for p in self._phones if p.player_name == player_name)
 
     def _get_player_using_phone(self, event_statement: str) -> deprecated_agent.BasicAgent | None:
         self._logger.semi_verbose("Checking if the phone was used...")
@@ -128,7 +129,7 @@ class SceneTriggeringComponent(component.Component):
         print("Starting phone scene")
         phone_scene = scene.build(
             player,
-            self._get_phone(player.name),
+            self._phones[player.name],
             clock=self._clock,
             model=self._model,
             memory_factory=self._memory_factory,
@@ -148,4 +149,4 @@ class SceneTriggeringComponent(component.Component):
             self._run_phone_scene(player)
 
     def partial_state(self, player_name: str):  # noqa: D102
-        return self._get_phone(player_name).description()
+        return self._phones[player_name].description()

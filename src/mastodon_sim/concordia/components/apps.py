@@ -218,7 +218,7 @@ class ActionDescriptor:
         from first person perspective and makes sense as a realistic user post based on their information.
         Do not post any statuses from 3rd person perspective.
 
-        Note: current_user or the username field is ALWAYS the first name of the agent only. Never provide their full name or another name
+        Note: current_user, target_user or the username field is ALWAYS the first name of the agent only. Never provide their full name or another name
 
         Bad examples:
             `bio`: Updated my bio and checking notifications!
@@ -459,28 +459,28 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         return bio_message
 
-    @timed_function(tag="app_action")
-    @app_action
-    def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
-        """Read a user's profile on Mastodon social network."""
-        current_user = current_user.split()[0]
-        target_user = target_user.split()[0]
+    # @timed_function(tag="app_action")
+    # @app_action
+    # def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
+    #     """Read a user's profile on Mastodon social network."""
+    #     current_user = current_user.split()[0]
+    #     target_user = target_user.split()[0]
 
-        current_username = self._get_username(current_user)
-        target_username = self._get_username(target_user)
-        self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
-        if self.perform_operations:
-            display_name, bio = self._mastodon_ops.read_bio(current_username, target_username)
-        else:
-            display_name, bio = "Mock Name", "Mock Bio"
-            self._print(
-                "Skipping real Mastodon API call since perform_operations is set to False",
-                color="light_grey",
-            )
-        self._print(f"Profile: {display_name} - {bio}", emoji="📄")
-        with open("app_logger.txt", "a") as f:
-            f.write(f"{current_user} read profile of user: {target_user}\n")
-        return display_name, bio
+    #     current_username = self._get_username(current_user)
+    #     target_username = self._get_username(target_user)
+    #     self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
+    #     if self.perform_operations:
+    #         display_name, bio = self._mastodon_ops.read_bio(current_username, target_username)
+    #     else:
+    #         display_name, bio = "Mock Name", "Mock Bio"
+    #         self._print(
+    #             "Skipping real Mastodon API call since perform_operations is set to False",
+    #             color="light_grey",
+    #         )
+    #     self._print(f"Profile: {display_name} - {bio}", emoji="📄")
+    #     with open("app_logger.txt", "a") as f:
+    #         f.write(f"{current_user} read profile of user: {target_user}\n")
+    #     return display_name, bio
 
     @timed_function(tag="app_action")
     @app_action
@@ -823,31 +823,31 @@ class MastodonSocialNetworkApp(PhoneApp):
             f.write(f"{current_user} retrieved their own timeline\n")
         return "Own Mastodon Timeline:\n" + str_timeline
 
-    # @app_action
-    # def get_user_timeline(self, current_user: str, target_user: str, limit: int) -> str:
-    #     """Read a specific user's timeline on Mastodon social network."""
-    #     current_username = self._get_username(current_user)
-    #     target_username = self._get_username(target_user)
-    #     self._print(
-    #         f"@{current_username} fetching @{target_username}'s timeline (limit: {limit})",
-    #         emoji="👥",
-    #     )
-    #     if self.perform_operations:
-    #         timeline = self._mastodon_ops.get_user_timeline(
-    #             current_username, target_username, limit=limit
-    #         )
-    #     else:
-    #         timeline = []
-    #         self._print(
-    #             "Skipping real Mastodon API call since perform_operations is set to False",
-    #             color="light_grey",
-    #         )
-    #     self._print(
-    #         f"Retrieved {len(timeline)} posts from @{target_username}'s timeline",
-    #         emoji="📊",
-    #     )
-    #     str_timeline = self.print_and_return_timeline(timeline)
-    #     return f"@{current_username}'s Mastodon Timeline:\n" + str_timeline
+    @app_action
+    def get_user_timeline(self, current_user: str, target_user: str, limit: int) -> str:
+        """Read a specific user's timeline on Mastodon social network."""
+        current_username = self._get_username(current_user.split()[0])
+        target_username = self._get_username(target_user.split()[0])
+        self._print(
+            f"@{current_username} fetching @{target_username}'s timeline (limit: {limit})",
+            emoji="👥",
+        )
+        if self.perform_operations:
+            timeline = self._mastodon_ops.get_user_timeline(
+                current_username, target_username, limit=limit
+            )
+        else:
+            timeline = []
+            self._print(
+                "Skipping real Mastodon API call since perform_operations is set to False",
+                color="light_grey",
+            )
+        self._print(
+            f"Retrieved {len(timeline)} posts from @{target_username}'s timeline",
+            emoji="📊",
+        )
+        str_timeline = self.print_and_return_timeline(timeline)
+        return f"@{current_username}'s Mastodon Timeline:\n" + str_timeline
 
     def print_notifications(self, notifications: list[dict[str, Any]]) -> str:
         """Generate a string of important details of notifications, one per line."""
@@ -936,23 +936,23 @@ class MastodonSocialNetworkApp(PhoneApp):
 
     # region[additional methods]
 
-    # @app_action
-    # def boost_toot(
-    #     self, current_user: str, target_user: str, toot_id: str
-    # ) -> None:
-    #   """Boost (reblog) a toot."""
-    #   current_username = self._get_username(current_user)
-    #   target_username = self._get_username(target_user)
-    #   self._print(
-    #       f"@{current_username} boosting post {toot_id} from @{target_username}",
-    #       emoji="🔁",
-    #   )
-    #   if self.perform_operations:
-    #     self._mastodon_ops.boost_toot(current_username, target_username, toot_id)
-    #   self._print(
-    #       f"@{current_username} boosted post {toot_id} from @{target_username}",
-    #       emoji="✅",
-    #   )
+    @app_action
+    def boost_toot(self, current_user: str, target_user: str, toot_id: str) -> None:
+        """Boost (reblog) a toot."""
+        current_username = self._get_username(current_user.split()[0])
+        target_username = self._get_username(target_user.split()[0])
+        self._print(
+            f"@{current_username} boosting post {toot_id}",
+            emoji="🔁",
+        )
+        if self.perform_operations:
+            self._mastodon_ops.boost_toot(current_username, target_username, toot_id)
+        self._print(
+            f"@{current_username} boosted post {toot_id}",
+            emoji="✅",
+        )
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} boosted a toot from {target_user} with Toot ID:{toot_id}\n")
 
     # @app_action
     # def block_user(self, current_user: str, target_user: str) -> None:
