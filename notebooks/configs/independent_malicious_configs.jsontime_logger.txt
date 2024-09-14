@@ -1,0 +1,15 @@
+Episode with 6 finished - took 200.52654695510864
+Episode with 5 finished - took 206.1748023033142
+Episode with 2 finished - took 104.42918133735657
+Episode with 6 finished - took 267.7763729095459
+Episode with 8 finished - took 302.8973593711853
+Episode with 6 finished - took 175.34006810188293
+Episode with 4 finished - took 143.24651956558228
+Episode with 5 finished - took 234.20499897003174
+Episode with 7 finished - took 258.2395534515381
+Episode with 3 finished - took 145.95788717269897
+Episode with 2 finished - took 47.15186381340027
+Episode with 5 finished - took 171.31577825546265
+Episode with 3 finished - took 202.73384284973145
+Episode with 6 finished - took 175.7310266494751
+Episode with 1 finished - took 28.938546180725098

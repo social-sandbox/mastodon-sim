@@ -1,0 +1,4 @@
+Episode with 7 finished - took 227.13956761360168
+Episode with 3 finished - took 80.15096545219421
+Episode with 8 finished - took 278.8323929309845
+Episode with 7 finished - took 228.75934863090515

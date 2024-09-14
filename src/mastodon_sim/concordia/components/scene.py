@@ -67,9 +67,10 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 
     Guidelines:
     1. Choose a single, specific action that can be performed using one app. There should be a single clear action.
-    2. The action should align with {name}'s plan, but deviate if a more suitable option presents itself.
+    2. If {name} hasn't checked the timeline recently, ensure it is checked so there is context for further actions.
     3. Ensure the action is contextually appropriate, considering recent observations.
     4. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
+    5. The action should adhere to {name}'s plans, but deviate if a more suitable option is presented.
 
     Examples of contextually appropriate actions:
     - Using the Mastodon app to read their feed: {name} opens the Mastodon app and reads their feed.
@@ -77,7 +78,8 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
     - Liking a Mastodon post: {name} likes a post they have recently read with a given Toot ID. (Return toot ID of the post you want to like)
     - Replying to a Mastodon post: {name} replies to a post they have recently read with a given Toot ID.
-    - Using the Mastodon app to send a message: {name} opens the Mastodon app and send a direct message to George.
+    - Boosting a Mastodon post: {name} opens the Mastodon app to boost (Retweet) a toot - that shares it with their own followers. (Return Toot ID and the exact contents of the toot to be boosted.)
+    - Read another user's timeline: If you find a user interesting you can view their past activity and timeline:
 
     Remember:
     - Consider current observations so as not to repeat actions that have already been performed.
@@ -90,6 +92,7 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 
     Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
     {name} should like a toot if they agree with it.
+    {name} should boost a toot if they strongly agree with it.
     {name} should tag other users if referring to them.
   """)
 
