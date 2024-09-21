@@ -16,8 +16,16 @@ from typing import Any, Literal, get_type_hints
 import docstring_parser  # pytype: disable=import-error  # Fails on GitHub.
 import termcolor
 
+write_path = ""
+
+
+def set_app_output_write_path(path):
+    global write_path
+    write_path = value
+
+
 file_lock = threading.Lock()
-# region[setup]
+# region[setup]s
 _DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 _ARGUMENT_REGEX = re.compile(r"(?P<param>\w+):\s*(?P<value>[^\n]+)")
@@ -436,9 +444,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         bio_message = f'Profile updated successfully: "{bio}"'
         self._print(bio_message, emoji="✅")
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} upated their profile.\n")
 
         return bio_message
@@ -461,7 +467,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     #             color="light_grey",
     #         )
     #     self._print(f"Profile: {display_name} - {bio}", emoji="📄")
-    #     with open("/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a") as f:
+    #     with open("/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/write_path+ "app_logger.txt".txt", "a") as f:
     #         f.write(f"{current_user} read profile of user: {target_user}\n")
     #     return display_name, bio
 
@@ -484,9 +490,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         )
         self._print(follow_message, emoji="➕")  # noqa: RUF001
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} followed user: {target_user}\n")
         return follow_message
 
@@ -513,9 +517,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         )
         self._print(unfollow_message, emoji="✅")
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} unfollowed user: {target_user}\n")
         return unfollow_message
 
@@ -665,9 +667,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             raise
         return_msg = f'{current_user} posted a toot!: "{status}"'
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} posted\n")
         return return_msg
 
@@ -723,9 +723,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
 
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} replied to Toot ID:{in_reply_to_id}\n")
         return return_msg
 
@@ -810,9 +808,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         )
         str_timeline = self.print_and_return_timeline(timeline)
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} retrieved their own timeline\n")
         return "Own Mastodon Timeline:\n" + str_timeline
 
@@ -898,9 +894,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         full_output = f"{retrieval_message}\n{notifications_string}"
         self._print(full_output)
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} read their notifications\n")
         return full_output
 
@@ -925,9 +919,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             )
         self._print(like_message, emoji="✅")
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(f"{current_user} liked a toot from {target_user} with Toot ID:{toot_id}\n")
         return like_message
 
@@ -949,9 +941,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             emoji="✅",
         )
         with file_lock:
-            with open(
-                "/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/app_logger.txt", "a"
-            ) as f:
+            with open(write_path + "app_logger.txt", "a") as f:
                 f.write(
                     f"{current_user} boosted a toot from {target_user} with Toot ID:{toot_id}\n"
                 )
