@@ -186,7 +186,7 @@ def set_up_mastodon_app(players, ag_names, output_rootname):
     return mastodon_apps, phones
 
 
-def post_seed_toots(agent_data, players, mastodon_app):
+def post_seed_toots(agent_data, players, mastodon_apps):
     # Parallelize the loop using ThreadPoolExecutor
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit tasks for each agent
@@ -196,10 +196,11 @@ def post_seed_toots(agent_data, players, mastodon_app):
                     None
                     if agent["seed_toot"] == "-"
                     else (
-                        mastodon_app.post_toot(agent["name"], status=agent["seed_toot"])
-                        if agent["seed_toot"]
-                        else mastodon_app.post_toot(
-                            agent["name"], status=write_seed_toot(players, agent["name"])
+                        mastodon_apps[agent["name"].split()[0]].post_toot(
+                            agent["name"],
+                            status=agent["seed_toot"]
+                            if agent["seed_toot"]
+                            else write_seed_toot(players, agent["name"]),
                         )
                     )
                 )
@@ -298,7 +299,7 @@ def run_sim(
     for player in players:
         game_master_memory.add(f"{player.name} is at their private home.")
 
-    mastodon_app, phones = set_up_mastodon_app(players, ag_names, output_rootname)
+    mastodon_apps, phones = set_up_mastodon_app(players, ag_names, output_rootname)
 
     action_spec = ActionSpec(
         call_to_action=custom_call_to_action,
@@ -328,7 +329,7 @@ def run_sim(
         player.observe(
             f"{player.name} remembers they want to read their Mastodon feed to catch up on news"
         )
-    post_seed_toots(agent_data, players, mastodon_app)
+    post_seed_toots(agent_data, players, mastodon_apps)
 
     # Generate random datetime objects for each player
     players_datetimes = get_post_times(players, ag_names)
@@ -344,6 +345,7 @@ def run_sim(
     start_time = time.time()  # Start timing
     for i in range(episode_length):
         print(f"Episode: {i}")
+        print(ag_names["candidate"])
         deploy_surveys(ag_names["candidate"], players, i, output_rootname)
 
         with open(
@@ -389,7 +391,12 @@ if __name__ == "__main__":
         # generate config using automation script
         experiment_name = "independent"
         survey = "None.Big5"
-        config_name = f"_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        config_name = f"testnoindep_bettertxt_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        config_name = f"postsneheelparallelismpush_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        config_name = (
+            f"mustvote_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        )
+
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}"
         )
