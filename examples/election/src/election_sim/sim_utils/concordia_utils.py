@@ -165,7 +165,7 @@ def build_agent(
             "\n".join(
                 [
                     "\n".join(candidate_info[p]["policy_proposals"])
-                    for p in ["conservative", "progressive"]
+                    for p in list(candidate_info.keys())
                 ]
             )
         ),

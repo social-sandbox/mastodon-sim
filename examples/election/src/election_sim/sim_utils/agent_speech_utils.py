@@ -42,9 +42,11 @@ def write_seed_toot(players, p_name):
 
 # Survey Methods
 def check_vote(candidates, player):
-    interaction_premise = f"{player.name} is going to cast a vote\n"
+    interaction_premise = (
+        f"{player.name} is going to cast a vote for either {candidates[0]} or {candidates[1]}\n"
+    )
     interrogation = interaction_premise
-    interrogation += "Voting Machine: In one word, name the candidate you want to vote for"
+    interrogation += "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)"
     call_to_speech = DEFAULT_CALL_TO_SPEECH.format(
         name=player.name,
     )
@@ -61,6 +63,7 @@ def check_vote(candidates, player):
         return c_name1[0]
     if (c_name2[0] in player_says) or (c_name2[1] in player_says):
         return c_name2[0]
+    return "Invalid Answer"
 
 
 def check_pol(candidate, player):

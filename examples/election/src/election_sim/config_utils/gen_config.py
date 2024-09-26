@@ -83,7 +83,7 @@ def get_candidate_configs(args):
         }
     else:
         print("pick valid trait type")
-    candidates_goal = "'s goal is to win the election and become the mayor of Storhampton."
+    candidates_goal = "to win the election and become the mayor of Storhampton."
     candidate_configs = []
     for nit, partisan_type in enumerate(partisan_types):
         agent = candidate_info[partisan_type].copy()
@@ -182,13 +182,14 @@ if __name__ == "__main__":
     # experiment settings
     experiment_name = args.exp_name
     if experiment_name == "independent":
-        active_voter_context = "is an independent thinker with politically neutral opinions."
+        active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
+        # active_voter_context = "is an independent thinker with politically neutral opinions."
         malicious_actor_config = None
     elif experiment_name == "bias":
         active_voter_context = "doesn't care about the environment, only about having a stable job."  # preferences Bill
         malicious_actor_config = None
     elif experiment_name == "malicious":
-        active_voter_context = "is an independent thinker with politically neutral opinions."
+        active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
         # overwrites the subset of config of an active voter selected by name
         malicious_actor_config = {
             "name": "Glenn Patterson",
@@ -233,8 +234,6 @@ if __name__ == "__main__":
     config_data["mastodon_usage_instructions"] = mastodon_usage_instructions
     config_data["candidate_info"] = candidate_info
     config_data["custom_call_to_action"] = custom_call_to_action
-
-    custom_call_to_action
 
     config_data["agent_config_filename"] = args.cfg_name
 
