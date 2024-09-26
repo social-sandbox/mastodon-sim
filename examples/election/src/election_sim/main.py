@@ -91,6 +91,8 @@ def select_large_language_model():
         )
     elif "gpt" in MODEL_NAME:
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
+        GPT_API_KEY = "sk-None-W3uEa1y7qyp2OP3lkGQQT3BlbkFJmF5psn95dGP8wxe2EJVs"
+
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
         model = gpt_model.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)
@@ -197,10 +199,11 @@ def post_seed_toots(agent_data, players, mastodon_apps):
                     if agent["seed_toot"] == "-"
                     else (
                         mastodon_apps[agent["name"].split()[0]].post_toot(
-                            agent["name"],
-                            status=agent["seed_toot"]
-                            if agent["seed_toot"]
-                            else write_seed_toot(players, agent["name"]),
+                            agent["name"], status=agent["seed_toot"]
+                        )
+                        if agent["seed_toot"]
+                        else mastodon_apps[agent["name"].split()[0]].post_toot(
+                            agent["name"], status=write_seed_toot(players, agent["name"])
                         )
                     )
                 )
