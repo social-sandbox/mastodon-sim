@@ -109,12 +109,20 @@ def get_sentance_encoder():
 def set_up_mastodon_app(players, ag_names, output_rootname):
     apps.set_app_output_write_path(output_rootname)
 
-    mastodon_app = apps.MastodonSocialNetworkApp(perform_operations=USE_MASTODON_SERVER)
-
-    phones = {player.name: apps.Phone(player.name, apps=[mastodon_app]) for player in players}
+    mastodon_apps = {
+        player.name.split()[0]: apps.MastodonSocialNetworkApp(
+            perform_operations=USE_MASTODON_SERVER
+        )
+        for player in players
+    }
+    phones = {
+        player.name: apps.Phone(player.name, apps=[mastodon_apps[player.name.split()[0]]])
+        for player in players
+    }
 
     user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
-    mastodon_app.set_user_mapping(user_mapping)
+    for p in mastodon_apps:
+        mastodon_apps[p].set_user_mapping(user_mapping)
 
     if USE_MASTODON_SERVER:
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -124,27 +132,37 @@ def set_up_mastodon_app(players, ag_names, output_rootname):
                 if follower != ag_names["candidate"][0].split()[0]:
                     futures.append(
                         executor.submit(
-                            mastodon_app.follow_user, follower, ag_names["candidate"][0].split()[0]
+                            mastodon_apps[follower].follow_user,
+                            follower,
+                            ag_names["candidate"][0].split()[0],
                         )
                     )
                 if follower != ag_names["candidate"][1].split()[0]:
                     futures.append(
                         executor.submit(
-                            mastodon_app.follow_user, follower, ag_names["candidate"][1].split()[0]
+                            mastodon_apps[follower].follow_user,
+                            follower,
+                            ag_names["candidate"][1].split()[0],
                         )
                     )
                 for followee in user_mapping:
                     if follower != followee:
                         if random.random() < 0.2:
                             futures.append(
-                                executor.submit(mastodon_app.follow_user, follower, followee)
+                                executor.submit(
+                                    mastodon_apps[follower].follow_user, follower, followee
+                                )
                             )
                             futures.append(
-                                executor.submit(mastodon_app.follow_user, followee, follower)
+                                executor.submit(
+                                    mastodon_apps[followee].follow_user, followee, follower
+                                )
                             )
                         elif random.random() < 0.15:
                             futures.append(
-                                executor.submit(mastodon_app.follow_user, follower, followee)
+                                executor.submit(
+                                    mastodon_apps[follower].follow_user, follower, followee
+                                )
                             )
 
             # Optionally, wait for all tasks to complete
@@ -165,7 +183,7 @@ def set_up_mastodon_app(players, ag_names, output_rootname):
         for future in concurrent.futures.as_completed(futures):
             future.result()  # This will raise any exceptions that occurred during execution, if any
 
-    return mastodon_app, phones
+    return mastodon_apps, phones
 
 
 def post_seed_toots(agent_data, players, mastodon_app):
@@ -297,6 +315,9 @@ def run_sim(
         players=players,
         action_spec=action_spec,
         memory_factory=blank_memory_factory,
+        embedder=embedder,
+        importance_model=importance_model,
+        importance_model_gm=importance_model_gm,
     )
 
     # Seed Sim Content
