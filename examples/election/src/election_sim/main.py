@@ -91,6 +91,8 @@ def select_large_language_model():
         )
     elif "gpt" in MODEL_NAME:
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
+        GPT_API_KEY = "sk-None-W3uEa1y7qyp2OP3lkGQQT3BlbkFJmF5psn95dGP8wxe2EJVs"
+
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
         model = gpt_model.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)
@@ -186,7 +188,7 @@ def set_up_mastodon_app(players, ag_names, output_rootname):
     return mastodon_apps, phones
 
 
-def post_seed_toots(agent_data, players, mastodon_app):
+def post_seed_toots(agent_data, players, mastodon_apps):
     # Parallelize the loop using ThreadPoolExecutor
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit tasks for each agent
@@ -196,9 +198,11 @@ def post_seed_toots(agent_data, players, mastodon_app):
                     None
                     if agent["seed_toot"] == "-"
                     else (
-                        mastodon_app.post_toot(agent["name"], status=agent["seed_toot"])
+                        mastodon_apps[agent["name"].split()[0]].post_toot(
+                            agent["name"], status=agent["seed_toot"]
+                        )
                         if agent["seed_toot"]
-                        else mastodon_app.post_toot(
+                        else mastodon_apps[agent["name"].split()[0]].post_toot(
                             agent["name"], status=write_seed_toot(players, agent["name"])
                         )
                     )
