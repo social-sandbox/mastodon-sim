@@ -21,7 +21,7 @@ write_path = ""
 
 def set_app_output_write_path(path):
     global write_path
-    write_path = value
+    write_path = path
 
 
 file_lock = threading.Lock()
@@ -374,7 +374,7 @@ def _parse_argument_text(args_text: str) -> dict[str, str]:
 
 @dataclasses.dataclass
 class MastodonSocialNetworkApp(PhoneApp):
-    """Mastodon sociall network app.
+    """Mastodon social network app.
 
     A social media application similar to Twitter that allows users to interact on social media.
     """

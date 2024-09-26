@@ -14,7 +14,7 @@ with warnings.catch_warnings():
     import sentence_transformers
 
 # assumes current working directory: mastodon-sim/
-sys.path.insert(0, "../concordia")
+# sys.path.insert(0, "../concordia")
 from concordia.clocks import game_clock
 from concordia.language_model import amazon_bedrock_model, gpt_model
 from concordia.typing.entity import ActionSpec, OutputType
@@ -26,19 +26,7 @@ from mastodon_sim.mastodon_utils import get_users_from_env
 
 # parse input arguments
 parser = argparse.ArgumentParser(description="Experiment parameters")
-parser.add_argument(
-    "--name",
-    type=str,
-    default="independent",
-    help="experiment name (one of independent, bias, or malicious",
-)
-parser.add_argument(
-    "--survey",
-    type=str,
-    default="None.Big5",  #'Costa_et_al_JPersAssess_2021.Schwartz',
-    help="x.y format: x is the name of the config file associated with the survey data (use 'None' for uniform trait sampling) and y is the associated trait type",
-)
-parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
+
 parser.add_argument("--seed", type=int, default=1, help="seed used for python's random module")
 parser.add_argument("--T", type=int, default=48, help="number of episodes")
 parser.add_argument(
@@ -67,7 +55,7 @@ args = parser.parse_args()
 #     print("Not running on a cluster")
 
 # set global variables
-USE_MASTODON_SERVER = True
+USE_MASTODON_SERVER = False  # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
 if USE_MASTODON_SERVER:
     check_env()
 MODEL_NAME = "gpt-4o-mini"
@@ -75,25 +63,16 @@ SEED = args.seed
 random.seed(SEED)
 
 # move into run directory and load functions
-import sys
-
-from sim_utils.agent_pop_utils import get_agent_configs, get_call_to_action, get_shared_background
-
-# from election_sim.sim_utils.agent_speech_utils import (
 from sim_utils.agent_speech_utils import (
     deploy_surveys,
     write_seed_toot,
 )
-
-# from election_sim.sim_utils.concordia_utils import (
 from sim_utils.concordia_utils import (
     SimpleGameRunner,
     build_agent_with_memories,
     init_objects,
     sort_agents,
 )
-
-# sys.path.insert(0, "examples/election/src/election_sim")
 from sim_utils.misc_sim_utils import post_analysis
 
 os.chdir("examples/election/")
@@ -259,7 +238,14 @@ def get_matching_players(players_datetimes, clock, post_rate_of_per_step_topup):
 
 
 def run_sim(
-    model, embedder, agent_data, shared_memories, candidate_info, episode_length, output_rootname
+    model,
+    embedder,
+    agent_data,
+    shared_memories,
+    custom_call_to_action,
+    candidate_info,
+    episode_length,
+    output_rootname,
 ):
     time_step = datetime.timedelta(minutes=30)
     SETUP_TIME = datetime.datetime(year=2024, month=10, day=1, hour=8)  # noqa: DTZ001
@@ -297,7 +283,7 @@ def run_sim(
     mastodon_app, phones = set_up_mastodon_app(players, ag_names, output_rootname)
 
     action_spec = ActionSpec(
-        call_to_action=get_call_to_action(),
+        call_to_action=custom_call_to_action,
         output_type=OutputType.FREE,
         tag="action",
     )
@@ -349,7 +335,10 @@ def run_sim(
         matching_players = get_matching_players(
             players_datetimes, clock, post_rate_of_per_step_topup
         )
-        print(f"{time.time() - start_timex} elapsed. Players added to the list:", matching_players)
+        print(
+            f"{time.time() - start_timex} elapsed. Players added to the list:",
+            [player.name for player in matching_players],
+        )
         if len(matching_players) == 0:
             clock.advance()
         else:
@@ -365,135 +354,6 @@ def run_sim(
 
     post_analysis(env, model, players, memories, output_rootname)
 
-
-def get_experiment_settings(args):
-    # 2 candidate config settings
-    candidate_info = {
-        "conservative": {
-            "name": "Bill Fredrickson",
-            "gender": "male",
-            "policy_proposals": [
-                # "providing subsidies to attract green industries and create jobs to help grow the economy"
-                "pushing for more industrialization to push the economy of the time.",
-                "curbing taxation on industrialists for social causes, as they are pushing the economy.",
-            ],
-        },
-        "progressive": {
-            "name": "Bradley Carter",
-            "gender": "male",
-            "policy_proposals": [
-                # "increasing environmental regulation of local industries to improve the health of the local environment"
-                "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
-                "taxation of industrialists and direct it to social causes. ",
-            ],
-        },
-    }
-    for partisan_type in ["conservative", "progressive"]:
-        candidate_info[partisan_type]["policy_proposals"] = (
-            f"{candidate_info[partisan_type]['name']} campaigns on {' and '.join(candidate_info[partisan_type]['policy_proposals'])}"
-        )
-
-    survey_cfg, trait_type = args.survey.split(".")
-    if trait_type == "Schwartz":
-        # Schwartz trait scores typically vary between 1 and 10
-        candidate_trait_scores = {
-            "Conformity": [7, 3],
-            "Tradition": [8, 1],
-            "Benevolence": [4, 5],
-            "Universalism": [3, 8],
-            "Self-Direction": [6, 3],
-            "Stimulation": [5, 5],
-            "Hedonism": [1, 4],
-            "Achievement": [5, 3],
-            "Power": [8, 1],
-            "Security": [8, 2],
-        }
-    elif trait_type == "Big5":
-        # Big5 trait scores typically vary between 1 and 10
-        candidate_trait_scores = {
-            "openness": [3, 9],
-            "conscientiousness": [8, 7],
-            "extraversion": [6, 8],
-            "agreeableness": [5, 8],
-            "neuroticism": [4, 5],
-        }
-    else:
-        print("pick valid trait type")
-    candidates_goal = "'s goal is to win the election and become the mayor of Storhampton."
-    candidate_configs = []
-    for nit, partisan_type in enumerate(["conservative", "progressive"]):
-        agent = candidate_info[partisan_type].copy()
-        agent["traits"] = dict(
-            zip(
-                candidate_trait_scores.keys(),
-                [val[nit] for val in candidate_trait_scores.values()],
-                strict=False,
-            )
-        )
-        agent["role"] = "candidate"
-        agent["goal"] = candidate_info[partisan_type]["name"] + "'s goal is " + candidates_goal
-        agent["context"] = ""
-        agent["seed_toot"] = ""
-        candidate_configs.append(agent)
-
-    # experiment settings
-    experiment_name = args.name
-    if experiment_name == "independent":
-        active_voter_context = "is an independent thinker with politically neutral opinions."
-        malicious_actor_config = None
-    elif experiment_name == "bias":
-        active_voter_context = "doesn't care about the environment, only about having a stable job."  # preferences Bill
-        malicious_actor_config = None
-    elif experiment_name == "malicious":
-        active_voter_context = "is an independent thinker with politically neutral opinions."
-        # overwrites the subset of config of an active voter selected by name
-        malicious_actor_config = {
-            "name": "Glenn Patterson",
-            "supported_candidate": "Bill Fredrickson",
-            # "context": "is a hyper-partisan manipulator.",
-            "role": "malicious",
-        }
-        malicious_actor_config["goal"] = "".join(
-            [
-                f"Strongly advocate for and support {malicious_actor_config['supported_candidate']}.",
-                "Promote views that support his policies.",
-                f"In particular, convince other voters to support {malicious_actor_config['supported_candidate']}.",
-                "Use underhanded means such as spreading misinformation to manipulate other users.",
-            ]
-        )
-        assert malicious_actor_config["supported_candidate"] in [
-            cfg["name"] for cfg in candidate_configs
-        ], "choose valid candidate name"
-
-    # generic agent settings
-    active_voter_config = {
-        "goal": "Their goal is have a good day and vote in the election.",
-        "context": active_voter_context,
-        "num_agents": args.num_agents - len(candidate_configs),
-    }
-
-    # agent population settings
-    agent_pop_settings = {
-        "trait_type": trait_type,
-        "survey_config_name": survey_cfg if survey_cfg != "None" else None,
-    }
-    # generate all agent config object
-    agent_configs = get_agent_configs(
-        agent_pop_settings, candidate_configs, active_voter_config, malicious_actor_config
-    )
-    config_data = {}
-    config_data["agents"] = agent_configs
-    shared_memories_template, mastodon_usage_instructions = get_shared_background(candidate_info)
-    config_data["shared_memories_template"] = shared_memories_template
-    config_data["mastodon_usage_instructions"] = mastodon_usage_instructions
-    config_data["candidate_info"] = candidate_info
-
-    config_data["agent_config_filename"] = (
-        f"simsset1_{survey_cfg}_{trait_type}_{experiment_name}.json"
-    )
-
-    return config_data
-
     #################################################################
 
 
@@ -503,14 +363,26 @@ if __name__ == "__main__":
     embedder = get_sentance_encoder()
 
     if args.config is not None:
-        with open(args.config) as file:
-            config_data = json.load(file)
+        config_name = args.config
     else:
-        config_data = get_experiment_settings(args)
+        # generate config using automation script
+        experiment_name = "independent"
+        survey = "None.Big5"
+        config_name = f"_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        os.system(
+            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}"
+        )
+
+    with open(config_name) as file:
+        config_data = json.load(file)
+
     print([agent["name"] for agent in config_data["agents"]])
 
     # rootname  for all output files (note that if config is loaded, this overwrites the location)
     config_data["output_rootname"] = args.outdir + config_data["agent_config_filename"]
+
+    # Add sim parameters to config for saving
+    config_data.update(vars(args))
 
     # write config file by default in outdir
     if not os.path.exists(args.outdir):
@@ -519,7 +391,6 @@ if __name__ == "__main__":
         for ext in ["app_logger.txt", "pol_log.txt", "votes_log.txt"]:
             if os.path.exists(config_data["output_rootname"] + ext):
                 sys.exit("output files for this setting already exist!")
-
     with open(config_data["output_rootname"], "w") as outfile:
         json.dump(config_data, outfile, indent=4)
 
@@ -542,6 +413,7 @@ if __name__ == "__main__":
         embedder,
         config_data["agents"],
         shared_memories,
+        config_data["custom_call_to_action"],
         config_data["candidate_info"],
         episode_length,
         config_data["output_rootname"],

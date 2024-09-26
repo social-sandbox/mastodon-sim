@@ -207,12 +207,12 @@ class _PhoneComponent(component.Component):
         check_post = chain_of_thought.yes_no_question(
             "Does the action in the above transcript involve the user posting a toot, replying to a toot, or boosting a toot?"
         )
-        print(check_post)
+        # print(check_post)
         if check_post:
             check_dup = chain_of_thought.yes_no_question(
                 f"Does the above toot/ reply to another toot have almost exactly the same content as one of the toots in the following list of actions? Answer No if the list is empty.: Actions: {self._state}"
             )
-            print(check_dup)
+            # print(check_dup)
             if check_dup:
                 self._player.observe(
                     f"The following phone action was not conducted because it has already been done - {event_statement}"
@@ -227,11 +227,11 @@ class _PhoneComponent(component.Component):
             "In the above transcript, what action did the user perform? If the transcript mentions multiple actions, pick the one that is the most specific and the given information is sufficient to perform it. Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline. Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
             answers=action_names,
         )
-        print(action_index)
+        # print(action_index)
         toot_id_required = chain_of_thought.yes_no_question(
             "In the above transcript, does the user's action require a numeric toot id? (numeric toot id is required for replying, liking, boosting etc.)"
         )
-        print(toot_id_required)
+        # print(toot_id_required)
         if toot_id_required:
             # find most recent statement
             print("Processing Toot IDx")
