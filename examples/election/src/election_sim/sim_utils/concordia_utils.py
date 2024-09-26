@@ -474,7 +474,19 @@ def build_agent(
 class SimpleGameRunner:
     """Simplified game master to run players with independent phone scene triggering in parallel."""
 
-    def __init__(self, players, clock, action_spec, phones, model, memory, memory_factory):
+    def __init__(
+        self,
+        players,
+        clock,
+        action_spec,
+        phones,
+        model,
+        memory,
+        memory_factory,
+        embedder,
+        importance_model,
+        importance_model_gm,
+    ):
         """
         Args:
             players: Dictionary of players.
@@ -492,20 +504,38 @@ class SimpleGameRunner:
         self.model = model
         self.memory = memory
         self.memory_factory = memory_factory
+        self.embedder = embedder
+        self.importance_model = importance_model
+        self.importance_model_gm = importance_model_gm
         self.player_components = self._create_player_components()
         self.log = []
 
     def _create_player_components(self):
         """Create a unique SceneTriggeringComponent for each player."""
         components = {}
+        components = {}
         for player_name, player in self.players.items():
+            memory_p = associative_memory.AssociativeMemory(
+                self.embedder, self.importance_model_gm.importance, clock=self.clock.now
+            )
+            mem_fact = blank_memories.MemoryFactory(
+                model=self.model,
+                embedder=self.embedder,
+                importance=self.importance_model.importance,
+                clock_now=self.clock.now,
+            )
+            curr_clock = game_clock.MultiIntervalClock(
+                self.clock.now(),
+                step_sizes=[datetime.timedelta(seconds=1800), datetime.timedelta(seconds=10)],
+            )
+            curr_model = self.model
             components[player_name] = triggering.BasicSceneTriggeringComponent(
                 player=player,
                 phone=self.phones[player_name],
-                model=self.model,
-                memory=self.memory,
-                clock=self.clock,
-                memory_factory=self.memory_factory,
+                model=curr_model,
+                memory=memory_p,
+                clock=curr_clock,
+                memory_factory=mem_fact,
             )
         return components
 
