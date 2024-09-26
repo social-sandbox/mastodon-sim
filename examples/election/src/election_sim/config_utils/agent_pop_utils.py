@@ -1,7 +1,6 @@
 import random
 import sys
 
-import numpy as np
 import pandas as pd
 
 # define survey-to-trait maps
@@ -82,86 +81,6 @@ Big5_map = {
     "question_score_values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 }
 
-CUSTOM_CALL_TO_ACTION = """
-Describe an activity on Storhampton.social that {name} would engage in for the next {timedelta}.
-Choose actions together take about {timedelta} to complete.
-It is critical to pay close attention to known information about {name}'s personality,
-preferences, habits, plans and background when crafting this activity. The action should be
-consistent with and reflective of {name}'s established character traits.
-
-Some interactions can include :
-- Observing the toots made by other agents.
-- Posting on Storhampton.social
-- Liking other toots
-- Replying to the toots made by other agents.
-- Boosting toots made by other agents
-
-
-Example:
-
-"Sarah checks her feed and replies if necessary. Then she may post a toot on Mastodon about her ideas on topic X on the lines of 'Just discovered an intriguing new language for low-latency systems programming.
-Has anyone given it a try? Curious about potential real-world applications. 🤔
-#TechNews #ProgrammingLanguages'"
-
-
-Ensure your response is specific, creative, and detailed. Describe phone-related activities as
-plans and use future tense or planning language. Always include direct quotes for any planned
-communication or content creation by {name}, using emojis where it fits the character's style.
-Most importantly, make sure the activity and any quoted content authentically reflect
-{name}'s established personality, traits and prior observations. Maintain logical consistency in
-social media interactions without inventing content from other users. Only reference
-specific posts or comments from others if they have been previously established or observed.
-
-"""
-
-
-def get_shared_background(candidate_info):
-    town_history = [
-        "Storhampton is a small town with a population of approximately 2,500 people.",
-        "Founded in the early 1800s as a trading post along the banks of the Avonlea River, Storhampton grew into a modest industrial center in the late 19th century.",
-        "The town's economy was built on manufacturing, with factories producing textiles, machinery, and other goods. ",
-        "Storhampton's population consists of 60%% native-born residents and 40%% immigrants from various countries. ",
-        "Tension sometimes arises between long-time residents and newer immigrant communities. ",
-        "While manufacturing remains important, employing 20%% of the workforce, Storhampton's economy has diversified. "
-        "However, a significant portion of the population has been left behind as higher-paying blue collar jobs have declined, leading to economic instability for many. ",
-        "The poverty rate stands at 15%.",
-    ]
-    shared_memories_template = (
-        [
-            "You are a user on Storhampton.social, a Mastodon instance created for the residents of Storhampton."
-        ]
-        + town_history
-        + [
-            "Mayoral Elections: The upcoming mayoral election in Storhampton has become a heated affair.",
-            "Social media has emerged as a key battleground in the race, with both candidates actively promoting themselves and engaging with voters.",
-            "Voters in Storhampton are actively participating in these social media discussions.",
-            "Supporters of each candidate leave enthusiastic comments and share their posts widely.",
-            f"Critics also chime in, attacking {candidate_info['conservative']['name']} as out-of-touch and beholden to traditional interests,",
-            f" or labeling {candidate_info['progressive']['name']} as a radical who will undermine law and order.",
-            "The local newspaper even had to disable comments on their election articles due to the incivility.",
-        ]
-    )
-    mastodon_usage_instructions = [
-        "To share content on Mastodon, you write a 'toot' (equivalent to a tweet or post).",
-        "Toots can be up to 500 characters long, allowing for more detailed expressions than some other platforms.",
-        "Your home timeline shows toots from people you follow and boosted (reblogged) content.",
-        "You can reply to toots, creating threaded conversations.",
-        "Favorite (like) toots to show appreciation or save them for later.",
-        "Boost (reblog) toots to share them with your followers.",
-        "You can mention other users in your toots using their @username.",
-        "Follow other users to see their public and unlisted toots in your home timeline.",
-        "You can unfollow users if you no longer wish to see their content.",
-        "Your profile can be customized with a display name and bio.",
-        "You can block users to prevent them from seeing your content or interacting with you.",
-        "Unblocking a user reverses the effects of blocking.",
-    ]
-
-    return shared_memories_template, mastodon_usage_instructions
-
-
-def get_call_to_action():
-    return CUSTOM_CALL_TO_ACTION
-
 
 def get_demo_data():
     demo_data = {
@@ -210,7 +129,8 @@ def get_demo_data():
 
 def get_names(num_agents):
     print("override num_agents since only have 18 non-candidate names")
-    return get_demo_data()[:num_agents]
+    names, _ = get_demo_data()
+    return list(names.keys())[:num_agents]
 
 
 def get_trait_demographics(traits_type, survey_source, num_agents):
@@ -236,7 +156,7 @@ def get_trait_demographics(traits_type, survey_source, num_agents):
         question_to_score_map = Big5_map
     else:
         sys.exit("choose valid trait type")
-    trait_keys = question_to_score_map["map"].keys()
+    trait_keys = list(question_to_score_map["map"].keys())
     if survey_source is None:
         # uniformily random score assignments over domain given by question_to_score_map
         min_score = min(question_to_score_map["question_score_values"])
@@ -269,7 +189,7 @@ def get_trait_demographics(traits_type, survey_source, num_agents):
     else:
         # TODO: import json from match with traits_type,survey_source and make config dictionary
         # for now just hardcode it and assign it directly:
-        if traits_type == "Schwartz" & survey_source == "Costa_et_al_JPersAssess_2021":
+        if (traits_type == "Schwartz") & (survey_source == "Costa_et_al_JPersAssess_2021"):
             Costa_et_al_JPersAssess_2021_meta_data = {
                 "trait_type": "Schwartz",
                 "survey_type": "TwIVI",
@@ -298,25 +218,27 @@ def get_trait_demographics(traits_type, survey_source, num_agents):
             sys.exit("Big5 not implemented yet")
             # TODO: add Big5 survey
             # config=
+        else:
+            print("invalid survey setting")
 
         # read and preprocess
         df = pd.read_csv("survey_data/" + config["data_filename"])
-        df.columns = map(str.lower, df.columns)
-        config["non_question_labels"] = [x.lower() for x in config["non_question_labels"]]
-        if "sex" in df.columns:
-            df = df.rename(columns={"sex": "gender"})  # conform to Concordia label
 
         # custom recoding
         if survey_source == "Costa_et_al_JPersAssess_2021":
+            # df.columns = map(str.lower, df.columns)
+            df = df.rename(columns={"Age": "age"})
+            df = df.rename(columns={"Sex": "gender"})  # conform to Concordia label
+
             gender_dict = {1: "male", 0: "female"}
             df["gender"] = df["gender"].map(gender_dict)
 
             # additional filtering for age (concordia default is 40 years old)
             df = df.loc[
                 (~df.isnull().any(axis=1))
-                & (df.Age < 42)
-                & (df.Age > 37),  # Chosen to give > 20 agents
-                ["gender"] + config["question_labels"],
+                & (df.age < 45)
+                & (df.age > 35),  # Chosen to give > 20 agents
+                ["age", "gender"] + config["question_labels"],
             ]
         else:
             # add custom recoding for each survey by adding an elif block here
@@ -324,53 +246,27 @@ def get_trait_demographics(traits_type, survey_source, num_agents):
 
         # scores computed for each question, from values answered to each question listed in 'question_labels' in config
         dvals = list(question_to_score_map["map"].values())
-        dkeys = list(question_to_score_map["map"].keys())
-        scores = [
-            dict(zip(dkeys, values, strict=False))
-            for values in list(
-                df.loc[:, config["question_labels"]]
-                .apply(
-                    lambda x: [
-                        sum(scores)  # TODO: generalize to include provided weights
-                        for scores in x.values[dvals]
-                    ],
-                    axis=1,
-                )
-                .values
-            )
-        ]
+        df["scores"] = df.loc[:, config["question_labels"]].apply(
+            lambda x: [
+                sum(scores)  # TODO: generalize to include provided weights
+                for scores in x.values[dvals]
+            ],
+            axis=1,
+        )
 
         if survey_source == "Costa_et_al_JPersAssess_2021":
-            agent_demographics, scores = get_demo_data()
-            genders = demographics.values()
-            ages = [40 for a in range(len(agent_demographics))]
-
-            # gender map hack
             if True:
-                gender_map_2_concordia = [  # TODO: automate mapping by iterative assignment based on demographic_data  (age, gender specification)
-                    0,
-                    2,
-                    1,
-                    3,
-                    4,
-                    5,
-                    7,
-                    6,
-                    9,
-                    8,
-                    16,
-                    10,
-                    17,
-                    11,
-                    21,
-                    12,
-                    22,
-                    13,
-                    14,
-                    15,
-                ]
-                scores = list(np.array(scores)[gender_map_2_concordia])
-                genders = list(np.array(genders)[gender_map_2_concordia])
+                # use hardcoded agent name+gender
+                agent_demographics, _ = get_demo_data()
+                genders = list(agent_demographics.values())
+                print(df.columns)
+                scores = []
+                ages = []
+                for gender in genders:
+                    respondent = df[df["gender"] == gender].sample()
+                    scores.append(respondent["scores"])
+                    ages.append(respondent["age"])
+                    df.drop(respondent.index, inplace=True)
             else:
                 # TODO:generate agent demographic profiles from the survey data itself by sampling without replacement
                 pass
@@ -398,7 +294,7 @@ def get_agent_configs(
         active_voter_config["num_agents"],
     )
     demographic_list = ["traits", "gender"]
-
+    print(agent_demographics)
     agent_configs = []
     for ait, name in enumerate(agent_demographics["fake_names"]):
         agent = {}
