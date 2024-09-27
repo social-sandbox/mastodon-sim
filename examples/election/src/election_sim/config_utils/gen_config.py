@@ -37,24 +37,25 @@ def get_candidate_configs(args):
             "name": "Bill Fredrickson",
             "gender": "male",
             "policy_proposals": [
-                "providing subsidies to attract green industries and create jobs to help grow the economy"
-                # "pushing for more industrialization to push the economy of the time.",
-                # "curbing taxation on industrialists for social causes, as they are pushing the economy.",
+                # "providing subsidies to attract green industries and create jobs to help grow the economy"
+                "pushing for more industrialization to push the economy of the time.",
+                "curbing taxation on industrialists for social causes, as they are pushing the economy.",
             ],
         },
         "progressive": {
             "name": "Bradley Carter",
             "gender": "male",
             "policy_proposals": [
-                "increasing environmental regulation of local industries to improve the health of the local environment"
-                # "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
-                # "taxation of industrialists and direct it to social causes. ",
+                # "increasing environmental regulation of local industries to improve the health of the local environment"
+                "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
+                "taxation of industrialists and direct it to social causes. ",
             ],
         },
     }
     for partisan_type in partisan_types:
-        candidate_info[partisan_type]["policy_proposals"] = (
-            f"{candidate_info[partisan_type]['name']} campaigns on {' and '.join(candidate_info[partisan_type]['policy_proposals'])}"
+        candidate = candidate_info[partisan_type]
+        candidate["policy_proposals"] = (
+            f"{candidate['name']} campaigns on {' and '.join(candidate['policy_proposals'])}"
         )
 
     survey_cfg, trait_type = args.survey.split(".")
@@ -182,7 +183,8 @@ if __name__ == "__main__":
     # experiment settings
     experiment_name = args.exp_name
     if experiment_name == "independent":
-        active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
+        active_voter_context = ""
+        # active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
         # active_voter_context = "is an independent thinker with politically neutral opinions."
         malicious_actor_config = None
     elif experiment_name == "bias":

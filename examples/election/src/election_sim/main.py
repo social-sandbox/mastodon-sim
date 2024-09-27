@@ -41,7 +41,7 @@ parser.add_argument(
 parser.add_argument(
     "--server",
     type=str,
-    default="www.social-sandbox.com",
+    default="None",  # www.social-sandbox.com, www.socialsandbox2.com
     help="config from which to optionally load experiment settings",
 )
 args = parser.parse_args()
@@ -55,9 +55,14 @@ args = parser.parse_args()
 #     print("Not running on a cluster")
 
 # set global variables
-USE_MASTODON_SERVER = False  # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
+USE_MASTODON_SERVER = (
+    False if args.server == "None" else True
+)  # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
 if USE_MASTODON_SERVER:
     check_env()
+else:
+    input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
+
 MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
 random.seed(SEED)
@@ -348,7 +353,7 @@ def run_sim(
     start_time = time.time()  # Start timing
     for i in range(episode_length):
         print(f"Episode: {i}")
-        print(ag_names["candidate"])
+
         deploy_surveys(ag_names["candidate"], players, i, output_rootname)
 
         with open(
@@ -389,16 +394,13 @@ if __name__ == "__main__":
     embedder = get_sentance_encoder()
 
     if args.config is not None:
+        print(f"using config:{args.config}")
         config_name = args.config
     else:
         # generate config using automation script
         experiment_name = "independent"
         survey = "None.Big5"
-        config_name = f"testnoindep_bettertxt_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
-        config_name = f"postsneheelparallelismpush_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
-        config_name = (
-            f"mustvote_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
-        )
+        config_name = f"_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}"
@@ -434,7 +436,7 @@ if __name__ == "__main__":
         config_data["shared_memories_template"]
         + [
             config_data["candidate_info"][p]["policy_proposals"]
-            for p in ["conservative", "progressive"]
+            for p in list(config_data["candidate_info"].keys())
         ]
         + config_data["mastodon_usage_instructions"]
     )
