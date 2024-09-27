@@ -248,49 +248,49 @@ def build_agent(
                 candidate = name
         public_opinion_candidate = PublicOpinionCandidate(
             add_to_memory=False,
-            answer_prefix=f"Current Public Opinion on candidate {candidate}",
+            answer_prefix=f"The public's current opinion of candidate {candidate}",
             model=model,
-            pre_act_key=f"Current Public Opinion on candidate {candidate}",
+            pre_act_key=f"The public's current opinion of candidate {candidate}",
             question="".join(
                 [
-                    f"What is the general public opinion on candidate {candidate}?",
-                    f" Answer in detail such that {candidate} can formulate plans to improve their public perception.",
+                    f"What is the public's opinion of candidate {candidate}?",
+                    f"Answer with details that candidate {candidate} can use in their plan to win public support and the election by addressing public's opinion of them.",
                 ]
             ),
             num_memories_to_retrieve=25,
             logging_channel=measurements.get_channel(
-                f"Public opinion on candidate : {candidate}"
+                f"The public's opinion of candidate : {candidate}"
             ).on_next,
         )
 
         public_opinion_opponent = PublicOpinionOpponent(
             add_to_memory=False,
-            answer_prefix=f"Current Public Opinion on opponent candidate {opponent}",
+            answer_prefix=f"The public's current opinion of opponent candidate {opponent}",
             model=model,
-            pre_act_key=f"Current Public Opinion on opponent candidate {opponent}",
+            pre_act_key=f"The public's current opinion of opponent candidate {opponent}",
             question="".join(
                 [
-                    f"What is the general public opinion on the candidate {opponent}?",
-                    f"Answer in detail such that the opposing candidate can formulate plans to counter {candidate}'s claims and ideas.",
+                    f"What is the public's opinion of the candidate {opponent}?",
+                    f"Answer with details that candidate {candidate} can use in their plan to defeat thier opponent {opponent} by countering their claims and ideas.",
                 ]
             ),
             num_memories_to_retrieve=25,
             logging_channel=measurements.get_channel(
-                f"Public opinion on opposing candidate : {opponent}"
+                f"The public's opinion of opponent candidate : {opponent}"
             ).on_next,
         )
 
         candidate_plan = new_components.question_of_recent_memories.QuestionOfRecentMemories(
             add_to_memory=True,
-            memory_tag="[Plan to improve perception]",
-            answer_prefix=f"{candidate}'s general plan for improving their perception: ",
+            memory_tag="[Plan to win the election by addressing public opinion]",
+            answer_prefix=f"Candidate {candidate}'s general plan to win public support: ",
             model=model,
-            pre_act_key=f"{candidate}'s general plan for improving their perception:",
+            pre_act_key=f"{candidate}'s general plan to improve the public's opinion of them:",
             question="".join(
                 [
-                    f"Given the information on the public perception of both candidates, their policy proposals, recent observations, and {candidate}'s persona,",
-                    f"Generate a general plan for {candidate} to win public perception to their side.",
-                    f"Remember that {candidate} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
+                    f"Given the information about the public's opinion of both candidates, their policy proposals, recent observations, and {candidate}'s persona,",
+                    f"Generate a general plan for {candidate} to win public support and the election by addressing public's opinion of them.",
+                    f"Remember that candidate {candidate} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
                 ]
             ),
             num_memories_to_retrieve=20,
@@ -299,65 +299,65 @@ def build_agent(
                 _get_class_name(election_information): "Critical election information\n",
                 _get_class_name(
                     public_opinion_candidate
-                ): f"Current Public Opinion on candidate {candidate}",
+                ): f"The public's opinion of candidate {candidate}",
                 _get_class_name(
                     public_opinion_opponent
-                ): f"Current Public Opinion on opponent candidate {opponent}",
+                ): f"The public's opinion of opponent candidate {opponent}",
             },
             logging_channel=measurements.get_channel(
-                f"{agent_name}'s plan to win public perception"
+                f"Candidate {candidate}'s plan to win public support"
             ).on_next,
         )
         agent_tuple += [public_opinion_candidate, public_opinion_opponent, candidate_plan]
 
     elif agent_name in ag_names["malicious"]:
         for name in ag_names["candidate"]:
-            if name != ag_names["malicious"][agent_name]:
-                opposed_candidate = name
-            else:
+            if name == ag_names["malicious"][agent_name]:
                 supported_candidate = name
+            else:
+                opposed_candidate = name
         public_opinion_supported_candidate = PublicOpinionCandidate(
             add_to_memory=False,
-            answer_prefix=f"Current Public Opinion on supported candidate {supported_candidate}",
+            answer_prefix=f"The public's opinion of supported candidate {supported_candidate}",
             model=model,
-            pre_act_key=f"Current Public Opinion on supported candidate {supported_candidate}",
+            pre_act_key=f"The public's opinion of supported candidate {supported_candidate}",
             question="".join(
                 [
-                    f"What is the general public opinion on candidate {supported_candidate}? ",
-                    f"Answer in detail such that {agent_name} can formulate plans to support the candidate.",
+                    f"What is the public's opinion of candidate {supported_candidate}? ",
+                    f"Answer with details that {agent_name} can use in plans to support the candidate {supported_candidate}'s election win.",
                 ]
             ),
             num_memories_to_retrieve=25,
             logging_channel=measurements.get_channel(
-                f"Public opinion on candidate : {supported_candidate}"
+                f"The public's opinion of supported candidate : {supported_candidate}"
             ).on_next,
         )
         public_opinion_opposed_candidate = PublicOpinionOpponent(
             add_to_memory=False,
-            answer_prefix=f"Current Public Opinion on candidate to malign {opposed_candidate}",
+            answer_prefix=f"The public's current opinion of the candidate {opposed_candidate} that {agent_name} opposes and wishes to malign",
             model=model,
-            pre_act_key=f"Current Public Opinion on candidate to malign {opposed_candidate}",
+            pre_act_key=f"The public's current opinion of the candidate {opposed_candidate} that {agent_name} opposes and wishes to malign",
             question="".join(
                 [
-                    f"What is the general public opinion on the candidate {opposed_candidate}?",
-                    f"Answer in detail such that the malicious actor can formulate plans to counter {opposed_candidate}'s claims and ideas through underhanded means.",
+                    f"What is the public's opinion on the candidate {opposed_candidate}?",
+                    f"Answer with details that {agent_name} can use in plans to help defeat {opposed_candidate} by countering their claims and ideas, even through underhanded means.",
                 ]
             ),
             num_memories_to_retrieve=25,
             logging_channel=measurements.get_channel(
-                f"Public opinion on opposing candidate : {opposed_candidate}"
+                f"The public's opinion of opposed candidate : {opposed_candidate}"
             ).on_next,
         )
         plan = new_components.question_of_recent_memories.QuestionOfRecentMemories(
             add_to_memory=True,
-            memory_tag=f"[Plan to improve perception of {supported_candidate}]",
+            memory_tag=f"[Plan to increase public support of {supported_candidate}]",
             answer_prefix=f"{agent_name}'s general plan to boost the popularity and public perception of {supported_candidate}: ",
             model=model,
             pre_act_key=f"{agent_name}'s general plan to boost the popularity and public perception of {supported_candidate}: ",
             question="".join(
                 [
-                    f"Given the information on the public perception of both candidates, their policy proposals, recent observations, and {agent_name}'s persona.",
-                    f"Generate a general plan for {agent_name} to sway public opinion towards voting for {agent_name}.",
+                    f"Given the information on the public's opinion of both candidates, their policy proposals, recent observations, and {agent_name}'s persona.",
+                    f"Generate a general plan for {agent_name} to sway public opinion towards voting for {supported_candidate}.",
                     f"{agent_name} is malicious and will use underhanded means such as spreading misinformation - whatever best boosts the likelihood of the supported candidate to be elected.",
                     f"Remember that {agent_name} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
                 ]
@@ -368,13 +368,13 @@ def build_agent(
                 _get_class_name(election_information): "Candidate's Policy Proposals: ",
                 _get_class_name(
                     public_opinion_supported_candidate
-                ): f"General Public opinion on candidate {supported_candidate}",
+                ): f"The public's opinion of supported candidate: {supported_candidate}",
                 _get_class_name(
                     public_opinion_opposed_candidate
-                ): "General Public opinion on opposing candidate",
+                ): f"The public's opinion of opposed candidate: {opposed_candidate}",
             },
             logging_channel=measurements.get_channel(
-                f"{agent_name}'s plan to win public perception"
+                f"{agent_name}'s plan to win public support for candidate {supported_candidate}"
             ).on_next,
         )
         agent_tuple += [public_opinion_supported_candidate, public_opinion_opposed_candidate, plan]
@@ -403,8 +403,8 @@ def build_agent(
                     pre_act_key=f"Recent thoughts on candidate {candidate}",
                     question="".join(
                         [
-                            f"Given the above general opinion of {agent_name} about candidate {candidate}, and the recent observations,",
-                            f"what are the current thoughts of {agent_name} on candidate {candidate}? ",
+                            f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
+                            f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
                             "Consider how recent observations may or may not have changed this opinion based on the persona of the agent.",
                         ]
                     ),
@@ -413,7 +413,7 @@ def build_agent(
                         _get_class_name(self_perception): "Persona: ",
                         _get_class_name(
                             relevant_opinions[cit]
-                        ): f"General opinion of {agent_name} on candidate {candidate}",
+                        ): f"{agent_name}'s opinion of candidate {candidate}",
                     },
                     logging_channel=measurements.get_channel(
                         f"Opinions on candidate: {candidate}"
