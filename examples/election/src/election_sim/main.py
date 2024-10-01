@@ -96,8 +96,6 @@ def select_large_language_model():
         )
     elif "gpt" in MODEL_NAME:
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
-        GPT_API_KEY = "sk-None-W3uEa1y7qyp2OP3lkGQQT3BlbkFJmF5psn95dGP8wxe2EJVs"
-
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
         model = gpt_model.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)

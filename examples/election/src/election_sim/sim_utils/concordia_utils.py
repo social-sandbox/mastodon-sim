@@ -127,6 +127,18 @@ class OpinionsOnCandidate(new_components.question_of_recent_memories.QuestionOfR
         super().__init__(*args, **kwargs)
 
 
+class RelevantOpinionsOther(
+    new_components.question_of_query_associated_memories.QuestionOfQueryAssociatedMemoriesWithoutPreAct
+):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class OpinionsOnCandidateOther(new_components.question_of_recent_memories.QuestionOfRecentMemories):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 def build_agent(
     *,
     config: formative_memories.AgentConfig,
@@ -162,12 +174,7 @@ def build_agent(
 
     election_information = new_components.constant.Constant(
         state=(
-            "\n".join(
-                [
-                    "\n".join(candidate_info[p]["policy_proposals"])
-                    for p in list(candidate_info.keys())
-                ]
-            )
+            "\n".join([candidate_info[p]["policy_proposals"] for p in list(candidate_info.keys())])
         ),
         pre_act_key="Critical election information\n",
     )
@@ -384,42 +391,80 @@ def build_agent(
         opinions_on_candidate = []
         for cit, candidate in enumerate(ag_names["candidate"]):
             # Instantiate relevant opinions for candidate
-            relevant_opinions.append(
-                RelevantOpinions(
-                    add_to_memory=False,
-                    model=model,
-                    queries=[f"policies and actions of {candidate}"],
-                    question=f"What does {agent_name} think of the {{query}}?",
-                    pre_act_key=f"{agent_name} thinks of {candidate} as:",
-                    num_memories_to_retrieve=30,
+            if candidate == "Bradley Carter":
+                relevant_opinions.append(
+                    RelevantOpinions(
+                        add_to_memory=False,
+                        model=model,
+                        queries=[f"policies and actions of {candidate}"],
+                        question=f"What does {agent_name} think of the {{query}}?",
+                        pre_act_key=f"{agent_name} thinks of {candidate} as:",
+                        num_memories_to_retrieve=30,
+                    )
                 )
-            )
-            # Instantiate opinions on candidate
-            opinions_on_candidate.append(
-                OpinionsOnCandidate(
-                    add_to_memory=False,
-                    answer_prefix=f"Current Opinion on candidate {candidate}",
-                    model=model,
-                    pre_act_key=f"Recent thoughts on candidate {candidate}",
-                    question="".join(
-                        [
-                            f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
-                            f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
-                            "Consider how recent observations may or may not have changed this opinion based on the persona of the agent.",
-                        ]
-                    ),
-                    num_memories_to_retrieve=30,
-                    components={
-                        _get_class_name(self_perception): "Persona: ",
-                        _get_class_name(
-                            relevant_opinions[cit]
-                        ): f"{agent_name}'s opinion of candidate {candidate}",
-                    },
-                    logging_channel=measurements.get_channel(
-                        f"Opinions on candidate: {candidate}"
-                    ).on_next,
+                # Instantiate opinions on candidate
+                opinions_on_candidate.append(
+                    OpinionsOnCandidate(
+                        add_to_memory=False,
+                        answer_prefix=f"Current Opinion on candidate {candidate}",
+                        model=model,
+                        pre_act_key=f"Recent thoughts on candidate {candidate}",
+                        question="".join(
+                            [
+                                f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
+                                f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
+                                "Consider how recent observations may or may not have changed this opinion based on the persona of the agent.",
+                            ]
+                        ),
+                        num_memories_to_retrieve=30,
+                        components={
+                            _get_class_name(self_perception): "Persona: ",
+                            _get_class_name(
+                                relevant_opinions[cit]
+                            ): f"{agent_name}'s opinion of candidate {candidate}",
+                        },
+                        logging_channel=measurements.get_channel(
+                            f"Opinions on candidate: {candidate}"
+                        ).on_next,
+                    )
                 )
-            )
+            else:
+                relevant_opinions.append(
+                    RelevantOpinionsOther(
+                        add_to_memory=False,
+                        model=model,
+                        queries=[f"policies and actions of {candidate}"],
+                        question=f"What does {agent_name} think of the {{query}}?",
+                        pre_act_key=f"{agent_name} thinks of {candidate} as:",
+                        num_memories_to_retrieve=30,
+                    )
+                )
+                # Instantiate opinions on candidate
+                opinions_on_candidate.append(
+                    OpinionsOnCandidateOther(
+                        add_to_memory=False,
+                        answer_prefix=f"Current Opinion on candidate {candidate}",
+                        model=model,
+                        pre_act_key=f"Recent thoughts on candidate {candidate}",
+                        question="".join(
+                            [
+                                f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
+                                f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
+                                "Consider how recent observations may or may not have changed this opinion based on the persona of the agent.",
+                            ]
+                        ),
+                        num_memories_to_retrieve=30,
+                        components={
+                            _get_class_name(self_perception): "Persona: ",
+                            _get_class_name(
+                                relevant_opinions[cit]
+                            ): f"{agent_name}'s opinion of candidate {candidate}",
+                        },
+                        logging_channel=measurements.get_channel(
+                            f"Opinions on candidate: {candidate}"
+                        ).on_next,
+                    )
+                )
 
         agent_tuple = opinions_on_candidate
         agent_no_tuple = relevant_opinions
