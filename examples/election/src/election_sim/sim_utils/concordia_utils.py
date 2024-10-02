@@ -391,7 +391,7 @@ def build_agent(
         opinions_on_candidate = []
         for cit, candidate in enumerate(ag_names["candidate"]):
             # Instantiate relevant opinions for candidate
-            if candidate == "Bradley Carter":
+            if candidate == ag_names["candidate"][1]:
                 relevant_opinions.append(
                     RelevantOpinions(
                         add_to_memory=False,

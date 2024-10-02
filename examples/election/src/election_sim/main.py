@@ -14,7 +14,9 @@ with warnings.catch_warnings():
     import sentence_transformers
 
 # assumes current working directory: mastodon-sim/
-# sys.path.insert(0, "../concordia")
+from concordia import __file__ as concordia_location
+
+print(f"importing Concordia from: {concordia_location}")
 from concordia.clocks import game_clock
 from concordia.language_model import amazon_bedrock_model, gpt_model
 from concordia.typing.entity import ActionSpec, OutputType
