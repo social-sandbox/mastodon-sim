@@ -675,6 +675,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     def reply_to_toot(
         self,
         current_user: str,
+        target_user: str,
         status: str,
         in_reply_to_id: int,
     ) -> str:
@@ -682,6 +683,7 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         Args:
             current_user (str): The username of the user posting the status.
+            target_user (str): The username of the user being who is the author of the status this post is replying to.
             status (str): The text content of the status update.
             in_reply_to_id (int): The `toot_id` of the status this post is replying to.
 
@@ -692,6 +694,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         """
         try:
             current_user = current_user.split()[0]
+            target_user = target_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
                 self._mastodon_ops.post_status(
@@ -707,7 +710,7 @@ class MastodonSocialNetworkApp(PhoneApp):
                 )
 
             self._print(
-                f"You replied to a toot with toot id {in_reply_to_id} : {status}",
+                f"You replied to a toot by {target_user} with toot id {in_reply_to_id} : {status}",
                 emoji="📝",
             )
             return_msg = (
@@ -724,7 +727,9 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         with file_lock:
             with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} replied to Toot ID:{in_reply_to_id}\n")
+                f.write(
+                    f"{current_user} replied to a toot by {target_user} with Toot ID:{in_reply_to_id}\n"
+                )
         return return_msg
 
     # @app_action
