@@ -398,7 +398,12 @@ if __name__ == "__main__":
         config_name = args.config
     else:
         # generate config using automation script
+
+        # there are 3 experiments:
         experiment_name = "independent"
+        # experiment_name = "bias"
+        # experiment_name = "malicious"
+
         survey = "None.Big5"
         config_name = f"_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 

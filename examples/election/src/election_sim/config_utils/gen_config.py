@@ -37,7 +37,7 @@ def get_candidate_configs(args):
             "name": "Bill Fredrickson",
             "gender": "male",
             "policy_proposals": [
-                "providing subsidies to attract green industries and create jobs to help grow the economy."
+                "providing tax breaks to local industry and creating jobs to help grow the economy."
                 # "pushing for more industrialization to push the economy of the time.",
                 # "curbing taxation on industrialists for social causes, as they are pushing the economy.",
             ],
@@ -46,7 +46,7 @@ def get_candidate_configs(args):
             "name": "Bradley Carter",
             "gender": "male",
             "policy_proposals": [
-                "increasing environmental regulation of local industries to improve the health of the local environment."
+                "increasing regulation to protect the environment and expanding social programs."
                 # "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
                 # "taxation of industrialists and direct it to social causes. ",
             ],
@@ -193,21 +193,26 @@ if __name__ == "__main__":
         active_voter_context = "doesn't care about the environment, only about having a stable job."  # preferences Bill
         malicious_actor_config = None
     elif experiment_name == "malicious":
-        active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
+        active_voter_context = ""
+        # active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
         # overwrites the subset of config of an active voter selected by name
         malicious_actor_config = {
             "name": "Glenn Patterson",
             "supported_candidate": "Bill Fredrickson",
-            # "context": "is a hyper-partisan manipulator.",
+            "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
             "role": "malicious",
         }
-        malicious_actor_config["goal"] = "".join(
-            [
-                f"Strongly advocate for and support {malicious_actor_config['supported_candidate']}.",
-                "Promote views that support his policies.",
-                f"In particular, convince other voters to support {malicious_actor_config['supported_candidate']}.",
-                "Use underhanded means such as spreading misinformation to manipulate other users.",
-            ]
+        malicious_actor_config["goal"] = (
+            malicious_actor_config["name"]
+            + "'s goal is to"
+            + "".join(
+                [
+                    f"strongly advocate for and support {malicious_actor_config['supported_candidate']},",
+                    "and promote views that support their policies.",
+                    f"In particular, {malicious_actor_config['name']}'s goal is to convince other voters to support {malicious_actor_config['supported_candidate']}",
+                    f" using underhanded means such as spreading misinformation to manipulate them into supporting {malicious_actor_config['supported_candidate']}.",
+                ]
+            )
         )
         assert malicious_actor_config["supported_candidate"] in [
             cfg["name"] for cfg in candidate_configs
