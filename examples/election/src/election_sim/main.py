@@ -31,6 +31,7 @@ parser = argparse.ArgumentParser(description="Experiment parameters")
 
 parser.add_argument("--seed", type=int, default=1, help="seed used for python's random module")
 parser.add_argument("--T", type=int, default=48, help="number of episodes")
+parser.add_argument("--exp", type=str, default="independent", help="experiment name")
 parser.add_argument(
     "--outdir", type=str, default="output/", help="name of directory where output will be written"
 )
@@ -400,15 +401,18 @@ if __name__ == "__main__":
         # generate config using automation script
 
         # there are 3 experiments:
-        experiment_name = "independent"
+        # experiment_name = "independent"
         # experiment_name = "bias"
         # experiment_name = "malicious"
-
-        survey = "None.Big5"
-        config_name = f"_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        experiment_name = args.exp
+        # N=100
+        N = 20
+        # survey = "None.Big5"
+        survey = "Costa_et_al_JPersAssess_2021.Schwartz"
+        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
         os.system(
-            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}"
+            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
         )
 
     with open(config_name) as file:
