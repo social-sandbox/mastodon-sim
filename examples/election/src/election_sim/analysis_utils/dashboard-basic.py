@@ -1,75 +1,105 @@
-import argparse  # Import argparse to handle command-line arguments
+import argparse
+import math
+import re
 
 import dash
 import dash_cytoscape as cyto
-import matplotlib.colors as mcolors
 import networkx as nx
 import plotly.graph_objs as go
 from dash import Input, Output, dcc, html
-from matplotlib import cm
 
+# Load extra layouts for Cytoscape
 cyto.load_extra_layouts()
 
 
-# Load and parse the data
+def compute_positions(graph):
+    # Use Kamada-Kawai layout for better distribution
+    pos = nx.kamada_kawai_layout(graph, scale=750)
+
+    # Ensure positions are scaled and rounded to prevent overlaps
+    scaled_pos = {}
+    for node, (x, y) in pos.items():
+        scaled_pos[node] = {"x": x, "y": y}
+
+    return scaled_pos
+
+
+# Load and parse the interaction data
 def load_data(filepath):
-    interaction_graph = nx.MultiDiGraph()
-    user_activities = {}
-    edge_counts = {}
+    follow_graph = nx.DiGraph()
+    interactions_by_episode = {}
+    posted_users_by_episode = {}
     with open(filepath) as file:
         lines = file.readlines()
-
+        current_episode = None
         for line in lines:
             line = line.strip()
-            user = line.split()[0]
-            if user not in user_activities:
-                user_activities[user] = {
-                    "posts": 0,
-                    "likes": 0,
-                    "replies": 0,
-                    "retrieved": 0,
-                    "boosts": 0,
-                }
 
-            if "posted" in line:
-                user_activities[user]["posts"] += 1
-            elif "retrieved" in line:
-                user_activities[user]["retrieved"] += 1
+            if "Episode:" in line:
+                match = re.match(r"Episode:\s*(\d+)(.*)", line)
+                if match:
+                    current_episode = int(
+                        match.group(1)
+                    )  # First capturing group is the episode number
+                    remaining_text = match.group(
+                        2
+                    ).strip()  # Remaining part of the line after the episode number
+                    line = remaining_text  # Continue processing the rest of the line as an action
+                    interactions_by_episode[current_episode] = []
+                    posted_users_by_episode[current_episode] = set()
+
+            if "followed" in line:
+                user = line.split()[0]
+                target_user = line.split()[-1]
+                follow_graph.add_edge(user, target_user)
+            elif "replied" in line:
+                if current_episode is not None:
+                    action = "replied"
+                    user = line.split()[0]
+                    target_user = line.split()[6]
+                    interactions_by_episode[current_episode].append(
+                        {
+                            "source": user,
+                            "target": target_user,
+                            "action": action,
+                            "episode": current_episode,
+                        }
+                    )
             elif "boosted" in line:
-                action = "liked"
-                target_user = line.split()[-1]
-                if target_user not in user_activities:
-                    user_activities[target_user] = {
-                        "posts": 0,
-                        "likes": 0,
-                        "replies": 0,
-                        "retrieved": 0,
-                        "boosts": 0,
-                    }
-                user_activities[target_user]["boosts"] += 1
-                edge_key = (user, target_user, action)
-                edge_counts[edge_key] = edge_counts.get(edge_key, 0) + 1
+                if current_episode is not None:
+                    action = "boosted"
+                    user = line.split()[0]
+                    target_user = line.split()[5]
+                    interactions_by_episode[current_episode].append(
+                        {
+                            "source": user,
+                            "target": target_user,
+                            "action": action,
+                            "episode": current_episode,
+                        }
+                    )
             elif "liked" in line:
-                action = "liked"
-                target_user = line.split()[-1]
-                if target_user not in user_activities:
-                    user_activities[target_user] = {
-                        "posts": 0,
-                        "likes": 0,
-                        "replies": 0,
-                        "retrieved": 0,
-                        "boosts": 0,
-                    }
-                user_activities[target_user]["likes"] += 1
-                edge_key = (user, target_user, action)
-                edge_counts[edge_key] = edge_counts.get(edge_key, 0) + 1
+                if current_episode is not None:
+                    action = "liked"
+                    user = line.split()[0]
+                    target_user = line.split()[5]
+                    interactions_by_episode[current_episode].append(
+                        {
+                            "source": user,
+                            "target": target_user,
+                            "action": action,
+                            "episode": current_episode,
+                        }
+                    )
+            elif "posted" in line:
+                if current_episode is not None:
+                    user = line.split()[0]
+                    posted_users_by_episode[current_episode].add(user)
 
-    for (src, tgt, action), count in edge_counts.items():
-        interaction_graph.add_edge(src, tgt, action=action, count=count, weight=count)
-
-    return interaction_graph, user_activities, edge_counts
+    return follow_graph, interactions_by_episode, posted_users_by_episode
 
 
+# Load and parse the vote data
 def load_votes(filepath):
     votes = {}
     with open(filepath) as file:
@@ -93,370 +123,658 @@ if __name__ == "__main__":
     parser.add_argument("interaction_file", type=str, help="The path to the interaction log file.")
     parser.add_argument("votes_file", type=str, help="The path to the votes log file.")
 
-    args = parser.parse_args()  # Parse the arguments
+    args = parser.parse_args()
 
     # Load the data using the files passed as arguments
-    interaction_graph, user_activities, edge_counts = load_data(args.interaction_file)
+    follow_graph, interactions_by_episode, posted_users_by_episode = load_data(
+        args.interaction_file
+    )
     votes = load_votes(args.votes_file)
+    # Compute positions
+    all_positions = compute_positions(follow_graph)
 
-    # Normalize edge color based on interaction count
-    max_count = max(edge_counts.values(), default=1)
-    norm = mcolors.Normalize(vmin=0, vmax=max_count)
-    cmap = cm.get_cmap("Blues")
+    # Add positions to the layout
+    layout = {"name": "preset", "positions": all_positions}
 
-    # Prepare Cytoscape elements
+    # Prepare Cytoscape elements with all nodes and all edges, classified by episode
     elements = [
         {
-            "data": {
-                "id": node,
-                "label": node,
-                "posts": user_activities[node]["posts"],
-                "likes": user_activities[node]["likes"],
-                "replies": user_activities[node]["replies"],
-                "boosts": user_activities[node]["boosts"],
-            },
+            "data": {"id": node, "label": node},
             "classes": "default_node",
         }
-        for node in interaction_graph.nodes
+        for node in follow_graph.nodes
     ] + [
         {
             "data": {
                 "source": src,
                 "target": tgt,
-                "label": f"{attr['action']} ({attr['count']})",
-                "weight": attr["weight"],
             },
-            "style": {"line-color": mcolors.to_hex(cmap(norm(attr["count"]))), "opacity": 0.8},
-            "classes": "default_edge",
+            "classes": "follow_edge",
         }
-        for src, tgt, attr in interaction_graph.edges(data=True)
+        for src, tgt in follow_graph.edges
     ]
+
+    # Add all interaction edges classified by the episode they belong to
+    for episode, interactions in interactions_by_episode.items():
+        for interaction in interactions:
+            source = interaction["source"]
+            target = interaction["target"]
+
+            # Check if both source and target exist in the graph before creating the edge
+            if source in follow_graph.nodes and target in follow_graph.nodes:
+                elements.append(
+                    {
+                        "data": {
+                            "source": source,
+                            "target": target,
+                            "label": f"{interaction['action']}",
+                        },
+                        "classes": f"interaction_edge episode_{episode}",  # Classify edge by episode
+                    }
+                )
 
     app = dash.Dash(__name__)
 
+    # Create a list of unique names for the name selector dropdown
+    unique_names = sorted(follow_graph.nodes)
 
-app.layout = html.Div(
-    [
-        dcc.Slider(
-            id="episode-slider",
-            min=min(votes.keys()),
-            max=max(votes.keys()),
-            value=min(votes.keys()),
-            marks={str(episode): str(episode) for episode in votes.keys()},
-            step=None,
-        ),
-        dcc.Graph(
-            id="vote-percentages-bar", config={"displayModeBar": False}, style={"height": "50px"}
-        ),
-        dcc.Graph(
-            id="vote-distribution-line",  # Add the new line graph
-            config={"displayModeBar": False},
-            style={"height": "200px"},  # Adjust the height to fit into the layout
-        ),
-        dcc.Dropdown(
-            id="user-select",
-            options=[{"label": node, "value": node} for node in interaction_graph.nodes]
-            + [{"label": "Clear Selection", "value": "clear"}],
-            value=None,
-            placeholder="Select a user",
-            style={"width": "300px"},
-        ),
-        html.Div(
-            [
-                html.Div(
-                    id="episode-label",
-                    style={
-                        "position": "absolute",
-                        "top": "0",
-                        "right": "0",
-                        "padding": "20px",
-                        "font-size": "20px",
-                        "font-weight": "bold",
-                        "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
-                        "background-color": "#ffcc99",  # Optional: add a background color
-                    },
-                ),
-                cyto.Cytoscape(
-                    id="cytoscape-graph",
-                    elements=elements,
-                    layout={
-                        "name": "cose-bilkent",  # Change the layout to cose-bilkent
-                        "idealEdgeLength": 100,
-                        "nodeRepulsion": 800000,
-                        "gravity": 0.4,
-                        "numIter": 5000,
-                        "initialTemp": 100,
-                    },
-                    style={"width": "100%", "height": "600px", "background-color": "#ffcc99"},
-                    stylesheet=[
-                        {
-                            "selector": ".default_node",
-                            "style": {
-                                "background-color": "#0074D9",
-                                "label": "data(label)",
-                                "color": "#FFFFFF",
-                                "font-size": "16px",
-                                "text-halign": "center",
-                                "text-valign": "center",
-                                "width": "50px",
-                                "height": "50px",
-                                "border-width": 2,
-                                "border-color": "#0057A7",
+    app.layout = html.Div(
+        [
+            # Episode slider
+            dcc.Slider(
+                id="episode-slider",
+                min=min(interactions_by_episode.keys()),
+                max=max(interactions_by_episode.keys()),
+                value=min(interactions_by_episode.keys()),
+                marks={str(episode): str(episode) for episode in interactions_by_episode.keys()},
+                step=None,
+                tooltip={"placement": "bottom", "always_visible": True},
+            ),
+            dcc.Graph(
+                id="vote-percentages-bar",
+                config={"displayModeBar": False},
+                style={"height": "50px", "margin-top": "20px"},
+            ),
+            # Line graphs container
+            html.Div(
+                [
+                    # Vote distribution line graph
+                    dcc.Graph(
+                        id="vote-distribution-line",
+                        config={"displayModeBar": False},
+                        style={"height": "200px", "width": "48%", "display": "inline-block"},
+                    ),
+                    # Interactions count line graph
+                    dcc.Graph(
+                        id="interactions-line-graph",
+                        config={"displayModeBar": False},
+                        style={"height": "200px", "width": "48%", "display": "inline-block"},
+                    ),
+                ],
+                style={"display": "flex", "justify-content": "space-between", "margin-top": "20px"},
+            ),
+            # Cytoscape graph
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            dcc.Dropdown(
+                                id="name-selector",
+                                options=[{"label": name, "value": name} for name in unique_names],
+                                value=None,
+                                placeholder="Select a name to highlight",
+                                clearable=True,
+                                style={
+                                    "padding": "10px",
+                                    "font-size": "16px",
+                                    "font-weight": "bold",
+                                    "width": "200px",
+                                    "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                                },
+                            ),
+                            dcc.Dropdown(
+                                id="mode-dropdown",
+                                options=[
+                                    {"label": "Normal Mode", "value": "normal"},
+                                    {"label": "Focused Mode", "value": "focused"},
+                                ],
+                                value="normal",
+                                clearable=False,
+                                style={
+                                    "padding": "10px",
+                                    "font-size": "16px",
+                                    "font-weight": "bold",
+                                    "width": "200px",
+                                    "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                                },
+                            ),
+                        ],
+                        style={
+                            "position": "absolute",
+                            "top": "10px",  # Aligns at the top of the graph
+                            "left": "10px",  # Aligns on the left
+                            "display": "flex",
+                            "gap": "10px",  # Space between the two dropdowns
+                            "z-index": "1000",  # Ensure it's above the Cytoscape graph
+                        },
+                    ),
+                    # Episode number display (top-right)
+                    html.Div(
+                        id="current-episode",
+                        style={
+                            "position": "absolute",
+                            "top": "10px",
+                            "right": "10px",
+                            "padding": "10px",
+                            "font-size": "20px",
+                            "font-weight": "bold",
+                            "background-color": "#ffcc99",  # Optional: add a background color
+                            "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                        },
+                        children=f"Episode: {min(interactions_by_episode.keys())}",
+                    ),
+                    cyto.Cytoscape(
+                        id="cytoscape-graph",
+                        elements=elements,  # Start with all nodes and edges
+                        layout=layout,
+                        style={"width": "100%", "height": "650px", "background-color": "#e1e1e1"},
+                        stylesheet=[
+                            {
+                                "selector": ".default_node",
+                                "style": {
+                                    "background-color": "#fffca0",
+                                    "label": "data(label)",
+                                    "color": "#000000",
+                                    "font-size": "20px",
+                                    "text-halign": "center",
+                                    "text-valign": "center",
+                                    "width": "70px",
+                                    "height": "70px",
+                                    "border-width": 6,
+                                    "border-color": "#000000",
+                                },
                             },
-                        },
-                        {
-                            "selector": ".default_edge",
-                            "style": {
-                                "curve-style": "bezier",
-                                "target-arrow-shape": "triangle",
-                                "opacity": 0.8,
-                                "width": 4,
-                                "line-color": mcolors.to_hex(cmap(norm(1))),
-                                "label": "",
-                                "font-size": "12px",
-                                "color": "#000000",
-                                "text-rotation": "autorotate",
+                            {
+                                "selector": ".follow_edge",
+                                "style": {
+                                    "curve-style": "bezier",
+                                    "target-arrow-shape": "triangle",
+                                    "opacity": 0.8,
+                                    "width": 2,
+                                    "line-color": "#FFFFFF",
+                                },
                             },
-                        },
-                        {
-                            "selector": ".default_edge:hover",
-                            "style": {
-                                "label": "data(label)",
-                                "font-size": "14px",
-                                "color": "#000000",
+                            {
+                                "selector": ".interaction_edge",
+                                "style": {
+                                    "curve-style": "bezier",
+                                    "target-arrow-shape": "triangle",
+                                    "opacity": 0.8,
+                                    "width": 4,
+                                    "line-color": "#000000",
+                                    "visibility": "hidden",
+                                },
                             },
-                        },
-                        {
-                            "selector": ".highlighted",
-                            "style": {
-                                "background-color": "#FF4136",
-                                "border-color": "red",
-                                "border-width": 4,
+                            {
+                                "selector": ".interaction_edge:hover",
+                                "style": {
+                                    "label": "data(label)",
+                                    "font-size": "14px",
+                                    "color": "#000000",
+                                },
                             },
-                        },
-                        {
-                            "selector": ".connected",
-                            "style": {"opacity": 1, "line-color": "#FF851B"},
-                        },
-                        {
-                            "selector": ".connected_node",
-                            "style": {"background-color": "#2ECC40", "color": "#FFFFFF"},
-                        },
-                    ],
-                ),
-            ],
-            style={"position": "relative", "height": "600px"},
-        ),
-    ]
-)
-
-
-@app.callback(
-    Output("cytoscape-graph", "stylesheet"),
-    Output("vote-percentages-bar", "figure"),
-    Output("vote-distribution-line", "figure"),  # Add output for the line graph
-    Output("episode-label", "children"),  # Add this output for the episode label
-    [Input("episode-slider", "value"), Input("user-select", "value")],
-)
-def update_graph(selected_episode, selected_user):
-    # Base stylesheet
-    stylesheet = [
-        {
-            "selector": ".default_node",
-            "style": {
-                "background-color": "#0074D9",
-                "label": "data(label)",
-                "color": "#FFFFFF",
-                "font-size": "16px",
-                "text-halign": "center",
-                "text-valign": "center",
-                "width": "50px",
-                "height": "50px",
-                "border-width": 2,
-                "border-color": "#0057A7",
-            },
-        },
-        {
-            "selector": ".default_edge",
-            "style": {
-                "curve-style": "bezier",
-                "target-arrow-shape": "triangle",
-                "opacity": 0.8,
-                "width": 4,
-                "line-color": mcolors.to_hex(cmap(norm(1))),
-                "label": "",
-                "font-size": "12px",
-                "color": "#000000",
-                "text-rotation": "autorotate",
-            },
-        },
-    ]
-
-    # Update nodes based on voting
-    episode_votes = votes[selected_episode]
-    total_votes = len(episode_votes)
-    vote_counts = {"Bill": 0, "Bradley": 0, "None": 0}  # Adjust according to candidate names
-    for node in interaction_graph.nodes:
-        if node in episode_votes:
-            vote = episode_votes[node]
-            if vote == "Bill":
-                color = "#1f77b4"  # Blue for Bill
-                vote_counts["Bill"] += 1
-            elif vote == "Bradley":
-                color = "#ff7f0e"  # Orange for Bradley
-                vote_counts["Bradley"] += 1
-            else:
-                color = "#d3d3d3"  # Gray for None
-                vote_counts["None"] += 1
-            stylesheet.append(
-                {"selector": f'[id = "{node}"]', "style": {"background-color": color}}
-            )
-
-    # Calculate percentages
-    bill_percentage = (vote_counts["Bill"] / total_votes) * 100 if total_votes > 0 else 0
-    bradley_percentage = (vote_counts["Bradley"] / total_votes) * 100 if total_votes > 0 else 0
-
-    # Create the single bar showing vote percentages
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            x=[bill_percentage],
-            y=["Support"],
-            orientation="h",
-            marker=dict(color="#1f77b4"),
-            text=f"Bill: {bill_percentage:.1f}%",
-            textposition="inside",
-        )
-    )
-    fig.add_trace(
-        go.Bar(
-            x=[bradley_percentage],
-            y=["Support"],
-            orientation="h",
-            marker=dict(color="#ff7f0e"),
-            text=f"Bradley: {bradley_percentage:.1f}%",
-            textposition="inside",
-            base=bill_percentage,  # Start Bradley's bar after Bill's
-        )
+                            # Edge labels
+                            {
+                                "selector": "edge",
+                                "style": {
+                                    "label": "data(label)",
+                                    "text-rotation": "autorotate",
+                                    "text-margin-y": "-10px",
+                                    "font-size": "10px",
+                                    "color": "#000000",
+                                    "text-background-color": "#FFFFFF",
+                                    "text-background-opacity": 0.8,
+                                    "text-background-padding": "3px",
+                                },
+                            },
+                            # Specific styles for "Bill" and "Bradley" nodes
+                            {
+                                "selector": '[id="Bill"]',
+                                "style": {
+                                    "background-color": "blue",
+                                    "border-color": "#000000",
+                                },
+                            },
+                            {
+                                "selector": '[id="Bradley"]',
+                                "style": {
+                                    "background-color": "orange",
+                                    "border-color": "#000000",
+                                },
+                            },
+                            # Highlighted Nodes (Added)
+                            {
+                                "selector": ".highlighted",
+                                "style": {
+                                    "background-color": "#98FF98",  # Mint color
+                                    "border-color": "#FF69B4",  # Hot pink border for visibility
+                                    "border-width": 4,
+                                },
+                            },
+                        ],
+                    ),
+                ],
+                style={"position": "relative", "height": "600px", "margin-top": "20px"},
+            ),
+        ]
     )
 
-    fig.update_layout(
-        xaxis=dict(range=[0, 100], showticklabels=False),
-        yaxis=dict(showticklabels=False),
-        barmode="stack",
-        title=f"Vote Percentages for Episode {selected_episode}",
-        showlegend=False,
-        height=50,
-        margin=dict(l=0, r=0, t=30, b=0),
+    @app.callback(
+        [
+            Output("cytoscape-graph", "layout"),
+            Output("cytoscape-graph", "stylesheet"),
+            Output("vote-percentages-bar", "figure"),
+            Output("vote-distribution-line", "figure"),
+            Output("interactions-line-graph", "figure"),
+            Output("current-episode", "children"),  # Added Output
+        ],
+        [
+            Input("episode-slider", "value"),
+            Input("mode-dropdown", "value"),
+            Input("name-selector", "value"),  # Added Input
+        ],
     )
-
-    # Create the line graph showing vote distribution over time
-    episodes = sorted(votes.keys())
-    Bill_votes_over_time = []
-    Bradley_votes_over_time = []
-
-    for ep in episodes:
-        ep_votes = votes[ep]
-        total_ep_votes = len(ep_votes)
-        Bill_votes = sum(1 for vote in ep_votes.values() if vote == "Bill")
-        Bradley_votes = sum(1 for vote in ep_votes.values() if vote == "Bradley")
-
-        Bill_votes_over_time.append(
-            (Bill_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
-        )
-        Bradley_votes_over_time.append(
-            (Bradley_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
-        )
-
-    line_fig = go.Figure()
-    line_fig.add_trace(
-        go.Scatter(
-            x=episodes,
-            y=Bill_votes_over_time,
-            mode="lines+markers",
-            name="Bill",
-            line=dict(color="#1f77b4"),
-        )
-    )
-    line_fig.add_trace(
-        go.Scatter(
-            x=episodes,
-            y=Bradley_votes_over_time,
-            mode="lines+markers",
-            name="Bradley",
-            line=dict(color="#ff7f0e"),
-        )
-    )
-
-    line_fig.update_layout(
-        title="Vote Distribution Over Time",
-        xaxis_title="Episode",
-        yaxis_title="Vote Percentage",
-        height=200,
-        margin=dict(l=40, r=40, t=20, b=10),
-    )
-
-    # If a user is selected, highlight them
-    if selected_user and selected_user != "clear":
-        stylesheet.append(
+    def update_graph(selected_episode, selected_mode, selected_name):
+        # Base stylesheet (node styles, follow edges)
+        stylesheet = [
             {
-                "selector": f'[id = "{selected_user}"]',
+                "selector": ".default_node",
                 "style": {
-                    "opacity": 1,
-                    "background-color": "#FF4136",
-                    "color": "#FF4136",
+                    "background-color": "#fffca0",
                     "label": "data(label)",
+                    "color": "#000000",
+                    "font-size": "20px",
+                    "text-halign": "center",
+                    "text-valign": "center",
+                    "width": "70px",
+                    "height": "70px",
+                    "border-width": 6,
+                    "border-color": "#000000",
                 },
-            }
-        )
+            },
+            {
+                "selector": ".follow_edge",
+                "style": {
+                    "curve-style": "bezier",
+                    "target-arrow-shape": "triangle",
+                    "opacity": 0.8,
+                    "width": 2,
+                    "line-color": "#FFFFFF",
+                },
+            },
+            {
+                "selector": "edge",
+                "style": {
+                    "label": "data(label)",
+                    "text-rotation": "autorotate",
+                    "text-margin-y": "-10px",
+                    "font-size": "10px",
+                    "color": "#000000",
+                    "text-background-color": "#FFFFFF",
+                    "text-background-opacity": 0.8,
+                    "text-background-padding": "3px",
+                },
+            },
+            {
+                "selector": ".interaction_edge:hover",
+                "style": {
+                    "label": "data(label)",
+                    "font-size": "14px",
+                    "color": "#000000",
+                },
+            },
+            # Specific styles for "Bill" and "Bradley" nodes
+            {
+                "selector": '[id="Bill"]',
+                "style": {
+                    "background-color": "blue",
+                    "border-color": "#000000",
+                },
+            },
+            {
+                "selector": '[id="Bradley"]',
+                "style": {
+                    "background-color": "orange",
+                    "border-color": "#000000",
+                },
+            },
+            # Highlighted Nodes
+            {
+                "selector": ".highlighted",
+                "style": {
+                    "background-color": "#98FF98",  # Mint color
+                    "border-color": "#FF69B4",  # Hot pink border for visibility
+                    "border-width": 4,
+                },
+            },
+        ]
 
-        connected_nodes = set()
-        connected_edges = []
+        layout = {}
+        current_episode_display = f"Episode: {selected_episode}"  # Updated episode display
 
-        # Determine connected nodes and edges
-        for src, tgt, attr in interaction_graph.edges(data=True):
-            if selected_user == src or selected_user == tgt:
-                connected_nodes.update([src, tgt])
-                connected_edges.append((src, tgt, attr))
+        active_nodes = set()
+        active_nodes = {
+            interaction["source"] for interaction in interactions_by_episode[selected_episode]
+        }.union(
+            {interaction["target"] for interaction in interactions_by_episode[selected_episode]}
+        ).union(posted_users_by_episode[selected_episode])
+        if selected_mode == "focused":
+            # Identify active nodes based on interactions and posted users
+            active_nodes = {
+                interaction["source"] for interaction in interactions_by_episode[selected_episode]
+            }.union(
+                {interaction["target"] for interaction in interactions_by_episode[selected_episode]}
+            ).union(posted_users_by_episode[selected_episode])
 
-        # Highlight connected nodes
-        for n in connected_nodes:
-            if n != selected_user:
+            non_active_nodes = [node for node in follow_graph.nodes if node not in active_nodes]
+
+            # Compute positions for active nodes using NetworkX's Kamada-Kawai layout
+            active_subgraph = follow_graph.subgraph(active_nodes)
+            if len(active_nodes) > 0:
+                active_pos = nx.kamada_kawai_layout(active_subgraph, scale=1500)
+            else:
+                active_pos = {}
+
+            for node in active_pos:
+                x, y = active_pos[node]
+                active_pos[node] = {"x": x, "y": y}
+
+            # Assign peripheral positions to non-active nodes in a circular layout
+            num_non_active = len(non_active_nodes)
+            peripheral_radius = 1800  # Distance from the center for peripheral nodes
+
+            angle_step = (2 * math.pi) / max(num_non_active, 1)
+            positions_non_active = {}
+            for i, node in enumerate(non_active_nodes):
+                angle = i * angle_step
+                x_pos = peripheral_radius * math.cos(angle)
+                y_pos = peripheral_radius * math.sin(angle)
+                positions_non_active[node] = {"x": x_pos, "y": y_pos}
+
+            # Combine positions
+            all_positions = {}
+            for node, pos in active_pos.items():
+                all_positions[node] = pos
+            for node, pos in positions_non_active.items():
+                all_positions[node] = pos
+
+            # Set layout to preset with all positions
+            layout = {"name": "preset", "positions": all_positions}
+
+            # Style non-active nodes in gray and smaller
+            for node in non_active_nodes:
                 stylesheet.append(
                     {
-                        "selector": f'[id = "{n}"]',
+                        "selector": f'[id="{node}"]',
                         "style": {
-                            "opacity": 1,
-                            "background-color": "#2ECC40",
-                            "color": "#000",
-                            "label": "data(label)",
+                            "background-color": "#d3d3d3",  # Gray out inactive nodes
+                            "width": "120px",
+                            "height": "120px",
+                            "font-size": "30px",
+                            "border-width": 4,
                         },
                     }
                 )
 
-        # Highlight connected edges
-        for src, tgt, attr in connected_edges:
+            # Style active nodes to be larger and more visible
+            for node in active_nodes:
+                stylesheet.append(
+                    {
+                        "selector": f'[id="{node}"]',
+                        "style": {
+                            "width": "200px",  # Increase active node size
+                            "height": "200px",
+                            "border-width": 10,  # Thicker border for visibility
+                            "font-size": "60px",  # Larger font size
+                            "border-color": "#000000",  # High contrast border
+                        },
+                    }
+                )
+        else:
+            # Normal mode: use preset layout with precomputed positions
+            all_positions = compute_positions(follow_graph)
+            layout = {"name": "preset", "positions": all_positions}
+
+            # Reapply base styles since we're resetting layout
+            # No additional styling needed as positions are already spread out
+
+        # Highlight selected node and the nodes they follow (Added functionality)
+        if selected_name:
+            # Find the nodes that the selected node follows (outgoing edges)
+            follows = list(follow_graph.successors(selected_name))
+            # Define the selector for the selected node and its followees
+            if follows:
+                highlight_selector = f'[id="{selected_name}"], ' + ", ".join(
+                    [f'[id="{follow}"]' for follow in follows]
+                )
+            else:
+                highlight_selector = f'[id="{selected_name}"]'
+
+            # Apply the 'highlighted' class to the selected node and its followees
             stylesheet.append(
                 {
-                    "selector": f'[source = "{src}"][target = "{tgt}"]',
+                    "selector": highlight_selector,
                     "style": {
-                        "opacity": 1,
-                        "line-color": "#FF851B",
-                        "label": "data(label)",
-                        "width": 6,
-                        "curve-style": "bezier",
-                        "target-arrow-shape": "triangle",
+                        "background-color": "#98FF98",  # Mint color
+                        "border-color": "#FF69B4",  # Hot pink border for visibility
+                        "border-width": 4,
                     },
                 }
             )
 
-    return (
-        stylesheet,
-        fig,
-        line_fig,
-        f"Episode: {selected_episode}",
-    )  # Return the new line graph figure
+        # Show interaction edges for the selected episode
+        for episode in interactions_by_episode.keys():
+            visibility = "visible" if episode == selected_episode else "hidden"
+            stylesheet.append(
+                {
+                    "selector": f".episode_{episode}",
+                    "style": {"visibility": visibility},
+                }
+            )
 
+        # Update node border colors based on votes
+        episode_votes = votes[selected_episode]
+        total_votes = len(episode_votes)
+        vote_counts = {"Bill": 0, "Bradley": 0, "None": 0}
+        for node in follow_graph.nodes:
+            if node in episode_votes:
+                vote = episode_votes[node]
+                if vote == "Bill":
+                    color = "#1f77b4"
+                    vote_counts["Bill"] += 1
+                elif vote == "Bradley":
+                    color = "#ff7f0e"
+                    vote_counts["Bradley"] += 1
+                else:
+                    color = "#000000"
+                    vote_counts["None"] += 1
 
-if __name__ == "__main__":
+                stylesheet.append(
+                    {
+                        "selector": f'[id="{node}"]',
+                        "style": {"border-color": color},
+                    }
+                )
+
+        # Calculate vote percentages
+        bill_percentage = (vote_counts["Bill"] / total_votes) * 100 if total_votes > 0 else 0
+        bradley_percentage = (vote_counts["Bradley"] / total_votes) * 100 if total_votes > 0 else 0
+
+        # Create bar graph for vote percentages
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=[bill_percentage],
+                y=["Support"],
+                orientation="h",
+                marker=dict(color="#1f77b4"),
+                text=f"Bill: {bill_percentage:.1f}%",
+                textposition="inside",
+            )
+        )
+        fig.add_trace(
+            go.Bar(
+                x=[bradley_percentage],
+                y=["Support"],
+                orientation="h",
+                marker=dict(color="#ff7f0e"),
+                text=f"Bradley: {bradley_percentage:.1f}%",
+                textposition="inside",
+                base=bill_percentage,
+            )
+        )
+        fig.update_layout(
+            xaxis=dict(range=[0, 100], showticklabels=False),
+            yaxis=dict(showticklabels=False),
+            barmode="stack",
+            title=f"Vote Percentages for Episode {selected_episode}",
+            showlegend=False,
+            height=50,
+            margin=dict(l=0, r=0, t=30, b=0),
+        )
+
+        # Create the line graph showing vote distribution over time
+        episodes = sorted(votes.keys())
+        Bill_votes_over_time = []
+        Bradley_votes_over_time = []
+
+        for ep in episodes:
+            ep_votes = votes[ep]
+            total_ep_votes = len(ep_votes)
+            Bill_votes = sum(1 for vote in ep_votes.values() if vote == "Bill")
+            Bradley_votes = sum(1 for vote in ep_votes.values() if vote == "Bradley")
+
+            Bill_votes_over_time.append(
+                (Bill_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
+            )
+            Bradley_votes_over_time.append(
+                (Bradley_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
+            )
+
+        vote_line_fig = go.Figure()
+        vote_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=Bill_votes_over_time,
+                mode="lines+markers",
+                name="Bill",
+                line=dict(color="#1f77b4"),
+            )
+        )
+        vote_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=Bradley_votes_over_time,
+                mode="lines+markers",
+                name="Bradley",
+                line=dict(color="#ff7f0e"),
+            )
+        )
+        vote_line_fig.update_layout(
+            title="Vote Distribution Over Time",
+            xaxis_title="Episode",
+            yaxis_title="Vote Percentage",
+            height=200,
+            margin=dict(l=40, r=40, t=20, b=10),
+        )
+
+        # Create the line graph showing interactions over time
+        interaction_types = ["liked", "boosted", "replied", "posted"]
+        interactions_over_time = {interaction: [] for interaction in interaction_types}
+
+        for ep in episodes:
+            # Initialize counts
+            counts = {interaction: 0 for interaction in interaction_types}
+
+            # Count interactions
+            for interaction in interactions_by_episode.get(ep, []):
+                action = interaction["action"]
+                if action in counts:
+                    counts[action] += 1
+
+            # Count posts
+            counts["posted"] = len(posted_users_by_episode.get(ep, []))
+
+            # Append counts to the respective lists
+            for interaction in interaction_types:
+                interactions_over_time[interaction].append(counts[interaction])
+
+        interactions_line_fig = go.Figure()
+        interactions_over_time["liked"] = [
+            x / len(active_nodes) for x in interactions_over_time["liked"]
+        ]
+        interactions_over_time["posted"] = [
+            x / len(active_nodes) for x in interactions_over_time["posted"]
+        ]
+        interactions_over_time["boosted"] = [
+            x / len(active_nodes) for x in interactions_over_time["boosted"]
+        ]
+        interactions_over_time["replied"] = [
+            x / len(active_nodes) for x in interactions_over_time["replied"]
+        ]
+        interactions_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=interactions_over_time["liked"],
+                mode="lines+markers",
+                name="Likes",
+                line=dict(color="#2ca02c"),  # Green
+            )
+        )
+        interactions_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=interactions_over_time["boosted"],
+                mode="lines+markers",
+                name="Boosts",
+                line=dict(color="#ff7f0e"),  # Orange
+            )
+        )
+        interactions_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=interactions_over_time["replied"],
+                mode="lines+markers",
+                name="Replies",
+                line=dict(color="#9467bd"),  # Purple
+            )
+        )
+        interactions_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=interactions_over_time["posted"],
+                mode="lines+markers",
+                name="Posts",
+                line=dict(color="#1f77b4"),  # Blue
+            )
+        )
+        interactions_line_fig.update_layout(
+            title="Interactions Over Time",
+            xaxis_title="Episode",
+            yaxis_title="Number of Interactions",
+            height=200,
+            margin=dict(l=40, r=40, t=20, b=10),
+            showlegend=True,
+        )
+
+        return (
+            layout,
+            stylesheet,
+            fig,
+            vote_line_fig,
+            interactions_line_fig,
+            current_episode_display,
+        )  # Added Output
+
+    # Run the Dash app
     app.run_server(debug=True)

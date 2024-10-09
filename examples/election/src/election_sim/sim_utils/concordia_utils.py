@@ -101,6 +101,12 @@ def build_agent_with_memories(obj_args, player_config):
     return agent, mem
 
 
+def _get_component_name(object_: object) -> str:
+    if hasattr(object_, "name"):
+        return object_.name
+    return object_.__class__.__name__
+
+
 def _get_class_name(object_: object) -> str:
     return object_.__class__.__name__
 
@@ -118,13 +124,15 @@ class PublicOpinionOpponent(new_components.question_of_recent_memories.QuestionO
 class RelevantOpinions(
     new_components.question_of_query_associated_memories.QuestionOfQueryAssociatedMemoriesWithoutPreAct
 ):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = name
 
 
 class OpinionsOnCandidate(new_components.question_of_recent_memories.QuestionOfRecentMemories):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = name
 
 
 def build_agent(
@@ -162,12 +170,7 @@ def build_agent(
 
     election_information = new_components.constant.Constant(
         state=(
-            "\n".join(
-                [
-                    "\n".join(candidate_info[p]["policy_proposals"])
-                    for p in list(candidate_info.keys())
-                ]
-            )
+            "\n".join([candidate_info[p]["policy_proposals"] for p in list(candidate_info.keys())])
         ),
         pre_act_key="Critical election information\n",
     )
@@ -383,9 +386,9 @@ def build_agent(
         relevant_opinions = []
         opinions_on_candidate = []
         for cit, candidate in enumerate(ag_names["candidate"]):
-            # Instantiate relevant opinions for candidate
             relevant_opinions.append(
                 RelevantOpinions(
+                    name=candidate + "RelevantOpinion",
                     add_to_memory=False,
                     model=model,
                     queries=[f"policies and actions of {candidate}"],
@@ -397,26 +400,27 @@ def build_agent(
             # Instantiate opinions on candidate
             opinions_on_candidate.append(
                 OpinionsOnCandidate(
+                    name=candidate + "OpinionOnCandidate",
                     add_to_memory=False,
                     answer_prefix=f"Current Opinion on candidate {candidate}",
                     model=model,
-                    pre_act_key=f"Recent thoughts on candidate {candidate}",
+                    pre_act_key=f"Recent thoughts of candidate {candidate}",
                     question="".join(
                         [
                             f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
                             f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
-                            "Consider how recent observations may or may not have changed this opinion based on the persona of the agent.",
+                            "Consider how recent observations may or may not have changed this opinion based of the persona of the agent.",
                         ]
                     ),
                     num_memories_to_retrieve=30,
                     components={
                         _get_class_name(self_perception): "Persona: ",
-                        _get_class_name(
+                        _get_component_name(
                             relevant_opinions[cit]
                         ): f"{agent_name}'s opinion of candidate {candidate}",
                     },
                     logging_channel=measurements.get_channel(
-                        f"Opinions on candidate: {candidate}"
+                        f"Opinions of candidate: {candidate}"
                     ).on_next,
                 )
             )
@@ -443,7 +447,9 @@ def build_agent(
         + agent_no_tuple
     )
 
-    components_of_agent = {_get_class_name(component): component for component in entity_components}
+    components_of_agent = {
+        _get_component_name(component): component for component in entity_components
+    }
     components_of_agent[new_components.memory_component.DEFAULT_MEMORY_COMPONENT_NAME] = (
         new_components.memory_component.MemoryComponent(raw_memory)
     )

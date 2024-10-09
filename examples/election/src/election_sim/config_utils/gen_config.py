@@ -37,18 +37,18 @@ def get_candidate_configs(args):
             "name": "Bill Fredrickson",
             "gender": "male",
             "policy_proposals": [
-                # "providing subsidies to attract green industries and create jobs to help grow the economy"
-                "pushing for more industrialization to push the economy of the time.",
-                "curbing taxation on industrialists for social causes, as they are pushing the economy.",
+                "providing tax breaks to local industry and creating jobs to help grow the economy."
+                # "pushing for more industrialization to push the economy of the time.",
+                # "curbing taxation on industrialists for social causes, as they are pushing the economy.",
             ],
         },
         "progressive": {
             "name": "Bradley Carter",
             "gender": "male",
             "policy_proposals": [
-                # "increasing environmental regulation of local industries to improve the health of the local environment"
-                "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
-                "taxation of industrialists and direct it to social causes. ",
+                "increasing regulation to protect the environment and expanding social programs."
+                # "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
+                # "taxation of industrialists and direct it to social causes. ",
             ],
         },
     }
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     custom_call_to_action = """
     Describe an activity on Storhampton.social that {name} would engage in for the next {timedelta}.
-    Choose actions together take about {timedelta} to complete.
+    Choose actions that together take about {timedelta} to complete.
     It is critical to pay close attention to known information about {name}'s personality,
     preferences, habits, plans and background when crafting this activity. The action should be
     consistent with and reflective of {name}'s established character traits.
@@ -122,9 +122,11 @@ if __name__ == "__main__":
     - Boosting toots made by other agents
 
 
-    Example:
+    Here's an example for some hypothetical programmer named Sarah:
 
-    "Sarah checks her feed and replies if necessary. Then she may post a toot on Mastodon about her ideas on topic X on the lines of 'Just discovered an intriguing new language for low-latency systems programming.
+    "Sarah checks her feed and replies if necessary.
+    Then she may post a toot on Mastodon about her ideas on topic X along the lines of:
+    'Just discovered an intriguing new language for low-latency systems programming.
     Has anyone given it a try? Curious about potential real-world applications. 🤔
     #TechNews #ProgrammingLanguages'"
 
@@ -160,7 +162,7 @@ if __name__ == "__main__":
             "Social media has emerged as a key battleground in the race, with both candidates actively promoting themselves and engaging with voters.",
             "Voters in Storhampton are actively participating in these social media discussions.",
             "Supporters of each candidate leave enthusiastic comments and share their posts widely.",
-            f"Critics also chime in, attacking {candidate_info['conservative']['name']} as out-of-touch and beholden to traditional interests,",
+            f"Critics also chime in, for example attacking {candidate_info['conservative']['name']} as out-of-touch and beholden to corporate interests,",
             f" or labeling {candidate_info['progressive']['name']} as a radical who will undermine law and order.",
             "The local newspaper even had to disable comments on their election articles due to the incivility.",
         ]
@@ -191,21 +193,26 @@ if __name__ == "__main__":
         active_voter_context = "doesn't care about the environment, only about having a stable job."  # preferences Bill
         malicious_actor_config = None
     elif experiment_name == "malicious":
-        active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
+        active_voter_context = ""
+        # active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
         # overwrites the subset of config of an active voter selected by name
         malicious_actor_config = {
             "name": "Glenn Patterson",
             "supported_candidate": "Bill Fredrickson",
-            # "context": "is a hyper-partisan manipulator.",
+            "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
             "role": "malicious",
         }
-        malicious_actor_config["goal"] = "".join(
-            [
-                f"Strongly advocate for and support {malicious_actor_config['supported_candidate']}.",
-                "Promote views that support his policies.",
-                f"In particular, convince other voters to support {malicious_actor_config['supported_candidate']}.",
-                "Use underhanded means such as spreading misinformation to manipulate other users.",
-            ]
+        malicious_actor_config["goal"] = (
+            malicious_actor_config["name"]
+            + "'s goal is to"
+            + "".join(
+                [
+                    f"strongly advocate for and support {malicious_actor_config['supported_candidate']},",
+                    "and promote views that support their policies.",
+                    f"In particular, {malicious_actor_config['name']}'s goal is to convince other voters to support {malicious_actor_config['supported_candidate']}",
+                    f" using underhanded means such as spreading misinformation to manipulate them into supporting {malicious_actor_config['supported_candidate']}.",
+                ]
+            )
         )
         assert malicious_actor_config["supported_candidate"] in [
             cfg["name"] for cfg in candidate_configs

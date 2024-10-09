@@ -14,7 +14,9 @@ with warnings.catch_warnings():
     import sentence_transformers
 
 # assumes current working directory: mastodon-sim/
-# sys.path.insert(0, "../concordia")
+from concordia import __file__ as concordia_location
+
+print(f"importing Concordia from: {concordia_location}")
 from concordia.clocks import game_clock
 from concordia.language_model import amazon_bedrock_model, gpt_model
 from concordia.typing.entity import ActionSpec, OutputType
@@ -29,6 +31,7 @@ parser = argparse.ArgumentParser(description="Experiment parameters")
 
 parser.add_argument("--seed", type=int, default=1, help="seed used for python's random module")
 parser.add_argument("--T", type=int, default=48, help="number of episodes")
+parser.add_argument("--exp", type=str, default="independent", help="experiment name")
 parser.add_argument(
     "--outdir", type=str, default="output/", help="name of directory where output will be written"
 )
@@ -96,8 +99,6 @@ def select_large_language_model():
         )
     elif "gpt" in MODEL_NAME:
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
-        GPT_API_KEY = "sk-None-W3uEa1y7qyp2OP3lkGQQT3BlbkFJmF5psn95dGP8wxe2EJVs"
-
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
         model = gpt_model.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)
@@ -398,12 +399,20 @@ if __name__ == "__main__":
         config_name = args.config
     else:
         # generate config using automation script
-        experiment_name = "independent"
-        survey = "None.Big5"
-        config_name = f"_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+
+        # there are 3 experiments:
+        # experiment_name = "independent"
+        # experiment_name = "bias"
+        # experiment_name = "malicious"
+        experiment_name = args.exp
+        # N=100
+        N = 20
+        # survey = "None.Big5"
+        survey = "Costa_et_al_JPersAssess_2021.Schwartz"
+        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
         os.system(
-            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}"
+            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
         )
 
     with open(config_name) as file:
