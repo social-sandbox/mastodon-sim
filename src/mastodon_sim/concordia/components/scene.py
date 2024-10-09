@@ -14,9 +14,9 @@
 
 """A GameMaster that simulates a player's interaction with their phone."""
 
+import functools
 import re
 import textwrap
-import threading
 
 # _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 #   What action is {name} currently performing or has just performed
@@ -25,11 +25,13 @@ import threading
 #   Give a specific activity using one app. For example:
 #   {name} uses/used the Chat app to send "hi, what's up?" to George.
 #   """)
+import time
 from html import unescape
 from typing import Literal
 
 import termcolor
-from concordia.agents import entity_agent_with_logging
+#from concordia.agents import basic_agent
+from concordia.agents import deprecated_agent as basic_agent
 from concordia.associative_memory import blank_memories
 from concordia.clocks import game_clock
 from concordia.document import interactive_document
@@ -43,28 +45,40 @@ from mastodon_sim import mastodon_ops
 from mastodon_sim.concordia.components import apps, logging
 from mastodon_sim.concordia.components.apps import COLOR_TYPE
 
-file_lock = threading.Lock()
+
+def timed_function(tag="general"):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            duration = end_time - start_time
+            with open("time_logger.txt", "a") as f:
+                f.write(f"{tag} - {func.__name__} took {duration:.6f}s on {time.asctime()}\n")
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s current goal, plans and observations, what SINGLE specific action would they likely perform on their phone right now, and what information would they need to perform it?
-    Use your plan for current phone usage, tagged as tagged as [Planned Actions for upcoming Phone Usage] in your observations, alongside your previous actiosn to actualize the plan conducted in the current usage, tagged as [Action done on phone] to decide your next single action.
-    Mention a concrete action that can easily be converted into an API call, and don't answer with vague and general responses.
+    Based on {name}'s current goal and recent observations, what specific action would they likely perform on their phone right now, and what information would they need to perform it?
 
     Guidelines:
-    1. Choose a single, specific action that can be performed using one app.
-    2. Ensure the action is contextually appropriate, considering recent observations.
-    3. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
-    4. The action should adhere to {name}'s plans, but deviate if a more suitable option is presented.
+    1. Choose a single, specific action that can be performed using one app. There should be a single clear action.
+    2. The action should align with {name}'s plan, but deviate if a more suitable option presents itself.
+    3. Ensure the action is contextually appropriate, considering recent observations.
+    4. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
 
     Examples of contextually appropriate actions:
-    - Using the Mastodon app to read own timeline: {name} opens the Mastodon app and reads their feed.
-    - Posting a toot: {name} opens the Mastodon app and posts a toot.
+    - Using the Mastodon app to read their feed: {name} opens the Mastodon app and reads their feed.
+    - Posting a toot: {name} opens the Mastodon app and posts a toot. You can tag other users by adding '@' before mentioning their username.
     - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
     - Liking a Mastodon post: {name} likes a post they have recently read with a given Toot ID. (Return toot ID of the post you want to like)
     - Replying to a Mastodon post: {name} replies to a post they have recently read with a given Toot ID.
-    - Boosting a Mastodon post: {name} opens the Mastodon app to boost (Retweet) a toot - that shares it with their own followers. (Return Toot ID and the exact contents of the toot to be boosted.)
-    - Read another user's timeline: If you find a user interesting you can view their past activity and timeline (include their first name)
+    - Using the Mastodon app to send a message: {name} opens the Mastodon app and send a direct message to George.
 
     Remember:
     - Consider current observations so as not to repeat actions that have already been performed.
@@ -77,17 +91,15 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 
     Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
     {name} should like a toot if they agree with it.
-    {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
+    {name} should tag other users if referring to them.
   """)
 
 
-_PHONE_ACTION_SPEC = agent.ActionSpec(
-    call_to_action=_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
-)
+_PHONE_ACTION_SPEC = agent.ActionSpec(_PHONE_CALL_TO_ACTION, OutputType.FREE, tag="phone")
 
 
 def build(
-    player: entity_agent_with_logging.EntityAgentWithLogging,
+    player: basic_agent.BasicAgent,
     phone: apps.Phone,
     clock: game_clock.MultiIntervalClock,
     model: language_model.LanguageModel,
@@ -129,7 +141,7 @@ class _PhoneComponent(component.Component):
     def __init__(  # noqa: PLR0913
         self,
         model: language_model.LanguageModel,
-        player: entity_agent_with_logging.EntityAgentWithLogging,
+        player: basic_agent.BasicAgent,
         phone: apps.Phone,
         log_color: Literal[
             "black",
@@ -181,61 +193,35 @@ class _PhoneComponent(component.Component):
         )
         return did_conclude
 
+    @timed_function(tag="update_phonegamemaster")
     def update_after_event(self, event_statement: str):
         # print(f"Player state:\n{self._player.state()}")
         # TODO: May want to add player state to the transcript
         print("Inside phone_update_after_event")
-        print(f"Self state: {self._state}")
-        assert isinstance(self._phone.apps[0], apps.MastodonSocialNetworkApp)
-        app = self._phone.apps[0]
-        if self._state == "":
-            self._state += "You retrieved your timeline\n"
-            p_username = app.public_get_username(self._player.name.split()[0])
-            timeline = mastodon_ops.get_own_timeline(p_username, limit=10)
-
-            def _clean_html(html_string):
-                clean_text = re.sub("<[^<]+?>", "", unescape(html_string))
-                return re.sub(r"\s+", " ", clean_text).strip()
-
-            output_now = ""
-            for post in timeline:
-                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])}, Toot ID: {post['id']}\n "
-            self._player.observe(f"[Action done on phone]: Retrieved timeline: \n{output_now}")
-            return [f"[Action done on phone]: Retrieved timeline: \n{output_now}"]
+        self._state += "\n" + event_statement.strip()
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
-        check_post = chain_of_thought.yes_no_question(
-            "Does the action in the above transcript involve the user posting a toot, replying to a toot, or boosting a toot?"
+        chain_of_thought.statement(self._phone.description())
+        app_index = chain_of_thought.multiple_choice_question(
+            "In the above transcript, what app did the user use?",
+            answers=self._phone.app_names(),
         )
-        # print(check_post)
-        if check_post:
-            check_dup = chain_of_thought.yes_no_question(
-                f"Does the above toot/ reply to another toot have almost exactly the same content as one of the toots in the following list of actions? Answer No if the list is empty.: Actions: {self._state}"
-            )
-            # print(check_dup)
-            if check_dup:
-                self._player.observe(
-                    f"The following phone action was not conducted because it has already been done - {event_statement}"
-                )
-                return [
-                    f"The following phone action was not conducted because it has already been done - {event_statement}"
-                ]
-        self._state += "\n" + event_statement.strip()
+        app = self._phone.apps[app_index]
         action_names = [a.name for a in app.actions()]
         chain_of_thought.statement(app.description())
         action_index = chain_of_thought.multiple_choice_question(
-            "In the above transcript, what action did the user perform? If the transcript mentions multiple actions, pick the one that is the most specific and the given information is sufficient to perform it. Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline. Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
+            "In the above transcript, what action did the user perform?",
             answers=action_names,
         )
-        # print(action_index)
+        print(action_index)
         toot_id_required = chain_of_thought.yes_no_question(
-            "In the above transcript, does the user's action require a numeric toot id? (numeric toot id is required for replying, liking, boosting etc.)"
+            "In the above transcript, does the user's action require a numeric toot id? (numeric toot id is required for replying, liking etc.)"
         )
-        # print(toot_id_required)
+        print(toot_id_required)
         if toot_id_required:
             # find most recent statement
             print("Processing Toot IDx")
-            p_username = app.public_get_username(self._player.name.split()[0])
+            p_username = app.public_get_username(self._player.name)
             print(p_username)
             timeline = mastodon_ops.get_own_timeline(p_username, limit=10)
             print("Got ID from Mastodon")
@@ -280,7 +266,7 @@ class _PhoneComponent(component.Component):
             # TODO: verify if this makes sense
             if isinstance(result, str):
                 try:
-                    self._player.observe(f"[Action done on phone] : {result}")
+                    self._player.observe(result)
                     self._print("Phone action result observed.", color="yellow")
                 except Exception as e:
                     self._print(f"Error while observing result: {e}", color="red")
