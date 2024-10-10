@@ -7,6 +7,7 @@ import dash_cytoscape as cyto
 import networkx as nx
 import plotly.graph_objs as go
 from dash import Input, Output, dcc, html
+from plotly.subplots import make_subplots
 
 # Load extra layouts for Cytoscape
 cyto.load_extra_layouts()
@@ -180,21 +181,6 @@ if __name__ == "__main__":
 
     app.layout = html.Div(
         [
-            # Episode slider
-            dcc.Slider(
-                id="episode-slider",
-                min=min(interactions_by_episode.keys()),
-                max=max(interactions_by_episode.keys()),
-                value=min(interactions_by_episode.keys()),
-                marks={str(episode): str(episode) for episode in interactions_by_episode.keys()},
-                step=None,
-                tooltip={"placement": "bottom", "always_visible": True},
-            ),
-            dcc.Graph(
-                id="vote-percentages-bar",
-                config={"displayModeBar": False},
-                style={"height": "50px", "margin-top": "20px"},
-            ),
             # Line graphs container
             html.Div(
                 [
@@ -202,13 +188,13 @@ if __name__ == "__main__":
                     dcc.Graph(
                         id="vote-distribution-line",
                         config={"displayModeBar": False},
-                        style={"height": "200px", "width": "48%", "display": "inline-block"},
+                        style={"height": "170px", "width": "48%", "display": "inline-block"},
                     ),
                     # Interactions count line graph
                     dcc.Graph(
                         id="interactions-line-graph",
                         config={"displayModeBar": False},
-                        style={"height": "200px", "width": "48%", "display": "inline-block"},
+                        style={"height": "170px", "width": "48%", "display": "inline-block"},
                     ),
                 ],
                 style={"display": "flex", "justify-content": "space-between", "margin-top": "20px"},
@@ -222,7 +208,7 @@ if __name__ == "__main__":
                                 id="name-selector",
                                 options=[{"label": name, "value": name} for name in unique_names],
                                 value=None,
-                                placeholder="Select a name to highlight",
+                                placeholder="Select Name",
                                 clearable=True,
                                 style={
                                     "padding": "10px",
@@ -235,8 +221,8 @@ if __name__ == "__main__":
                             dcc.Dropdown(
                                 id="mode-dropdown",
                                 options=[
-                                    {"label": "Normal Mode", "value": "normal"},
-                                    {"label": "Focused Mode", "value": "focused"},
+                                    {"label": "Universal View", "value": "normal"},
+                                    {"label": "Active View", "value": "focused"},
                                 ],
                                 value="normal",
                                 clearable=False,
@@ -277,7 +263,7 @@ if __name__ == "__main__":
                         id="cytoscape-graph",
                         elements=elements,  # Start with all nodes and edges
                         layout=layout,
-                        style={"width": "100%", "height": "650px", "background-color": "#e1e1e1"},
+                        style={"width": "100%", "height": "620px", "background-color": "#e1e1e1"},
                         stylesheet=[
                             {
                                 "selector": ".default_node",
@@ -364,7 +350,27 @@ if __name__ == "__main__":
                         ],
                     ),
                 ],
-                style={"position": "relative", "height": "600px", "margin-top": "20px"},
+                style={
+                    "position": "relative",
+                    "height": "600px",
+                    "margin-top": "10px",
+                    "margin-bottom": "20px",
+                },
+            ),
+            # Episode slider
+            dcc.Slider(
+                id="episode-slider",
+                min=min(interactions_by_episode.keys()),
+                max=max(interactions_by_episode.keys()),
+                value=min(interactions_by_episode.keys()),
+                marks={str(episode): str(episode) for episode in interactions_by_episode.keys()},
+                step=None,
+                tooltip={"placement": "bottom", "always_visible": True},
+            ),
+            dcc.Graph(
+                id="vote-percentages-bar",
+                config={"displayModeBar": False},
+                style={"height": "50px", "margin-top": "20px"},
             ),
         ]
     )
@@ -681,9 +687,12 @@ if __name__ == "__main__":
             )
         )
         vote_line_fig.update_layout(
-            title="Vote Distribution Over Time",
-            xaxis_title="Episode",
-            yaxis_title="Vote Percentage",
+            title={"text": "Vote Distribution Over Time", "font": {"size": 14}},
+            xaxis={"title": {"text": "Episode", "font": {"size": 10}}, "tickfont": {"size": 8}},
+            yaxis={
+                "title": {"text": "Vote Percentage", "font": {"size": 10}},
+                "tickfont": {"size": 8},
+            },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
         )
@@ -692,8 +701,23 @@ if __name__ == "__main__":
         interaction_types = ["liked", "boosted", "replied", "posted"]
         interactions_over_time = {interaction: [] for interaction in interaction_types}
 
+        total_users = len(follow_graph.nodes)
+
+        # Initialize lists to store normalized interactions and active user fractions
+
+        active_user_fractions = []
+
         for ep in episodes:
             # Initialize counts
+            active_nodes_in_ep = set()
+            active_nodes_in_ep = {
+                interaction["source"] for interaction in interactions_by_episode.get(ep, [])
+            }.union(
+                {interaction["target"] for interaction in interactions_by_episode.get(ep, [])}
+            ).union(set(posted_users_by_episode.get(ep, [])))
+
+            num_active_users = len(active_nodes_in_ep)
+
             counts = {interaction: 0 for interaction in interaction_types}
 
             # Count interactions
@@ -707,21 +731,15 @@ if __name__ == "__main__":
 
             # Append counts to the respective lists
             for interaction in interaction_types:
-                interactions_over_time[interaction].append(counts[interaction])
+                interactions_over_time[interaction].append(counts[interaction] / num_active_users)
 
-        interactions_line_fig = go.Figure()
-        interactions_over_time["liked"] = [
-            x / len(active_nodes) for x in interactions_over_time["liked"]
-        ]
-        interactions_over_time["posted"] = [
-            x / len(active_nodes) for x in interactions_over_time["posted"]
-        ]
-        interactions_over_time["boosted"] = [
-            x / len(active_nodes) for x in interactions_over_time["boosted"]
-        ]
-        interactions_over_time["replied"] = [
-            x / len(active_nodes) for x in interactions_over_time["replied"]
-        ]
+            # Calculate active user fraction
+            active_user_fraction = num_active_users / total_users if total_users > 0 else 0
+            active_user_fractions.append(active_user_fraction)
+
+        interactions_line_fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+        # Add normalized interaction traces to the primary y-axis
         interactions_line_fig.add_trace(
             go.Scatter(
                 x=episodes,
@@ -729,8 +747,11 @@ if __name__ == "__main__":
                 mode="lines+markers",
                 name="Likes",
                 line=dict(color="#2ca02c"),  # Green
-            )
+                marker=dict(symbol="circle", size=6),
+            ),
+            secondary_y=False,
         )
+
         interactions_line_fig.add_trace(
             go.Scatter(
                 x=episodes,
@@ -738,8 +759,11 @@ if __name__ == "__main__":
                 mode="lines+markers",
                 name="Boosts",
                 line=dict(color="#ff7f0e"),  # Orange
-            )
+                marker=dict(symbol="square", size=6),
+            ),
+            secondary_y=False,
         )
+
         interactions_line_fig.add_trace(
             go.Scatter(
                 x=episodes,
@@ -747,8 +771,11 @@ if __name__ == "__main__":
                 mode="lines+markers",
                 name="Replies",
                 line=dict(color="#9467bd"),  # Purple
-            )
+                marker=dict(symbol="diamond", size=6),
+            ),
+            secondary_y=False,
         )
+
         interactions_line_fig.add_trace(
             go.Scatter(
                 x=episodes,
@@ -756,17 +783,71 @@ if __name__ == "__main__":
                 mode="lines+markers",
                 name="Posts",
                 line=dict(color="#1f77b4"),  # Blue
-            )
+                marker=dict(symbol="triangle-up", size=6),
+            ),
+            secondary_y=False,
         )
+
+        # Add active users fraction trace to the secondary y-axis
+        interactions_line_fig.add_trace(
+            go.Scatter(
+                x=episodes,
+                y=active_user_fractions,
+                mode="lines",
+                name="Active User Fraction",
+                line=dict(color="gray"),
+            ),
+            secondary_y=True,
+        )
+
+        # Define the y-axis range
+        y_axis_range = [0, 2]
+
+        # Update both y-axes
+        interactions_line_fig.update_yaxes(
+            title_text="Action Rate of Active Users",
+            range=y_axis_range,
+            secondary_y=False,
+            showgrid=True,
+            gridcolor="lightgray",
+        )
+
+        interactions_line_fig.update_yaxes(
+            title_text="Active User Fraction",
+            range=[0, 1],
+            secondary_y=True,
+            showgrid=False,  # Typically, grid lines are only on the primary y-axis
+            gridcolor="lightgray",
+        )
+
         interactions_line_fig.update_layout(
-            title="Interactions Over Time",
-            xaxis_title="Episode",
-            yaxis_title="Number of Interactions",
+            title={
+                "text": "Interactions Over Time",
+                "font": {"size": 14},  # Reduced title font size to 14
+            },
+            xaxis={
+                "title": {
+                    "text": "Episode",
+                    "font": {"size": 10},  # Reduced x-axis label font size to 12
+                },
+                "tickfont": {"size": 8},  # Reduced x-axis tick font size
+                "range": [
+                    0,
+                    len(episodes) + 1,
+                ],  # Setting the range from 0 to length of episodes + 1
+                "dtick": 10,  # Show a tick marker every 5 episodes
+            },
+            yaxis={
+                "title": {
+                    "text": "Interactions/ Num. Agents",
+                    "font": {"size": 10},  # Reduced y-axis label font size to 12
+                },
+                "tickfont": {"size": 8},  # Reduced y-axis tick font size
+            },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
             showlegend=True,
         )
-
         return (
             layout,
             stylesheet,
