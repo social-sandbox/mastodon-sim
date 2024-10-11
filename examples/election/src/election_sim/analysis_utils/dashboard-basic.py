@@ -211,10 +211,10 @@ if __name__ == "__main__":
                                 placeholder="Select Name",
                                 clearable=True,
                                 style={
-                                    "padding": "10px",
+                                    "padding": "0px",
                                     "font-size": "16px",
                                     "font-weight": "bold",
-                                    "width": "200px",
+                                    "width": "150px",
                                     "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
                                 },
                             ),
@@ -227,10 +227,10 @@ if __name__ == "__main__":
                                 value="normal",
                                 clearable=False,
                                 style={
-                                    "padding": "10px",
+                                    "padding": "0px",
                                     "font-size": "16px",
                                     "font-weight": "bold",
-                                    "width": "200px",
+                                    "width": "150px",
                                     "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
                                 },
                             ),
@@ -276,7 +276,7 @@ if __name__ == "__main__":
                                     "text-valign": "center",
                                     "width": "70px",
                                     "height": "70px",
-                                    "border-width": 6,
+                                    "border-width": 10,
                                     "border-color": "#000000",
                                 },
                             },
@@ -344,7 +344,7 @@ if __name__ == "__main__":
                                 "style": {
                                     "background-color": "#98FF98",  # Mint color
                                     "border-color": "#FF69B4",  # Hot pink border for visibility
-                                    "border-width": 4,
+                                    "border-width": 10,
                                 },
                             },
                         ],
@@ -370,7 +370,7 @@ if __name__ == "__main__":
             dcc.Graph(
                 id="vote-percentages-bar",
                 config={"displayModeBar": False},
-                style={"height": "50px", "margin-top": "20px"},
+                style={"height": "100px", "margin-top": "20px"},
             ),
         ]
     )
@@ -404,7 +404,7 @@ if __name__ == "__main__":
                     "text-valign": "center",
                     "width": "70px",
                     "height": "70px",
-                    "border-width": 6,
+                    "border-width": 10,
                     "border-color": "#000000",
                 },
             },
@@ -437,30 +437,6 @@ if __name__ == "__main__":
                     "label": "data(label)",
                     "font-size": "14px",
                     "color": "#000000",
-                },
-            },
-            # Specific styles for "Bill" and "Bradley" nodes
-            {
-                "selector": '[id="Bill"]',
-                "style": {
-                    "background-color": "blue",
-                    "border-color": "#000000",
-                },
-            },
-            {
-                "selector": '[id="Bradley"]',
-                "style": {
-                    "background-color": "orange",
-                    "border-color": "#000000",
-                },
-            },
-            # Highlighted Nodes
-            {
-                "selector": ".highlighted",
-                "style": {
-                    "background-color": "#98FF98",  # Mint color
-                    "border-color": "#FF69B4",  # Hot pink border for visibility
-                    "border-width": 4,
                 },
             },
         ]
@@ -527,7 +503,7 @@ if __name__ == "__main__":
                             "width": "120px",
                             "height": "120px",
                             "font-size": "30px",
-                            "border-width": 4,
+                            "border-width": 10,
                         },
                     }
                 )
@@ -540,7 +516,7 @@ if __name__ == "__main__":
                         "style": {
                             "width": "200px",  # Increase active node size
                             "height": "200px",
-                            "border-width": 10,  # Thicker border for visibility
+                            "border-width": 30,  # Thicker border for visibility
                             "font-size": "60px",  # Larger font size
                             "border-color": "#000000",  # High contrast border
                         },
@@ -552,31 +528,7 @@ if __name__ == "__main__":
             layout = {"name": "preset", "positions": all_positions}
 
             # Reapply base styles since we're resetting layout
-            # No additional styling needed as positions are already spread out
-
-        # Highlight selected node and the nodes they follow (Added functionality)
-        if selected_name:
-            # Find the nodes that the selected node follows (outgoing edges)
-            follows = list(follow_graph.successors(selected_name))
-            # Define the selector for the selected node and its followees
-            if follows:
-                highlight_selector = f'[id="{selected_name}"], ' + ", ".join(
-                    [f'[id="{follow}"]' for follow in follows]
-                )
-            else:
-                highlight_selector = f'[id="{selected_name}"]'
-
-            # Apply the 'highlighted' class to the selected node and its followees
-            stylesheet.append(
-                {
-                    "selector": highlight_selector,
-                    "style": {
-                        "background-color": "#98FF98",  # Mint color
-                        "border-color": "#FF69B4",  # Hot pink border for visibility
-                        "border-width": 4,
-                    },
-                }
-            )
+            # No additional styling needed as positions are already spread ou
 
         # Show interaction edges for the selected episode
         for episode in interactions_by_episode.keys():
@@ -592,25 +544,45 @@ if __name__ == "__main__":
         episode_votes = votes[selected_episode]
         total_votes = len(episode_votes)
         vote_counts = {"Bill": 0, "Bradley": 0, "None": 0}
+        if selected_name:
+            # Find the nodes that the selected node follows (outgoing edges)
+            follows = list(follow_graph.successors(selected_name))
+
         for node in follow_graph.nodes:
             if node in episode_votes:
                 vote = episode_votes[node]
+
                 if vote == "Bill":
-                    color = "#1f77b4"
+                    color = "#ff7f0e"
                     vote_counts["Bill"] += 1
                 elif vote == "Bradley":
-                    color = "#ff7f0e"
+                    color = "#1f77b4"
                     vote_counts["Bradley"] += 1
                 else:
                     color = "#000000"
                     vote_counts["None"] += 1
 
+                if selected_name:
+                    if node == selected_name:
+                        backcolor = "#A020F0"
+                    elif node in follows:
+                        backcolor = "#98FF98"
+                    else:
+                        backcolor = "#fffca0"
+                elif node == "Bill":
+                    backcolor = "orange"
+                elif node == "Bradley":
+                    backcolor = "#add8e6"
+                else:
+                    backcolor = "#fffca0"
                 stylesheet.append(
                     {
                         "selector": f'[id="{node}"]',
-                        "style": {"border-color": color},
+                        "style": {"border-color": color, "background-color": backcolor},
                     }
                 )
+            else:
+                print(f"{node} not in vote list")
 
         # Calculate vote percentages
         bill_percentage = (vote_counts["Bill"] / total_votes) * 100 if total_votes > 0 else 0
@@ -623,7 +595,7 @@ if __name__ == "__main__":
                 x=[bill_percentage],
                 y=["Support"],
                 orientation="h",
-                marker=dict(color="#1f77b4"),
+                marker=dict(color="#ff7f0e"),
                 text=f"Bill: {bill_percentage:.1f}%",
                 textposition="inside",
             )
@@ -633,7 +605,7 @@ if __name__ == "__main__":
                 x=[bradley_percentage],
                 y=["Support"],
                 orientation="h",
-                marker=dict(color="#ff7f0e"),
+                marker=dict(color="#1f77b4"),
                 text=f"Bradley: {bradley_percentage:.1f}%",
                 textposition="inside",
                 base=bill_percentage,
@@ -644,9 +616,10 @@ if __name__ == "__main__":
             yaxis=dict(showticklabels=False),
             barmode="stack",
             title=f"Vote Percentages for Episode {selected_episode}",
+            title_x=0.5,
             showlegend=False,
-            height=50,
-            margin=dict(l=0, r=0, t=30, b=0),
+            height=100,
+            margin=dict(l=20, r=20, t=40, b=0),
         )
 
         # Create the line graph showing vote distribution over time
@@ -673,8 +646,9 @@ if __name__ == "__main__":
                 x=episodes,
                 y=Bill_votes_over_time,
                 mode="lines+markers",
-                name="Bill",
-                line=dict(color="#1f77b4"),
+                name="for Bill",
+                line=dict(color="#ff7f0e"),
+                cliponaxis=False,
             )
         )
         vote_line_fig.add_trace(
@@ -682,19 +656,26 @@ if __name__ == "__main__":
                 x=episodes,
                 y=Bradley_votes_over_time,
                 mode="lines+markers",
-                name="Bradley",
-                line=dict(color="#ff7f0e"),
+                name="for Bradley",
+                line=dict(color="#1f77b4"),
+                cliponaxis=False,
             )
         )
         vote_line_fig.update_layout(
-            title={"text": "Vote Distribution Over Time", "font": {"size": 14}},
-            xaxis={"title": {"text": "Episode", "font": {"size": 10}}, "tickfont": {"size": 8}},
-            yaxis={
-                "title": {"text": "Vote Percentage", "font": {"size": 10}},
+            title={"text": "Vote Share Over Time", "font": {"size": 14}, "x": 0.43},
+            xaxis={
+                "title": {"text": "Episode", "font": {"size": 10}},
                 "tickfont": {"size": 8},
+                "dtick": 8,
+                "range": [0, len(episodes) - 1],
+            },
+            yaxis={
+                "title": {"text": "Vote Percentage", "font": {"size": 12}},
+                "tickfont": {"size": 8},
+                "range": [0, 100],
             },
             height=200,
-            margin=dict(l=40, r=40, t=20, b=10),
+            margin=dict(l=0, r=0, t=20, b=10),
         )
 
         # Create the line graph showing interactions over time
@@ -748,6 +729,7 @@ if __name__ == "__main__":
                 name="Likes",
                 line=dict(color="#2ca02c"),  # Green
                 marker=dict(symbol="circle", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -760,6 +742,7 @@ if __name__ == "__main__":
                 name="Boosts",
                 line=dict(color="#ff7f0e"),  # Orange
                 marker=dict(symbol="square", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -772,6 +755,7 @@ if __name__ == "__main__":
                 name="Replies",
                 line=dict(color="#9467bd"),  # Purple
                 marker=dict(symbol="diamond", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -784,6 +768,7 @@ if __name__ == "__main__":
                 name="Posts",
                 line=dict(color="#1f77b4"),  # Blue
                 marker=dict(symbol="triangle-up", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -794,8 +779,9 @@ if __name__ == "__main__":
                 x=episodes,
                 y=active_user_fractions,
                 mode="lines",
-                name="Active User Fraction",
+                name="Active User<br>Fraction",
                 line=dict(color="gray"),
+                cliponaxis=False,
             ),
             secondary_y=True,
         )
@@ -818,12 +804,14 @@ if __name__ == "__main__":
             secondary_y=True,
             showgrid=False,  # Typically, grid lines are only on the primary y-axis
             gridcolor="lightgray",
+            tickfont={"size": 8},
         )
 
         interactions_line_fig.update_layout(
             title={
-                "text": "Interactions Over Time",
+                "text": "Actions Over Time",
                 "font": {"size": 14},  # Reduced title font size to 14
+                "x": 0.35,
             },
             xaxis={
                 "title": {
@@ -833,21 +821,23 @@ if __name__ == "__main__":
                 "tickfont": {"size": 8},  # Reduced x-axis tick font size
                 "range": [
                     0,
-                    len(episodes) + 1,
+                    len(episodes) - 1,
                 ],  # Setting the range from 0 to length of episodes + 1
-                "dtick": 10,  # Show a tick marker every 5 episodes
+                "dtick": 8,  # Show a tick marker every 5 episodes
             },
             yaxis={
                 "title": {
-                    "text": "Interactions/ Num. Agents",
-                    "font": {"size": 10},  # Reduced y-axis label font size to 12
+                    "text": "#Actions /<br> #Active Users",
+                    "font": {"size": 12},  # Reduced y-axis label font size to 12
                 },
                 "tickfont": {"size": 8},  # Reduced y-axis tick font size
             },
             height=200,
-            margin=dict(l=40, r=40, t=20, b=10),
+            margin=dict(l=0, r=40, t=20, b=20),
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=1.3),
             showlegend=True,
         )
+
         return (
             layout,
             stylesheet,
