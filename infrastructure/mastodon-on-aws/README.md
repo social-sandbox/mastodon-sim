@@ -153,8 +153,8 @@ Ensure the following are installed and configured on your system:
 While on the web server, create a new user and grant admin privileges.
 
 ```bash
-export ADMIN_USERNAME=austinmw
-export EMAIL_ADDRESS=austinmw89@gmail.com
+export ADMIN_USERNAME=yourusername
+export EMAIL_ADDRESS=youremail@gmail.com
 
 # Create a new user and generate a password (write down the password)
 RAILS_ENV=production bin/tootctl accounts create $ADMIN_USERNAME --email $EMAIL_ADDRESS --confirmed --role Owner
@@ -219,7 +219,7 @@ This should output the following:
 2024-07-06T07:41:45.792379-0400 INFO Created new Mastodon app
 2024-07-06T07:41:45.793279-0400 INFO Created new .env file at /Users/austinwelch/Desktop/mastodon-sim/.env
 2024-07-06T07:41:45.793401-0400 INFO Added API_BASE_URL=https://social-sandbox.com
-2024-07-06T07:41:45.793498-0400 INFO Added EMAIL_PREFIX=austinmw89
+2024-07-06T07:41:45.793498-0400 INFO Added EMAIL_PREFIX=youremail
 2024-07-06T07:41:45.793774-0400 INFO Adding new MASTODON_CLIENT_ID
 2024-07-06T07:41:45.793870-0400 INFO Adding new MASTODON_CLIENT_SECRET
 2024-07-06T07:41:45.794207-0400 INFO Updated .env file at /Users/austinwelch/Desktop/mastodon-sim/.env
@@ -244,7 +244,7 @@ This should output the following:
 5. Run the creation script
 
     ```bash
-    python3 create_users.py austinmw89 -n 5
+    python3 create_users.py youremail -n 5
     ```
 
 ## Costs for Running Mastodon on AWS
@@ -272,6 +272,74 @@ Here is how you update your infrastructure.
 3. Press the `Edit` button.
 4. Choose the option `Replace current template` with `https://s3.eu-central-1.amazonaws.com/mastodon-on-aws-cloudformation/latest/quickstart.yml`.
 5. Go through the rest of the wizard and keep the defaults.
+
+
+---
+
+## Increase API Limits
+
+Mastodon API limits are configured in the **`rack_attack.rb`** file, located inside the **Mastodon Web Service task container**. This service runs on **AWS Fargate**, backed by **AWS Elastic Container Service (ECS)**. Although direct access to this file is not needed, it’s useful to know that it resides within the running container at:  
+**`/opt/mastodon/config/initializers/rack_attack.rb`**.
+
+The deployment uses the public Mastodon Docker image:  
+**`public.ecr.aws/h6i3a8b9/mastodon:v4.2.10`**
+
+To increase the API rate limits, follow these high-level steps:
+
+1. Modify the `rack_attack.rb` file with the desired API limits.
+2. Build a custom Docker image that incorporates the modified `rack_attack.rb` file.
+3. Create a new **Elastic Container Repository (ECR)** in your AWS account and push the custom image to it.
+4. Update the `mastodon.yaml` configuration to point to the custom image.
+
+---
+
+### Detailed Steps:
+
+1. **Delete the Current Stack:**
+   1. Log in to the AWS Console.
+   2. Navigate to the **CloudFormation** service and go to **Stacks**.
+   3. Select the top-level Mastodon stack (the only non-nested one) and click **Delete**.  
+      *Note: This may take about 5 minutes and will partially fail, as some resources need manual cleanup.*
+   4. **ALB** and **Hosted Zones** will likely fail to delete automatically.  
+      - **TODO:** Provide manual cleanup instructions for these resources.
+   5. Once the resources are deleted, retry deleting the entire stack, which should now succeed.
+   6. Wait another 5 minutes for the deletion to complete.
+
+2. **Clear the S3 Bucket:**
+   - Go to the **S3** service in the AWS Console.
+   - Find the Mastodon deployment bucket and **clear its contents** (but do not delete the bucket itself).
+
+3. **Clean Local Files:**
+   - In your terminal, change to the directory:  
+     `mastodon-sim/infrastructure/mastodon-on-aws`  
+   - Delete the following files and directories:
+     - `parameters.json`
+     - `node_modules`
+     - `packaged.yml`
+
+4. **Build and Push the Custom Docker Image:**
+   - Navigate to:  
+     `mastodon-sim/infrastructure/mastodon-on-aws/custom_mods`  
+   - Update the `rack_attack.rb` file with your new limits.
+   - Run the script:  
+     ```bash
+     ./build_push_update.sh
+     ```
+   This script performs the following tasks:
+   - Builds the custom Docker image for the Mastodon Web Service.
+   - Pushes the new image to your private Amazon ECR repository.
+   - Updates the CloudFormation template to use the custom image.
+
+   If successful, this will generate an updated `mastodon.yaml` file at:  
+   `mastodon-sim/infrastructure/mastodon-on-aws/`.
+
+5. **Verify the Custom Image Reference:**
+   - Open the `mastodon.yaml` file and confirm that the `AppImage` keys now point to the custom ECR image.
+
+6. **Rerun the Full Setup:**
+   - Follow the setup instructions at the top of the file, starting from the **Generate Required Secrets and Keys** step.
+
+If all steps are followed correctly, the Mastodon server will redeploy with the new API rate limits in effect!
 
 ## Activating SES
 

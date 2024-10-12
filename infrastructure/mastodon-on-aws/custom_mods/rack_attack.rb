@@ -70,38 +70,38 @@ class Rack::Attack
     req.authenticated_user_id if req.api_request?
   end
 
-  throttle('throttle_per_token_api', limit: 300, period: 2.minutes) do |req|
+  throttle('throttle_per_token_api', limit: 3_000, period: 2.minutes) do |req|
     req.authenticated_token_id if req.api_request?
   end
 
-  throttle('throttle_unauthenticated_api', limit: 300, period: 5.minutes) do |req|
+  throttle('throttle_unauthenticated_api', limit: 3_000, period: 5.minutes) do |req|
     req.throttleable_remote_ip if req.api_request? && req.unauthenticated?
   end
 
-  throttle('throttle_api_media', limit: 30, period: 2.minutes) do |req|
+  throttle('throttle_api_media', limit: 3_000, period: 2.minutes) do |req|
     req.authenticated_user_id if req.post? && req.path.match?(%r{\A/api/v\d+/media\z}i)
   end
 
-  throttle('throttle_media_proxy', limit: 30, period: 2.minutes) do |req|
+  throttle('throttle_media_proxy', limit: 3_000, period: 2.minutes) do |req|
     req.throttleable_remote_ip if req.path.start_with?('/media_proxy')
   end
 
-  throttle('throttle_api_sign_up', limit: 5, period: 30.minutes) do |req|
+  throttle('throttle_api_sign_up', limit: 5_000, period: 30.minutes) do |req|
     req.throttleable_remote_ip if req.post? && req.path == '/api/v1/accounts'
   end
 
-  throttle('throttle_authenticated_paging', limit: 500, period: 1.minutes) do |req|
+  throttle('throttle_authenticated_paging', limit: 5_000, period: 1.minutes) do |req|
     req.authenticated_user_id if req.paging_request?
   end
 
-  throttle('throttle_unauthenticated_paging', limit: 500, period: 3.minutes) do |req|
+  throttle('throttle_unauthenticated_paging', limit: 5_000, period: 3.minutes) do |req|
     req.throttleable_remote_ip if req.paging_request? && req.unauthenticated?
   end
 
   API_DELETE_REBLOG_REGEX = %r{\A/api/v1/statuses/\d+/unreblog\z}
   API_DELETE_STATUS_REGEX = %r{\A/api/v1/statuses/\d+\z}
 
-  throttle('throttle_api_delete', limit: 500, period: 1.minutes) do |req|
+  throttle('throttle_api_delete', limit: 5_000, period: 1.minutes) do |req|
     req.authenticated_user_id if (req.post? && req.path.match?(API_DELETE_REBLOG_REGEX)) || (req.delete? && req.path.match?(API_DELETE_STATUS_REGEX))
   end
 
@@ -125,7 +125,7 @@ class Rack::Attack
     req.throttleable_remote_ip if req.post? && (req.path_matches?('/auth/confirmation') || req.path == '/api/v1/emails/confirmations')
   end
 
-  throttle('throttle_email_confirmations/email', limit: 5, period: 30.minutes) do |req|
+  throttle('throttle_email_confirmations/email', limit: 1_000, period: 30.minutes) do |req|
     if req.post? && req.path_matches?('/auth/password')
       req.params.dig('user', 'email').presence
     elsif req.post? && req.path == '/api/v1/emails/confirmations'
@@ -137,7 +137,7 @@ class Rack::Attack
     req.throttleable_remote_ip if req.post? && req.path_matches?('/auth/sign_in')
   end
 
-  throttle('throttle_login_attempts/email', limit: 300, period: 1.hour) do |req|
+  throttle('throttle_login_attempts/email', limit: 2_000, period: 1.hour) do |req|
     req.session[:attempt_user_id] || req.params.dig('user', 'email').presence if req.post? && req.path_matches?('/auth/sign_in')
   end
 
