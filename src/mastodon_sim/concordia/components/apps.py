@@ -6,7 +6,6 @@ import datetime
 import inspect
 import re
 import textwrap
-import threading
 import types
 import typing
 from collections.abc import Callable, Sequence
@@ -16,16 +15,7 @@ from typing import Any, Literal, get_type_hints
 import docstring_parser  # pytype: disable=import-error  # Fails on GitHub.
 import termcolor
 
-write_path = ""
-
-
-def set_app_output_write_path(path):
-    global write_path
-    write_path = path
-
-
-file_lock = threading.Lock()
-# region[setup]s
+# region[setup]
 _DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 _ARGUMENT_REGEX = re.compile(r"(?P<param>\w+):\s*(?P<value>[^\n]+)")
@@ -56,6 +46,26 @@ COLOR_TYPE = (
     ]
     | None
 )
+
+import functools
+import time
+
+
+def timed_function(tag="general"):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            duration = end_time - start_time
+            with open("time_logger.txt", "a") as f:
+                f.write(f"{tag} - {func.__name__} took {duration:.6f}s on {time.asctime()}\n")
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 def parse_literal(literal_type: type) -> ParserFunc:
@@ -208,8 +218,6 @@ class ActionDescriptor:
         from first person perspective and makes sense as a realistic user post based on their information.
         Do not post any statuses from 3rd person perspective.
 
-        Note: current_user, target_user or the username field is ALWAYS the first name of the agent only. Never provide their full name or another name
-
         Bad examples:
             `bio`: Updated my bio and checking notifications!
             `status`: I'm updating my status and posting a message
@@ -332,7 +340,7 @@ class PhoneApp(metaclass=abc.ABCMeta):
             return getattr(self, action.name)(**processed_args)
         except Exception as e:
             self._print(f"Error invoking action {action.name}: {e}", color="red")
-            return f"Error invoking action {action.name}: {e}"
+            return None
 
 
 # endregion
@@ -369,12 +377,99 @@ def _parse_argument_text(args_text: str) -> dict[str, str]:
     return {m.group("param"): m.group("value").strip() for m in matches if m.group("value").strip()}
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class _Meeting:
+    time: str
+    participant: str
+    title: str
+
+
+# endregion
+
+# region[Calendar App]
+
+
+class ToyCalendar(PhoneApp):
+    """A toy calendar app."""
+
+    def __init__(self):
+        self._meetings = []
+
+    def name(self):
+        """Define the name of the app."""
+        return "Calendar"
+
+    def description(self):
+        """Define the description of the app."""
+        return "Lets you schedule meetings with other people."
+
+    @app_action
+    def add_meeting(self, time: str, participant: str, title: str):
+        """Add a meeting to the calendar.
+
+        This action schedules a meeting with the participant
+        and sends them a notification about the meeting.
+
+        Args:
+          time: The time of the meeting, e.g., tomorrow, in two weeks.
+          participant: The name of the participant.
+          title: The title of the meeting, e.g., Alice / John 1:1.
+
+        Returns
+        -------
+          A description of the added meeting.
+
+        Raises
+        ------
+          ActionArgumentError: If the format of any of the arguments is invalid.
+        """
+        meeting = _Meeting(time=time, participant=participant, title=title)
+        self._meetings.append(meeting)
+        output = (
+            f"🗓️ A meeting with '{meeting.participant}' was scheduled at"
+            f" '{meeting.time}' with title '{meeting.title}'."
+        )
+        self._print(output)
+        return output
+
+    @app_action
+    def check_calendar(self, num_recent_meetings: int):
+        """Check the calendar for scheduled meetings.
+
+        This action checks the calendar to view and confirm meetings.
+
+        Args:
+            num_recent_meetings (int): The number of most recent meetings to check.
+                                      Use a large number (e.g., 1000) to see all
+                                      meetings.
+
+        Returns
+        -------
+            str: A description of the scheduled meetings.
+        """
+        if not self._meetings:
+            output = "No meetings scheduled."
+        else:
+            meetings_to_check = self._meetings[-num_recent_meetings:]
+            output = f"Scheduled meetings (showing last {num_recent_meetings}):\n"
+            for meeting in meetings_to_check:
+                output += (
+                    f"- Title: '{meeting.title}', Time: '{meeting.time}',"
+                    f" Participant: '{meeting.participant}'\n"
+                )
+
+        self._print(output)
+        return output
+
+
+# endregion
+
 # region[Mastodon Social Network App]
 
 
 @dataclasses.dataclass
 class MastodonSocialNetworkApp(PhoneApp):
-    """Mastodon social network app.
+    """Mastodon sociall network app.
 
     A social media application similar to Twitter that allows users to interact on social media.
     """
@@ -427,12 +522,13 @@ class MastodonSocialNetworkApp(PhoneApp):
         """Public interface to get the username."""
         return self._get_username(display_name)
 
+    @timed_function(tag="app_action")
     @app_action
-    def update_profile(self, current_user: str, bio: str) -> str:
+    def update_profile(self, current_user: str, display_name: str, bio: str) -> str:
         """Update the user's bio."""
         current_user = current_user.split()[0]
 
-        username = self._get_username(current_user)
+        username = self._get_username(display_name)
         self._print(f"Updating profile for @{username}: {current_user}", emoji="✏️")
         if self.perform_operations:
             self._mastodon_ops.update_bio(username, current_user, bio)
@@ -443,34 +539,35 @@ class MastodonSocialNetworkApp(PhoneApp):
             )
         bio_message = f'Profile updated successfully: "{bio}"'
         self._print(bio_message, emoji="✅")
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} upated their profile.\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} upated their profile.\n")
 
         return bio_message
 
-    # @app_action
-    # def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
-    #     """Read a user's profile on Mastodon social network."""
-    #     current_user = current_user.split()[0]
-    #     target_user = target_user.split()[0]
+    @timed_function(tag="app_action")
+    @app_action
+    def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
+        """Read a user's profile on Mastodon social network."""
+        current_user = current_user.split()[0]
+        target_user = target_user.split()[0]
 
-    #     current_username = self._get_username(current_user)
-    #     target_username = self._get_username(target_user)
-    #     self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
-    #     if self.perform_operations:
-    #         display_name, bio = self._mastodon_ops.read_bio(current_username, target_username)
-    #     else:
-    #         display_name, bio = "Mock Name", "Mock Bio"
-    #         self._print(
-    #             "Skipping real Mastodon API call since perform_operations is set to False",
-    #             color="light_grey",
-    #         )
-    #     self._print(f"Profile: {display_name} - {bio}", emoji="📄")
-    #     with open("/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/write_path+ "app_logger.txt".txt", "a") as f:
-    #         f.write(f"{current_user} read profile of user: {target_user}\n")
-    #     return display_name, bio
+        current_username = self._get_username(current_user)
+        target_username = self._get_username(target_user)
+        self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
+        if self.perform_operations:
+            display_name, bio = self._mastodon_ops.read_bio(current_username, target_username)
+        else:
+            display_name, bio = "Mock Name", "Mock Bio"
+            self._print(
+                "Skipping real Mastodon API call since perform_operations is set to False",
+                color="light_grey",
+            )
+        self._print(f"Profile: {display_name} - {bio}", emoji="📄")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} read profile of user: {target_user}\n")
+        return display_name, bio
 
+    @timed_function(tag="app_action")
     @app_action
     def follow_user(self, current_user: str, target_user: str) -> str:
         """Follow a user on Mastodon social network."""
@@ -489,11 +586,11 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"current_user (@{current_username}) followed target_user (@{target_username})"
         )
         self._print(follow_message, emoji="➕")  # noqa: RUF001
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} followed user: {target_user}\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} followed user: {target_user}\n")
         return follow_message
 
+    @timed_function(tag="app_action")
     @app_action
     def unfollow_user(self, current_user: str, target_user: str) -> str:
         """Unfollow a user."""
@@ -516,9 +613,8 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"current_user (@{current_username}) unfollowed target_user (@{target_username})"
         )
         self._print(unfollow_message, emoji="✅")
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} unfollowed user: {target_user}\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} unfollowed user: {target_user}\n")
         return unfollow_message
 
     # @app_action
@@ -622,6 +718,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     #     return_msg = f'Status posted for user: {current_user} ({username}): "{status}"'
     #     return return_msg
 
+    @timed_function(tag="app_action")
     @app_action
     def post_toot(
         self,
@@ -666,16 +763,15 @@ class MastodonSocialNetworkApp(PhoneApp):
             self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
             raise
         return_msg = f'{current_user} posted a toot!: "{status}"'
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} posted\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} posted\n")
         return return_msg
 
+    @timed_function(tag="app_action")
     @app_action
     def reply_to_toot(
         self,
         current_user: str,
-        target_user: str,
         status: str,
         in_reply_to_id: int,
     ) -> str:
@@ -683,7 +779,6 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         Args:
             current_user (str): The username of the user posting the status.
-            target_user (str): The username of the user being who is the author of the status this post is replying to.
             status (str): The text content of the status update.
             in_reply_to_id (int): The `toot_id` of the status this post is replying to.
 
@@ -694,7 +789,6 @@ class MastodonSocialNetworkApp(PhoneApp):
         """
         try:
             current_user = current_user.split()[0]
-            target_user = target_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
                 self._mastodon_ops.post_status(
@@ -710,7 +804,7 @@ class MastodonSocialNetworkApp(PhoneApp):
                 )
 
             self._print(
-                f"You replied to a toot by {target_user} with toot id {in_reply_to_id} : {status}",
+                f"You replied to a toot with toot id {in_reply_to_id} : {status}",
                 emoji="📝",
             )
             return_msg = (
@@ -725,11 +819,8 @@ class MastodonSocialNetworkApp(PhoneApp):
             self._print(f"An unexpected error occurred, regular toot posted: {e!s}", emoji="❌")
             return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
 
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(
-                    f"{current_user} replied to a toot by {target_user} with Toot ID:{in_reply_to_id}\n"
-                )
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} replied to Toot ID:{in_reply_to_id}\n")
         return return_msg
 
     # @app_action
@@ -790,6 +881,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         self._print(str_timeline)
         return str_timeline
 
+    @timed_function(tag="app_action")
     @app_action
     def get_own_timeline(self, current_user: str, limit: int) -> str:
         """Read the Mastodon social network feed for the current user."""
@@ -812,16 +904,15 @@ class MastodonSocialNetworkApp(PhoneApp):
             emoji="📊",
         )
         str_timeline = self.print_and_return_timeline(timeline)
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} retrieved their own timeline\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} retrieved their own timeline\n")
         return "Own Mastodon Timeline:\n" + str_timeline
 
     # @app_action
     # def get_user_timeline(self, current_user: str, target_user: str, limit: int) -> str:
     #     """Read a specific user's timeline on Mastodon social network."""
-    #     current_username = self._get_username(current_user.split()[0])
-    #     target_username = self._get_username(target_user.split()[0])
+    #     current_username = self._get_username(current_user)
+    #     target_username = self._get_username(target_user)
     #     self._print(
     #         f"@{current_username} fetching @{target_username}'s timeline (limit: {limit})",
     #         emoji="👥",
@@ -871,6 +962,7 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         return "\n".join(notification_lines)
 
+    @timed_function(tag="app_action")
     @app_action
     def read_notifications(self, current_user: str, clear: bool, limit: int) -> str:
         """Read Mastodon social network notifications."""
@@ -898,11 +990,11 @@ class MastodonSocialNetworkApp(PhoneApp):
         notifications_string = self.print_notifications(notifications)
         full_output = f"{retrieval_message}\n{notifications_string}"
         self._print(full_output)
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} read their notifications\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} read their notifications\n")
         return full_output
 
+    @timed_function(tag="app_action")
     @app_action
     def like_toot(self, current_user: str, target_user: str, toot_id: str) -> str:
         """Like (favorite) a toot."""
@@ -923,33 +1015,29 @@ class MastodonSocialNetworkApp(PhoneApp):
                 color="light_grey",
             )
         self._print(like_message, emoji="✅")
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} liked a toot from {target_user} with Toot ID:{toot_id}\n")
+        with open("app_logger.txt", "a") as f:
+            f.write(f"{current_user} liked a toot from {target_user} with Toot ID:{toot_id}\n")
         return like_message
 
     # region[additional methods]
 
-    @app_action
-    def boost_toot(self, current_user: str, target_user: str, toot_id: str) -> None:
-        """Boost (reblog) a toot."""
-        current_username = self._get_username(current_user.split()[0])
-        target_username = self._get_username(target_user.split()[0])
-        self._print(
-            f"@{current_username} boosting post {toot_id}",
-            emoji="🔁",
-        )
-        if self.perform_operations:
-            self._mastodon_ops.boost_toot(current_username, target_username, toot_id)
-        self._print(
-            f"@{current_username} boosted post {toot_id}",
-            emoji="✅",
-        )
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(
-                    f"{current_user} boosted a toot from {target_user} with Toot ID:{toot_id}\n"
-                )
+    # @app_action
+    # def boost_toot(
+    #     self, current_user: str, target_user: str, toot_id: str
+    # ) -> None:
+    #   """Boost (reblog) a toot."""
+    #   current_username = self._get_username(current_user)
+    #   target_username = self._get_username(target_user)
+    #   self._print(
+    #       f"@{current_username} boosting post {toot_id} from @{target_username}",
+    #       emoji="🔁",
+    #   )
+    #   if self.perform_operations:
+    #     self._mastodon_ops.boost_toot(current_username, target_username, toot_id)
+    #   self._print(
+    #       f"@{current_username} boosted post {toot_id} from @{target_username}",
+    #       emoji="✅",
+    #   )
 
     # @app_action
     # def block_user(self, current_user: str, target_user: str) -> None:
