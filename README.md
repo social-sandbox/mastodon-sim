@@ -83,3 +83,8 @@ mastodon-sim --help
 ```
 
 -->
+
+### Running Experiments
+
+- See `mastodon-sim/infrastructure/mastodon-on-aws/README.md` for Mastodon server deployment instructions.
+- See `mastodon-sim/notebooks` to run experiments after deploying the server.
