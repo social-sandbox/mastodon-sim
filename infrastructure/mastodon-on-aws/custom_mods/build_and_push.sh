@@ -39,7 +39,7 @@ aws ecr get-login-password --region ${AWS_REGION} --profile ${AWS_PROFILE} | doc
 
 # Build the Docker image
 echo "Building Docker image..."
-docker build -t ${ECR_REPO_NAME}:${IMAGE_TAG} .
+docker build --no-cache -t ${ECR_REPO_NAME}:${IMAGE_TAG} .
 
 # Tag the image for ECR
 echo "Tagging image for ECR..."
