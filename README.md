@@ -3,7 +3,7 @@
 
 # Mastodon Social Simulation
 
-Generative Agent simulation of a Mastodon social network
+Generative Agent simulation of a Mastodon social network. Paper: [http://arxiv.org/abs/2410.13915](http://arxiv.org/abs/2410.13915).
 
 <!--
 ## Hidden Section
