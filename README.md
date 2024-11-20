@@ -3,14 +3,7 @@
 
 # Mastodon Social Simulation
 
-Generative Agent simulation of a Mastodon social network
-
-> [!WARNING]
-> **Work in Progress**
->
-> This README is currently under development. The information provided here may be incomplete, subject to change, and may not yet reflect the current state of the codebase. We appreciate your patience as we work on improving our documentation to accurately represent the project.
->
-> **Last updated:** July 06, 2024
+Generative Agent simulation of a Mastodon social network. Paper: [http://arxiv.org/abs/2410.13915](http://arxiv.org/abs/2410.13915).
 
 <!--
 ## Hidden Section
@@ -90,3 +83,8 @@ mastodon-sim --help
 ```
 
 -->
+
+### Running Experiments
+
+- See `mastodon-sim/infrastructure/mastodon-on-aws/README.md` for Mastodon server deployment instructions.
+- See `mastodon-sim/notebooks` to run experiments after deploying the server.
