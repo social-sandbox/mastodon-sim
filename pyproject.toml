@@ -52,6 +52,9 @@ ipympl = "^0.9.4"
 python-louvain = "^0.16"
 powerlaw = "^1.5"
 pyproject-toml = "^0.0.10"
+dash = "^2.18.2"
+dash-cytoscape = "^1.0.2"
+scipy = "^1.14.1"
 
 [tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
 commitizen = ">=3.21.3"

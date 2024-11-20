@@ -639,11 +639,12 @@ class MastodonSocialNetworkApp(PhoneApp):
             ValueError: If the input parameters are invalid.
             Exception: For any other unexpected errors during posting.
         """
+        return_val = None
         try:
             current_user = current_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
-                self._mastodon_ops.post_status(
+                return_val = self._mastodon_ops.post_status(
                     login_user=username,
                     status=status,
                 )
@@ -657,6 +658,7 @@ class MastodonSocialNetworkApp(PhoneApp):
                 f'Status posted for user: {current_user} ({username}): "{status}"',
                 emoji="📝",
             )
+            # self._print(return_val)
 
         except ValueError as e:
             self._print(f"Invalid input: {e!s}", emoji="❌")
@@ -665,10 +667,15 @@ class MastodonSocialNetworkApp(PhoneApp):
         except Exception as e:
             self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
             raise
-        return_msg = f'{current_user} posted a toot!: "{status}"'
+        if return_val:
+            return_msg = (
+                f"{current_user} posted a toot with Toot ID: {return_val['id']} --- {status}\n"
+            )
+        else:
+            return_msg = f'{current_user} posted a toot!: "{status}"\n'
         with file_lock:
             with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} posted\n")
+                f.write(return_msg)
         return return_msg
 
     @app_action
@@ -692,12 +699,13 @@ class MastodonSocialNetworkApp(PhoneApp):
             ValueError: If the input parameters are invalid.
             Exception: For any other unexpected errors during posting.
         """
+        return_val = None
         try:
             current_user = current_user.split()[0]
             target_user = target_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
-                self._mastodon_ops.post_status(
+                return_val = self._mastodon_ops.post_status(
                     login_user=username,
                     status=status,
                     in_reply_to_id=in_reply_to_id,
@@ -727,9 +735,10 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         with file_lock:
             with open(write_path + "app_logger.txt", "a") as f:
-                f.write(
-                    f"{current_user} replied to a toot by {target_user} with Toot ID:{in_reply_to_id}\n"
-                )
+                if return_val:
+                    f.write(
+                        f"{current_user} replied to a toot by {target_user} with Toot ID: {in_reply_to_id}, new Toot ID: {return_val['id']} --- {status}\n"
+                    )
         return return_msg
 
     # @app_action
