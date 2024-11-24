@@ -210,7 +210,7 @@ class ActionDescriptor:
         from first person perspective and makes sense as a realistic user post based on their information.
         Do not post any statuses from 3rd person perspective.
 
-        Note: current_user, target_user or the username field is ALWAYS the first name of the agent only. Never provide their full name or another name
+        Note: current_user, target_user or the username field is ALWAYS the full name of the agents in the format: "Firstname Lastname".
 
         Bad examples:
             `bio`: Updated my bio and checking notifications!
