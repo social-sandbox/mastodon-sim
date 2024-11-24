@@ -42,6 +42,12 @@ parser.add_argument(
     help="config from which to optionally load experiment settings",
 )
 parser.add_argument(
+    "--evals",
+    type=str,
+    default=None,
+    help="config from which to optionally load evals",
+)
+parser.add_argument(
     "--server",
     type=str,
     default="None",  # www.social-sandbox.com, www.socialsandbox2.com
@@ -81,7 +87,7 @@ from sim_utils.concordia_utils import (
     init_objects,
     sort_agents,
 )
-from sim_utils.misc_sim_utils import post_analysis
+from sim_utils.misc_sim_utils import event_logger, post_analysis
 
 os.chdir("examples/election/")
 
@@ -114,82 +120,73 @@ def get_sentance_encoder():
     return embedder
 
 
-def set_up_mastodon_app(players, ag_names, output_rootname):
-    apps.set_app_output_write_path(output_rootname)
+def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname):
+    # apps.set_app_output_write_path(output_rootname)
 
     mastodon_apps = {
-        player.name.split()[0]: apps.MastodonSocialNetworkApp(
-            perform_operations=USE_MASTODON_SERVER
+        player.name: apps.MastodonSocialNetworkApp(
+            action_logger=action_logger, perform_operations=USE_MASTODON_SERVER
         )
         for player in players
     }
     phones = {
-        player.name: apps.Phone(player.name, apps=[mastodon_apps[player.name.split()[0]]])
+        player.name: apps.Phone(player.name, apps=[mastodon_apps[player.name]])
         for player in players
     }
-
+    agent_names = [player.name for player in players]
     user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
-    if USE_MASTODON_SERVER:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for follower in user_mapping:
-                print(follower)
-                if follower != ag_names["candidate"][0].split()[0]:
-                    futures.append(
-                        executor.submit(
-                            mastodon_apps[follower].follow_user,
-                            follower,
-                            ag_names["candidate"][0].split()[0],
-                        )
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for follower in agent_names:
+            print(follower)
+            if follower != ag_names["candidate"][0]:
+                futures.append(
+                    executor.submit(
+                        mastodon_apps[follower].follow_user,
+                        follower,
+                        ag_names["candidate"][0],
                     )
-                if follower != ag_names["candidate"][1].split()[0]:
-                    futures.append(
-                        executor.submit(
-                            mastodon_apps[follower].follow_user,
-                            follower,
-                            ag_names["candidate"][1].split()[0],
-                        )
-                    )
-                for followee in user_mapping:
-                    if follower != followee:
-                        if random.random() < 0.2:
-                            futures.append(
-                                executor.submit(
-                                    mastodon_apps[follower].follow_user, follower, followee
-                                )
-                            )
-                            futures.append(
-                                executor.submit(
-                                    mastodon_apps[followee].follow_user, followee, follower
-                                )
-                            )
-                        elif random.random() < 0.15:
-                            futures.append(
-                                executor.submit(
-                                    mastodon_apps[follower].follow_user, follower, followee
-                                )
-                            )
-
-            # Optionally, wait for all tasks to complete
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    future.result()  # This will raise any exceptions that occurred during execution, if any
-                except Exception as e:
-                    print(f"Ignoring already-following error: {e}")
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(
-                    mastodon_ops.update_bio, user_mapping[name], display_name=name, bio=""
                 )
-                for name in user_mapping
-            ]
+            if follower != ag_names["candidate"][1]:
+                futures.append(
+                    executor.submit(
+                        mastodon_apps[follower].follow_user,
+                        follower,
+                        ag_names["candidate"][1],
+                    )
+                )
+            for followee in agent_names:
+                if follower != followee:
+                    if random.random() < 0.2:
+                        futures.append(
+                            executor.submit(mastodon_apps[follower].follow_user, follower, followee)
+                        )
+                        futures.append(
+                            executor.submit(mastodon_apps[followee].follow_user, followee, follower)
+                        )
+                    elif random.random() < 0.15:
+                        futures.append(
+                            executor.submit(mastodon_apps[follower].follow_user, follower, followee)
+                        )
+
         # Optionally, wait for all tasks to complete
         for future in concurrent.futures.as_completed(futures):
-            future.result()  # This will raise any exceptions that occurred during execution, if any
+            try:
+                future.result()  # This will raise any exceptions that occurred during execution, if any
+            except Exception as e:
+                print(f"Ignoring already-following error: {e}")
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(mastodon_ops.update_bio, user_mapping[name], display_name=name, bio="")
+            for name in user_mapping
+        ]
+    # Optionally, wait for all tasks to complete
+    for future in concurrent.futures.as_completed(futures):
+        future.result()  # This will raise any exceptions that occurred during execution, if any
 
     return mastodon_apps, phones
 
@@ -204,11 +201,11 @@ def post_seed_toots(agent_data, players, mastodon_apps):
                     None
                     if agent["seed_toot"] == "-"
                     else (
-                        mastodon_apps[agent["name"].split()[0]].post_toot(
+                        mastodon_apps[agent["name"]].post_toot(
                             agent["name"], status=agent["seed_toot"]
                         )
                         if agent["seed_toot"]
-                        else mastodon_apps[agent["name"].split()[0]].post_toot(
+                        else mastodon_apps[agent["name"]].post_toot(
                             agent["name"], status=write_seed_toot(players, agent["name"])
                         )
                     )
@@ -272,6 +269,7 @@ def run_sim(
     shared_memories,
     custom_call_to_action,
     candidate_info,
+    eval_config,
     episode_length,
     output_rootname,
 ):
@@ -308,7 +306,10 @@ def run_sim(
     for player in players:
         game_master_memory.add(f"{player.name} is at their private home.")
 
-    mastodon_apps, phones = set_up_mastodon_app(players, ag_names, output_rootname)
+    action_event_logger = event_logger("action", output_rootname)
+    action_event_logger.episode_idx = -1
+
+    mastodon_apps, phones = set_up_mastodon_app(players, ag_names, action_event_logger)
 
     action_spec = ActionSpec(
         call_to_action=custom_call_to_action,
@@ -346,6 +347,10 @@ def run_sim(
         0.15  # TODO: remove this with reformulation to a single step process
     )
 
+    # initialize
+    eval_event_logger = event_logger("eval", output_rootname)
+    eval_event_logger.episode_idx = -1
+
     # main loop
     time_intervals = []
     prompt_token_intervals = []
@@ -354,14 +359,15 @@ def run_sim(
     start_time = time.time()  # Start timing
     for i in range(episode_length):
         print(f"Episode: {i}")
+        eval_event_logger.episode_idx = i
+        action_event_logger.episode_idx = i
+        deploy_surveys(players, eval_config, eval_event_logger)
 
-        deploy_surveys(ag_names["candidate"], players, i, output_rootname)
-
-        with open(
-            output_rootname + "app_logger.txt",
-            "a",
-        ) as a:
-            a.write(f"Episode: {i}")
+        # with open(
+        #     output_rootname + "app_logger.txt",
+        #     "a",
+        # ) as a:
+        #     a.write(f"Episode: {i}")
 
         start_timex = time.time()
         matching_players = get_matching_players(
@@ -407,8 +413,8 @@ if __name__ == "__main__":
         experiment_name = args.exp
         # N=100
         N = 20
-        # survey = "None.Big5"
-        survey = "Costa_et_al_JPersAssess_2021.Schwartz"
+        survey = "None.Big5"
+        # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
         config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
         os.system(
@@ -417,6 +423,9 @@ if __name__ == "__main__":
 
     with open(config_name) as file:
         config_data = json.load(file)
+
+    with open(config_data["evals_config_filename"]) as file:
+        eval_config_data = json.load(file)
 
     print([agent["name"] for agent in config_data["agents"]])
 
@@ -429,12 +438,18 @@ if __name__ == "__main__":
     # write config file by default in outdir
     if not os.path.exists(args.outdir):
         os.makedirs(args.outdir)
-    else:
-        for ext in ["app_logger.txt", "pol_log.txt", "votes_log.txt"]:
-            if os.path.exists(config_data["output_rootname"] + ext):
-                sys.exit("output files for this setting already exist!")
+    elif os.path.exists(config_data["output_rootname"]):
+        sys.exit("output files for this setting already exist!")
     with open(config_data["output_rootname"], "w") as outfile:
         json.dump(config_data, outfile, indent=4)
+    with open(
+        config_data["output_rootname"].split(".")[0]
+        + "_"
+        + config_data["evals_config_filename"]
+        + ".json",
+        "w",
+    ) as outfile:
+        json.dump(eval_config_data, outfile, indent=4)
 
     if USE_MASTODON_SERVER:
         clear_mastodon_server(len(config_data["agents"]))
@@ -457,6 +472,7 @@ if __name__ == "__main__":
         shared_memories,
         config_data["custom_call_to_action"],
         config_data["candidate_info"],
+        eval_config_data,
         episode_length,
-        config_data["output_rootname"],
+        config_data["output_rootname"].split(".")[0] + "_output.jsonl",
     )

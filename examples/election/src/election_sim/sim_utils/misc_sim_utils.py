@@ -1,14 +1,47 @@
 import json
+import threading
 
 from concordia.utils import html as html_lib
 from IPython import display
 
+file_lock = threading.Lock()
 
-def write_logs(results):
-    # Write the results to the respective files
-    for content, file_name in results:
-        with open(file_name, "a") as f:
-            f.write(content)
+# def write_logs(results):
+#     # Write the results to the respective files
+#     for content, file_name in results:
+#         with open(file_name, "a") as f:
+#             f.write(content)
+
+# def write_data(out_obj, output_filename):
+#     if isinstance(out_obj,list):
+#         for out_data in out_obj:
+#             write_item(out_data, output_filename)
+#     else:
+#         write_item(out_obj, output_filename)
+
+
+def write_item(out_item, output_filename):
+    with file_lock:
+        with open(output_filename, "a") as f:
+            print(json.dumps(out_item), file=f)  # adds the new line character
+
+
+class event_logger:
+    def __init__(self, event_type, output_filename):
+        self.episode_idx = None
+        self.output_filename = output_filename
+        self.type = event_type
+
+    def log(self, log_data):
+        if isinstance(log_data, list):
+            for log_item in log_data:
+                log_item["epi"] = self.episode_idx
+                log_item["type"] = self.type
+                write_item(log_item, self.output_filename)
+        else:
+            log_data["epi"] = self.episode_idx
+            log_data["type"] = self.type
+            write_item(log_data, self.output_filename)
 
 
 def read_token_data(file_path):

@@ -6,7 +6,6 @@ import datetime
 import inspect
 import re
 import textwrap
-import threading
 import types
 import typing
 from collections.abc import Callable, Sequence
@@ -16,15 +15,18 @@ from typing import Any, Literal, get_type_hints
 import docstring_parser  # pytype: disable=import-error  # Fails on GitHub.
 import termcolor
 
-write_path = ""
+# from election_sim.sim_utils.misc_sim_utils import event_logger
+# event_logger_class = TypeVar('event_logger', bound=event_logger)
+
+# write_path = ""
 
 
-def set_app_output_write_path(path):
-    global write_path
-    write_path = path
+# def set_app_output_write_path(path):
+#     global write_path
+#     write_path = path
 
 
-file_lock = threading.Lock()
+# file_lock = threading.Lock()
 # region[setup]s
 _DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -379,6 +381,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     A social media application similar to Twitter that allows users to interact on social media.
     """
 
+    action_logger: Any = None
     perform_operations: bool = True
     _log_color: COLOR_TYPE = dataclasses.field(default="blue", init=False)
     _mastodon_ops: Any = dataclasses.field(default=None, init=False)
@@ -430,6 +433,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def update_profile(self, current_user: str, bio: str) -> str:
         """Update the user's bio."""
+        current_user_full = str(current_user)
         current_user = current_user.split()[0]
 
         username = self._get_username(current_user)
@@ -443,9 +447,12 @@ class MastodonSocialNetworkApp(PhoneApp):
             )
         bio_message = f'Profile updated successfully: "{bio}"'
         self._print(bio_message, emoji="✅")
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} upated their profile.\n")
+        self.action_logger.log(
+            {"player": current_user_full, "label": "update_profile", "data": {"new_bio": bio}}
+        )
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(f"{current_user} upated their profile.\n")
 
         return bio_message
 
@@ -474,7 +481,9 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def follow_user(self, current_user: str, target_user: str) -> str:
         """Follow a user on Mastodon social network."""
+        current_user_full = str(current_user)
         current_user = current_user.split()[0]
+        target_user_full = str(target_user)
         target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
@@ -489,15 +498,23 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"current_user (@{current_username}) followed target_user (@{target_username})"
         )
         self._print(follow_message, emoji="➕")  # noqa: RUF001
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} followed user: {target_user}\n")
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "follow",
+                "data": {"target_user": target_user_full},
+            }
+        )
+        # with open(write_path + "app_logger.txt", "a") as f:
+        #     f.write(f"{current_user} followed user: {target_user}\n")
         return follow_message
 
     @app_action
     def unfollow_user(self, current_user: str, target_user: str) -> str:
         """Unfollow a user."""
+        current_user_full = str(current_user)
         current_user = current_user.split()[0]
+        target_user_full = str(target_user)
         target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
@@ -516,9 +533,16 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"current_user (@{current_username}) unfollowed target_user (@{target_username})"
         )
         self._print(unfollow_message, emoji="✅")
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} unfollowed user: {target_user}\n")
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "unfollow",
+                "data": {"target_user": target_user_full},
+            }
+        )
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(f"{current_user} unfollowed user: {target_user}\n")
         return unfollow_message
 
     # @app_action
@@ -640,6 +664,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             Exception: For any other unexpected errors during posting.
         """
         return_val = None
+        current_user_full = str(current_user)
         try:
             current_user = current_user.split()[0]
             username = self._get_username(current_user)
@@ -667,15 +692,24 @@ class MastodonSocialNetworkApp(PhoneApp):
         except Exception as e:
             self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
             raise
+        post_id = None
         if return_val:
             return_msg = (
                 f"{current_user} posted a toot with Toot ID: {return_val['id']} --- {status}\n"
             )
+            post_id = return_val["id"]
         else:
             return_msg = f'{current_user} posted a toot!: "{status}"\n'
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(return_msg)
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "post",
+                "data": {"post_id": post_id, "post_text": status},
+            }
+        )
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(return_msg)
         return return_msg
 
     @app_action
@@ -701,7 +735,9 @@ class MastodonSocialNetworkApp(PhoneApp):
         """
         return_val = None
         try:
+            current_user_full = str(current_user)
             current_user = current_user.split()[0]
+            target_user_full = str(target_user)
             target_user = target_user.split()[0]
             username = self._get_username(current_user)
             if self.perform_operations:
@@ -710,12 +746,13 @@ class MastodonSocialNetworkApp(PhoneApp):
                     status=status,
                     in_reply_to_id=in_reply_to_id,
                 )
-
+                post_id = return_val["id"]
             else:
                 self._print(
                     "Skipping real Mastodon API call since perform_operations is set to False",
                     color="light_grey",
                 )
+                post_id = ""
 
             self._print(
                 f"You replied to a toot by {target_user} with toot id {in_reply_to_id} : {status}",
@@ -724,7 +761,17 @@ class MastodonSocialNetworkApp(PhoneApp):
             return_msg = (
                 f"{current_user} replied to a toot with toot id {in_reply_to_id} : {status}"
             )
-
+            self.action_logger.log(
+                {
+                    "player": current_user_full,
+                    "label": "reply",
+                    "data": {
+                        "reply_to": {"user": target_user_full, "post_id": in_reply_to_id},
+                        "post_id": post_id,
+                        "post_text": status,
+                    },
+                }
+            )
         except ValueError as e:
             self._print(f"Invalid input, regular toot posted: {e!s}", emoji="❌")
             return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
@@ -732,13 +779,13 @@ class MastodonSocialNetworkApp(PhoneApp):
         except Exception as e:
             self._print(f"An unexpected error occurred, regular toot posted: {e!s}", emoji="❌")
             return_msg = f'''There was an error in posting {current_user}'s reply, response was posted as a new toot!: "{status}"'''
-
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                if return_val:
-                    f.write(
-                        f"{current_user} replied to a toot by {target_user} with Toot ID: {in_reply_to_id}, new Toot ID: {return_val['id']} --- {status}\n"
-                    )
+        # issue: where is new toot
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         if return_val:
+        #             f.write(
+        #                 f"{current_user} replied to a toot by {target_user} with Toot ID: {in_reply_to_id}, new Toot ID: {return_val['id']} --- {status}\n"
+        #             )
         return return_msg
 
     # @app_action
@@ -802,8 +849,9 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def get_own_timeline(self, current_user: str, limit: int) -> str:
         """Read the Mastodon social network feed for the current user."""
+        current_user_full = str(current_user)
         current_user = current_user.split()[0]
-        username = self._get_username(current_user)  # .split()[0])
+        username = self._get_username(current_user)
         self._print(
             f"Fetching @{username}'s timeline (limit: {limit})",
             emoji="🏠",
@@ -821,9 +869,17 @@ class MastodonSocialNetworkApp(PhoneApp):
             emoji="📊",
         )
         str_timeline = self.print_and_return_timeline(timeline)
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} retrieved their own timeline\n")
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(f"{current_user} retrieved their own timeline\n")
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "get_own_timeline",
+                "data": {"num_posts_retreived": len(timeline)},  # TODO: add timeline here
+            }
+        )
+
         return "Own Mastodon Timeline:\n" + str_timeline
 
     # @app_action
@@ -883,6 +939,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def read_notifications(self, current_user: str, clear: bool, limit: int) -> str:
         """Read Mastodon social network notifications."""
+        current_user_full = str(current_user)
         current_user = current_user.split()[0]
 
         username = self._get_username(current_user)
@@ -907,15 +964,27 @@ class MastodonSocialNetworkApp(PhoneApp):
         notifications_string = self.print_notifications(notifications)
         full_output = f"{retrieval_message}\n{notifications_string}"
         self._print(full_output)
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} read their notifications\n")
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "read_notification",
+                "data": {
+                    "num_notifications_retreived": len(notifications)
+                },  # TODO: add notifications timeline here
+            }
+        )
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(f"{current_user} read their notifications\n")
         return full_output
 
     @app_action
     def like_toot(self, current_user: str, target_user: str, toot_id: str) -> str:
         """Like (favorite) a toot."""
+        print("like" + current_user)
+        current_user_full = str(current_user)
         current_user = current_user.split()[0]
+        target_user_full = str(target_user)
         target_user = target_user.split()[0]
         current_username = self._get_username(current_user)
         target_username = self._get_username(target_user)
@@ -932,9 +1001,16 @@ class MastodonSocialNetworkApp(PhoneApp):
                 color="light_grey",
             )
         self._print(like_message, emoji="✅")
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(f"{current_user} liked a toot from {target_user} with Toot ID:{toot_id}\n")
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "like_toot",
+                "data": {"toot_id": toot_id, "user": target_user_full},
+            }
+        )
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(f"{current_user} liked a toot from {target_user} with Toot ID:{toot_id}\n")
         return like_message
 
     # region[additional methods]
@@ -942,8 +1018,13 @@ class MastodonSocialNetworkApp(PhoneApp):
     @app_action
     def boost_toot(self, current_user: str, target_user: str, toot_id: str) -> None:
         """Boost (reblog) a toot."""
-        current_username = self._get_username(current_user.split()[0])
-        target_username = self._get_username(target_user.split()[0])
+        print("like" + current_user)
+        current_user_full = str(current_user)
+        current_user = current_user.split()[0]
+        target_user_full = str(target_user)
+        target_user = target_user.split()[0]
+        current_username = self._get_username(current_user)
+        target_username = self._get_username(target_user)
         self._print(
             f"@{current_username} boosting post {toot_id}",
             emoji="🔁",
@@ -954,11 +1035,18 @@ class MastodonSocialNetworkApp(PhoneApp):
             f"@{current_username} boosted post {toot_id}",
             emoji="✅",
         )
-        with file_lock:
-            with open(write_path + "app_logger.txt", "a") as f:
-                f.write(
-                    f"{current_user} boosted a toot from {target_user} with Toot ID:{toot_id}\n"
-                )
+        self.action_logger.log(
+            {
+                "player": current_user_full,
+                "label": "boost_toot",
+                "data": {"toot_id": toot_id, "user": target_user_full},
+            }
+        )
+        # with file_lock:
+        #     with open(write_path + "app_logger.txt", "a") as f:
+        #         f.write(
+        #             f"{current_user} boosted a toot from {target_user} with Toot ID:{toot_id}\n"
+        #         )
 
     # @app_action
     # def block_user(self, current_user: str, target_user: str) -> None:
