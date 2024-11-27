@@ -448,7 +448,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         bio_message = f'Profile updated successfully: "{bio}"'
         self._print(bio_message, emoji="✅")
         self.action_logger.log(
-            {"player": current_user_full, "label": "update_profile", "data": {"new_bio": bio}}
+            {"source_user": current_user_full, "label": "update_profile", "data": {"new_bio": bio}}
         )
         # with file_lock:
         #     with open(write_path + "app_logger.txt", "a") as f:
@@ -500,7 +500,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         self._print(follow_message, emoji="➕")  # noqa: RUF001
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "follow",
                 "data": {"target_user": target_user_full},
             }
@@ -535,7 +535,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         self._print(unfollow_message, emoji="✅")
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "unfollow",
                 "data": {"target_user": target_user_full},
             }
@@ -692,19 +692,19 @@ class MastodonSocialNetworkApp(PhoneApp):
         except Exception as e:
             self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
             raise
-        post_id = None
+        toot_id = None
         if return_val:
             return_msg = (
                 f"{current_user} posted a toot with Toot ID: {return_val['id']} --- {status}\n"
             )
-            post_id = return_val["id"]
+            toot_id = return_val["id"]
         else:
             return_msg = f'{current_user} posted a toot!: "{status}"\n'
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "post",
-                "data": {"post_id": post_id, "post_text": status},
+                "data": {"toot_id": toot_id, "post_text": status},
             }
         )
         # with file_lock:
@@ -746,13 +746,13 @@ class MastodonSocialNetworkApp(PhoneApp):
                     status=status,
                     in_reply_to_id=in_reply_to_id,
                 )
-                post_id = return_val["id"]
+                toot_id = return_val["id"]
             else:
                 self._print(
                     "Skipping real Mastodon API call since perform_operations is set to False",
                     color="light_grey",
                 )
-                post_id = ""
+                toot_id = ""
 
             self._print(
                 f"You replied to a toot by {target_user} with toot id {in_reply_to_id} : {status}",
@@ -763,11 +763,11 @@ class MastodonSocialNetworkApp(PhoneApp):
             )
             self.action_logger.log(
                 {
-                    "player": current_user_full,
+                    "source_user": current_user_full,
                     "label": "reply",
                     "data": {
-                        "reply_to": {"user": target_user_full, "post_id": in_reply_to_id},
-                        "post_id": post_id,
+                        "reply_to": {"target_user": target_user_full, "toot_id": in_reply_to_id},
+                        "toot_id": toot_id,
                         "post_text": status,
                     },
                 }
@@ -874,7 +874,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         #         f.write(f"{current_user} retrieved their own timeline\n")
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "get_own_timeline",
                 "data": {"num_posts_retreived": len(timeline)},  # TODO: add timeline here
             }
@@ -966,7 +966,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         self._print(full_output)
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "read_notification",
                 "data": {
                     "num_notifications_retreived": len(notifications)
@@ -1003,9 +1003,9 @@ class MastodonSocialNetworkApp(PhoneApp):
         self._print(like_message, emoji="✅")
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "like_toot",
-                "data": {"toot_id": toot_id, "user": target_user_full},
+                "data": {"toot_id": toot_id, "target_user": target_user_full},
             }
         )
         # with file_lock:
@@ -1037,9 +1037,9 @@ class MastodonSocialNetworkApp(PhoneApp):
         )
         self.action_logger.log(
             {
-                "player": current_user_full,
+                "source_user": current_user_full,
                 "label": "boost_toot",
-                "data": {"toot_id": toot_id, "user": target_user_full},
+                "data": {"toot_id": toot_id, "target_user": target_user_full},
             }
         )
         # with file_lock:

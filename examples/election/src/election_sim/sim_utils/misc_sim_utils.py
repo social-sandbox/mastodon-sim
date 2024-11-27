@@ -35,12 +35,12 @@ class event_logger:
     def log(self, log_data):
         if isinstance(log_data, list):
             for log_item in log_data:
-                log_item["epi"] = self.episode_idx
-                log_item["type"] = self.type
+                log_item["episode"] = self.episode_idx
+                log_item["event_type"] = self.type
                 write_item(log_item, self.output_filename)
         else:
-            log_data["epi"] = self.episode_idx
-            log_data["type"] = self.type
+            log_data["episode"] = self.episode_idx
+            log_data["event_type"] = self.type
             write_item(log_data, self.output_filename)
 
 
