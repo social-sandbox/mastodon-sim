@@ -101,7 +101,9 @@ def get_candidate_configs(args):
 
 
 def gen_eval_config(evals_config_filename, candidates):
+    # a library of types of evaluation questions
     query_lib = {}
+    # votepref
     query_lib["vote_pref"] = {}
     query_lib["vote_pref"]["question_template"] = {
         "text": "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)",
@@ -111,6 +113,8 @@ def gen_eval_config(evals_config_filename, candidates):
         "static_labels": ["candidate1", "candidate2"],
         "dynamic_labels": ["playername"],
     }
+
+    # favorability
     query_lib["favorability"] = {}
     query_lib["favorability"]["question_template"] = {
         "text": "Poll: Return a single numeric value ranging from 1 to 10",
@@ -120,11 +124,14 @@ def gen_eval_config(evals_config_filename, candidates):
         "static_labels": ["candidate"],
         "dynamic_labels": ["playername"],
     }
+
+    # vote_intent
     query_lib["vote_intent"] = {}
     query_lib["vote_intent"]["question_template"] = {
         "text": "Friend: In one word, will you cast a vote? (reply yes, or no.)\n",
     }
 
+    # the data encoding the evaluation questions that will be used
     queries_data = [
         {
             "query_type": "vote_pref",

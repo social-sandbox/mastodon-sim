@@ -363,12 +363,6 @@ def run_sim(
         action_event_logger.episode_idx = i
         deploy_surveys(players, eval_config, eval_event_logger)
 
-        # with open(
-        #     output_rootname + "app_logger.txt",
-        #     "a",
-        # ) as a:
-        #     a.write(f"Episode: {i}")
-
         start_timex = time.time()
         matching_players = get_matching_players(
             players_datetimes, clock, post_rate_of_per_step_topup
