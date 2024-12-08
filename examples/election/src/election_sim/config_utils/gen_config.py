@@ -38,8 +38,6 @@ def get_candidate_configs(args):
             "gender": "male",
             "policy_proposals": [
                 "providing tax breaks to local industry and creating jobs to help grow the economy."
-                # "pushing for more industrialization to push the economy of the time.",
-                # "curbing taxation on industrialists for social causes, as they are pushing the economy.",
             ],
         },
         "progressive": {
@@ -47,8 +45,6 @@ def get_candidate_configs(args):
             "gender": "male",
             "policy_proposals": [
                 "increasing regulation to protect the environment and expanding social programs."
-                # "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
-                # "taxation of industrialists and direct it to social causes. ",
             ],
         },
     }
@@ -102,6 +98,70 @@ def get_candidate_configs(args):
         candidate_configs.append(agent)
 
     return candidate_configs, candidate_info
+
+
+def gen_eval_config(evals_config_filename, candidates):
+    # a library of types of evaluation questions
+    query_lib = {}
+    # votepref
+    query_lib["vote_pref"] = {}
+    query_lib["vote_pref"]["question_template"] = {
+        "text": "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)",
+    }
+    query_lib["vote_pref"]["interaction_premise_template"] = {
+        "text": "{{playername}} is going to cast a vote for either {candidate1} or {candidate2}\n",
+        "static_labels": ["candidate1", "candidate2"],
+        "dynamic_labels": ["playername"],
+    }
+
+    # favorability
+    query_lib["favorability"] = {}
+    query_lib["favorability"]["question_template"] = {
+        "text": "Poll: Return a single numeric value ranging from 1 to 10",
+    }
+    query_lib["favorability"]["interaction_premise_template"] = {
+        "text": "{{playername}} has to rate their opinion on the election candidate: {candidate} on a scale of 1 to 10 - with 1 representing intensive dislike and 10 representing strong favourability.\n",
+        "static_labels": ["candidate"],
+        "dynamic_labels": ["playername"],
+    }
+
+    # vote_intent
+    query_lib["vote_intent"] = {}
+    query_lib["vote_intent"]["question_template"] = {
+        "text": "Friend: In one word, will you cast a vote? (reply yes, or no.)\n",
+    }
+
+    # the data encoding the evaluation questions that will be used
+    queries_data = [
+        {
+            "query_type": "vote_pref",
+            "interaction_premise_template": {
+                "candidate1": candidates[0],
+                "candidate2": candidates[1],
+            },
+        },
+        {
+            "query_type": "favorability",
+            "interaction_premise_template": {
+                "candidate": candidates[0],
+            },
+        },
+        {
+            "query_type": "favorability",
+            "interaction_premise_template": {
+                "candidate": candidates[1],
+            },
+        },
+        {"query_type": "vote_intent"},
+    ]
+
+    evals_config = {}
+    evals_config["query_lib"] = query_lib
+    evals_config["queries_data"] = dict(zip(range(len(queries_data)), queries_data, strict=False))
+
+    # write config to output location
+    with open(evals_config_filename, "w") as outfile:
+        json.dump(evals_config, outfile, indent=4)
 
 
 if __name__ == "__main__":
@@ -245,7 +305,10 @@ if __name__ == "__main__":
     config_data["custom_call_to_action"] = custom_call_to_action
 
     config_data["agent_config_filename"] = args.cfg_name
-
+    config_data["evals_config_filename"] = "election_sentiment_eval_config"
     # write config to output location
     with open(config_data["agent_config_filename"], "w") as outfile:
         json.dump(config_data, outfile, indent=4)
+
+    candidate_names = [candidate["name"] for partisan_type, candidate in candidate_info.items()]
+    gen_eval_config(config_data["evals_config_filename"], candidate_names)

@@ -67,7 +67,7 @@ def post_status(  # noqa: PLR0913
     poll_multiple: bool = False,
     poll_hide_totals: bool = False,
     quote_id: int | None = None,
-) -> None:
+):
     """Post a status on Mastodon.
 
     Args:
@@ -137,6 +137,7 @@ def post_status(  # noqa: PLR0913
             logger.info(f"{login_user} successfully posted the status.")
 
         logger.debug(f"Status ID: {status_dict['id']}")
+        return status_dict
     except ValueError as e:
         logger.error(f"Error: {e}")
     except Exception as e:

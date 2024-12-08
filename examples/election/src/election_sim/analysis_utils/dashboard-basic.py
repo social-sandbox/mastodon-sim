@@ -1,15 +1,17 @@
 import argparse
 import base64
-import re
 
 import dash
 import dash_cytoscape as cyto
 import networkx as nx
+import pandas as pd
 import plotly.graph_objs as go
 from dash import Input, Output, State, dcc, html
+from output_proc_utils import post_process_output
 from plotly.subplots import make_subplots
 
 cyto.load_extra_layouts()
+from io import StringIO
 
 
 def compute_positions(graph):
@@ -49,310 +51,110 @@ def deserialize_data(serialized):
     return follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes
 
 
-# Load and parse the interaction data from a file path
-def load_data(filepath):
-    follow_graph = nx.DiGraph()
-    interactions_by_episode = {}
-    posted_users_by_episode = {}
-    toots = {}
-    current_episode = -1
-    interactions_by_episode[current_episode] = []
-    posted_users_by_episode[current_episode] = set()
-
-    with open(filepath, encoding="utf-8") as file:
-        lines = file.readlines()
-        for line in lines:
-            line = line.strip()
-
-            if "Episode:" in line:
-                match = re.match(r"Episode:\s*(\d+)(.*)", line)
-                if match:
-                    current_episode = int(match.group(1))
-                    remaining_text = match.group(2).strip()
-                    interactions_by_episode[current_episode] = []
-                    posted_users_by_episode[current_episode] = set()
-                    line = remaining_text
-                else:
-                    continue  # Skip malformed episode lines
-
-            if not line:
-                continue  # Skip empty lines
-
-            if "followed" in line:
-                user = line.split()[0]
-                target_user = line.split()[-1]
-                follow_graph.add_edge(user, target_user)
-            elif "replied" in line:
-                if current_episode is not None:
-                    # Line format: user replied to a toot by target_user with Toot ID:[id], new Toot ID:[new_id] --- [content]
-                    parts = line.split("---")
-                    main_part = parts[0].strip()
-                    content = parts[1].strip() if len(parts) > 1 else ""
-
-                    # Extract user, target_user, parent Toot ID, new Toot ID
-                    reply_pattern = r"(\w+) replied to a toot by (\w+) with Toot ID:?[:]? ?(\d+), new Toot ID:?[:]? ?(\d+)"
-                    match = re.match(reply_pattern, main_part)
-                    if match:
-                        user = match.group(1)
-                        target_user = match.group(2)
-                        parent_toot_id = match.group(3)
-                        new_toot_id = match.group(4)
-                        # Store the new Toot with content
-                        toots[new_toot_id] = {
-                            "user": user,
-                            "action": "replied",
-                            "content": content,
-                            "parent_toot_id": parent_toot_id,
-                        }
-                        # Add interaction
-                        interactions_by_episode[current_episode].append(
-                            {
-                                "source": user,
-                                "target": target_user,
-                                "action": "replied",
-                                "episode": current_episode,
-                                "toot_id": new_toot_id,
-                                "parent_toot_id": parent_toot_id,
-                            }
-                        )
-            elif "boosted" in line:
-                if current_episode is not None:
-                    # Line format: user boosted a toot from target_user with Toot ID:[id]
-                    boosted_pattern = r"(\w+) boosted a toot from (\w+) with Toot ID:?[:]? ?(\d+)"
-                    match = re.match(boosted_pattern, line)
-                    if match:
-                        user = match.group(1)
-                        target_user = match.group(2)
-                        toot_id = match.group(3)
-                        interactions_by_episode[current_episode].append(
-                            {
-                                "source": user,
-                                "target": target_user,
-                                "action": "boosted",
-                                "episode": current_episode,
-                                "toot_id": toot_id,
-                            }
-                        )
-            elif "liked" in line:
-                if current_episode is not None:
-                    # Line format: user liked a toot from target_user with Toot ID:[id]
-                    liked_pattern = r"(\w+) liked a toot from (\w+) with Toot ID:?[:]? ?(\d+)"
-                    match = re.match(liked_pattern, line)
-                    if match:
-                        user = match.group(1)
-                        target_user = match.group(2)
-                        toot_id = match.group(3)
-                        interactions_by_episode[current_episode].append(
-                            {
-                                "source": user,
-                                "target": target_user,
-                                "action": "liked",
-                                "episode": current_episode,
-                                "toot_id": toot_id,
-                            }
-                        )
-            elif "posted" in line:
-                if current_episode is not None:
-                    # Line format: user posted a toot with Toot ID: [id] --- [content]
-                    parts = line.split("---")
-                    main_part = parts[0].strip()
-                    content = parts[1].strip() if len(parts) > 1 else ""
-
-                    # Extract user and Toot ID
-                    post_pattern = r"(\w+) posted a toot with Toot ID:?[:]? ?(\d+)"
-                    match = re.match(post_pattern, main_part)
-                    if match:
-                        user = match.group(1)
-                        toot_id = match.group(2)
-                        # Store the Toot with content
-                        toots[toot_id] = {
-                            "user": user,
-                            "action": "posted",
-                            "content": content,
-                        }
-                        # Add interaction
-                        interactions_by_episode[current_episode].append(
-                            {
-                                "source": user,
-                                "target": user,  # For 'post', target is the user themselves
-                                "action": "posted",
-                                "episode": current_episode,
-                                "toot_id": toot_id,
-                            }
-                        )
-                        # Add to posted_users
-                        posted_users_by_episode[current_episode].add(user)
-
-    return follow_graph, interactions_by_episode, posted_users_by_episode, toots
+def get_target_user(row):
+    if row.label == "post":
+        target_user = row.source_user
+    elif row.label == "like_toot" or row.label == "boost_toot":
+        target_user = row.data["target_user"]
+    elif row.label == "reply":
+        target_user = row.data["reply_to"]["target_user"]
+    return target_user
 
 
-# Load and parse the vote data from a file path
-def load_votes(filepath):
-    votes = {}
-    with open(filepath) as file:
-        lines = file.readlines()
-        current_episode = None
-        for line in lines:
-            line = line.strip()
-            if line.startswith("Episode:"):
-                current_episode = int(line.split(":")[1].strip())
-                votes[current_episode] = {}
-            elif "votes for" in line:
-                user, candidate = line.split(" votes for ")
-                votes[current_episode][user.split()[0]] = candidate
-    return votes
+def get_int_dict(int_df):
+    past = dict(
+        zip(
+            ["post", "like_toot", "boost_toot", "reply"],
+            ["posted", "liked", "boosted", "replied"],
+            strict=False,
+        )
+    )
+    int_df["int_data"] = int_df.apply(
+        lambda x: {
+            "action": past[x.label],
+            "episode": x.episode,
+            "source": x.source_user,
+            "target": get_target_user(x),
+            "toot_id": x.data["toot_id"],
+        },
+        axis=1,
+    )
+    int_df.int_data = int_df.apply(
+        lambda x: x.int_data | {"parent_toot_id": x.data["reply_to"]["toot_id"]}
+        if x.label == "reply"
+        else x.int_data,
+        axis=1,
+    )
+    return int_df.groupby("episode")["int_data"].apply(list).to_dict()
 
 
-# Load and parse the interaction data from a string (for uploaded files)
-def load_data_from_string(file_contents):
-    follow_graph = nx.DiGraph()
-    interactions_by_episode = {}
-    posted_users_by_episode = {}
-    toots = {}
-    current_episode = -1
-    interactions_by_episode[current_episode] = []
-    posted_users_by_episode[current_episode] = set()
+def get_toot_dict(int_df):
+    past = dict(
+        zip(
+            ["post", "like_toot", "boost_toot", "reply"],
+            ["posted", "liked", "boosted", "replied"],
+            strict=False,
+        )
+    )
+    text_df = int_df.loc[(int_df.label == "post") | (int_df.label == "reply"), :].reset_index(
+        drop=True
+    )
 
-    lines = file_contents.splitlines()
-    for line in lines:
-        line = line.strip()
+    # handle Nones as toot_ids by appending an index
+    no_toot_id = text_df.data.apply(lambda x: x["toot_id"] is None)
+    text_df["no_toot_id_idx"] = -1
+    text_df.loc[no_toot_id, "no_toot_id_idx"] = range(no_toot_id.sum())
+    text_df.loc[no_toot_id, "data"] = text_df.loc[no_toot_id, :].apply(
+        lambda x: x.data | {"toot_id": "None" + str(x.no_toot_id_idx)}, axis=1
+    )
 
-        if "Episode:" in line:
-            match = re.match(r"Episode:\s*(\d+)(.*)", line)
-            if match:
-                current_episode = int(match.group(1))
-                remaining_text = match.group(2).strip()
-                interactions_by_episode[current_episode] = []
-                posted_users_by_episode[current_episode] = set()
-                line = remaining_text
-            else:
-                continue  # Skip malformed episode lines
+    text_df["toot_id"] = text_df.data.apply(lambda x: x["toot_id"])
+    text_df = text_df.set_index("toot_id")
+    text_df["text_data"] = text_df.apply(
+        lambda x: {"user": x.source_user, "action": past[x.label], "content": x.data["post_text"]},
+        axis=1,
+    )
+    text_df.text_data = text_df.apply(
+        lambda x: x.text_data | {"parent_toot_id": x.data["reply_to"]["toot_id"]}
+        if x.label == "reply"
+        else x.text_data,
+        axis=1,
+    )
 
-        if not line:
-            continue  # Skip empty lines
-
-        if "followed" in line:
-            user = line.split()[0]
-            target_user = line.split()[-1]
-            follow_graph.add_edge(user, target_user)
-        elif "replied" in line:
-            if current_episode is not None:
-                # Line format: user replied to a toot by target_user with Toot ID:[id], new Toot ID:[new_id] --- [content]
-                parts = line.split("---")
-                main_part = parts[0].strip()
-                content = parts[1].strip() if len(parts) > 1 else ""
-
-                # Extract user, target_user, parent Toot ID, new Toot ID
-                reply_pattern = r"(\w+) replied to a toot by (\w+) with Toot ID:?[:]? ?(\d+), new Toot ID:?[:]? ?(\d+)"
-                match = re.match(reply_pattern, main_part)
-                if match:
-                    user = match.group(1)
-                    target_user = match.group(2)
-                    parent_toot_id = match.group(3)
-                    new_toot_id = match.group(4)
-                    # Store the new Toot with content
-                    toots[new_toot_id] = {
-                        "user": user,
-                        "action": "replied",
-                        "content": content,
-                        "parent_toot_id": parent_toot_id,
-                    }
-                    # Add interaction
-                    interactions_by_episode[current_episode].append(
-                        {
-                            "source": user,
-                            "target": target_user,
-                            "action": "replied",
-                            "episode": current_episode,
-                            "toot_id": new_toot_id,
-                            "parent_toot_id": parent_toot_id,
-                        }
-                    )
-        elif "boosted" in line:
-            if current_episode is not None:
-                # Line format: user boosted a toot from target_user with Toot ID:[id]
-                boosted_pattern = r"(\w+) boosted a toot from (\w+) with Toot ID:?[:]? ?(\d+)"
-                match = re.match(boosted_pattern, line)
-                if match:
-                    user = match.group(1)
-                    target_user = match.group(2)
-                    toot_id = match.group(3)
-                    interactions_by_episode[current_episode].append(
-                        {
-                            "source": user,
-                            "target": target_user,
-                            "action": "boosted",
-                            "episode": current_episode,
-                            "toot_id": toot_id,
-                        }
-                    )
-        elif "liked" in line:
-            if current_episode is not None:
-                # Line format: user liked a toot from target_user with Toot ID:[id]
-                liked_pattern = r"(\w+) liked a toot from (\w+) with Toot ID:?[:]? ?(\d+)"
-                match = re.match(liked_pattern, line)
-                if match:
-                    user = match.group(1)
-                    target_user = match.group(2)
-                    toot_id = match.group(3)
-                    interactions_by_episode[current_episode].append(
-                        {
-                            "source": user,
-                            "target": target_user,
-                            "action": "liked",
-                            "episode": current_episode,
-                            "toot_id": toot_id,
-                        }
-                    )
-        elif "posted" in line:
-            if current_episode is not None:
-                # Line format: user posted a toot with Toot ID: [id] --- [content]
-                parts = line.split("---")
-                main_part = parts[0].strip()
-                content = parts[1].strip() if len(parts) > 1 else ""
-
-                # Extract user and Toot ID
-                post_pattern = r"(\w+) posted a toot with Toot ID:?[:]? ?(\d+)"
-                match = re.match(post_pattern, main_part)
-                if match:
-                    user = match.group(1)
-                    toot_id = match.group(2)
-                    # Store the Toot with content
-                    toots[toot_id] = {
-                        "user": user,
-                        "action": "posted",
-                        "content": content,
-                    }
-                    # Add interaction
-                    interactions_by_episode[current_episode].append(
-                        {
-                            "source": user,
-                            "target": user,  # For 'post', target is the user themselves
-                            "action": "posted",
-                            "episode": current_episode,
-                            "toot_id": toot_id,
-                        }
-                    )
-                    # Add to posted_users
-                    posted_users_by_episode[current_episode].add(user)
-
-    return follow_graph, interactions_by_episode, posted_users_by_episode, toots
+    return text_df.text_data.to_dict()
 
 
-# Load and parse the vote data from a string (for uploaded files)
-def load_votes_from_string(file_contents):
-    votes = {}
-    lines = file_contents.splitlines()
-    current_episode = None
-    for line in lines:
-        line = line.strip()
-        if line.startswith("Episode:"):
-            current_episode = int(line.split(":")[1].strip())
-            votes[current_episode] = {}
-        elif "votes for" in line:
-            user, candidate = line.split(" votes for ")
-            votes[current_episode][user.split()[0]] = candidate
-    return votes
+def load_data(input_var):
+    if len(input_var) < 500:
+        df = pd.read_json(input_var, lines=True)
+    else:
+        df = pd.read_json(StringIO(input_var), lines=True)
+
+    eval_df, int_df, edge_df = post_process_output(df)
+
+    # votes
+    votes = (
+        eval_df.loc[eval_df.label == "vote_pref", ["source_user", "response", "episode"]]
+        .groupby("episode")
+        .apply(lambda x: dict(zip(x.source_user, x.response, strict=False)))
+        .to_dict()
+    )
+
+    # final follow network
+    follow_graph = nx.from_pandas_edgelist(
+        edge_df, "source_user", "target_user", create_using=nx.DiGraph()
+    )  # invalid in presence of unfollows (in which case use episodewise_graphbuild)
+
+    # active users with episode keys
+    posted_users_by_episode = int_df.groupby("episode")["source_user"].apply(set).to_dict()
+
+    # interaction data
+    int_dict = get_int_dict(int_df.copy())
+
+    # toot_data
+    toot_dict = get_toot_dict(int_df.copy())
+
+    return follow_graph, int_dict, posted_users_by_episode, toot_dict, votes
 
 
 # Main entry point
@@ -360,25 +162,22 @@ if __name__ == "__main__":
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Run the Dash app with specific data files.")
     parser.add_argument(
-        "interaction_file",
+        "--output_file",
         type=str,
         nargs="?",
         default=None,
-        help="The path to the interaction log file.",
-    )
-    parser.add_argument(
-        "votes_file", type=str, nargs="?", default=None, help="The path to the votes log file."
+        help="The path to the output log file.",
     )
 
     args = parser.parse_args()
 
     # Initialize variables
-    if args.interaction_file and args.votes_file:
+    if args.output_file:
         # Load the data using the files passed as arguments
-        follow_graph, interactions_by_episode, posted_users_by_episode, toots = load_data(
-            args.interaction_file
+        (follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes) = load_data(
+            args.output_file
         )
-        votes = load_votes(args.votes_file)
+
         # Compute positions
         all_positions = compute_positions(follow_graph)
 
@@ -403,11 +202,11 @@ if __name__ == "__main__":
             html.Div(
                 id="upload-screen",
                 children=[
-                    # Upload Interaction Log
+                    # Upload Output Log
                     html.Div(
                         [
                             html.Label(
-                                "Upload Interaction Log:",
+                                "Upload Output Log:",
                                 style={
                                     "font-size": "18px",
                                     "font-weight": "bold",
@@ -448,52 +247,6 @@ if __name__ == "__main__":
                             ),
                         ],
                         style={"width": "100%", "max-width": "500px", "margin-bottom": "30px"},
-                    ),
-                    # Upload Vote Log
-                    html.Div(
-                        [
-                            html.Label(
-                                "Upload Vote Log:",
-                                style={
-                                    "font-size": "18px",
-                                    "font-weight": "bold",
-                                    "margin-bottom": "10px",
-                                    "color": "#555555",
-                                    "text-align": "center",
-                                },
-                            ),
-                            dcc.Upload(
-                                id="upload-vote-logger",
-                                children=html.Div(
-                                    [
-                                        "Drag and Drop or ",
-                                        html.A(
-                                            "Select Files",
-                                            style={
-                                                "color": "#1a73e8",
-                                                "text-decoration": "underline",
-                                            },
-                                        ),
-                                    ]
-                                ),
-                                style={
-                                    "width": "100%",
-                                    "max-width": "400px",
-                                    "height": "80px",
-                                    "lineHeight": "80px",
-                                    "borderWidth": "2px",
-                                    "borderStyle": "dashed",
-                                    "borderRadius": "10px",
-                                    "textAlign": "center",
-                                    "background-color": "#f9f9f9",
-                                    "cursor": "pointer",
-                                    "margin": "0 auto",  # Center the upload box
-                                    "transition": "border 0.3s ease-in-out",
-                                },
-                                multiple=False,
-                            ),
-                        ],
-                        style={"width": "100%", "max-width": "500px", "margin-bottom": "40px"},
                     ),
                     # Submit Button
                     html.Button(
@@ -787,33 +540,9 @@ if __name__ == "__main__":
                         [
                             html.Div(
                                 [
-                                    html.Label("Upload Interaction Log:"),
+                                    html.Label("Upload Output Log:"),
                                     dcc.Upload(
                                         id="upload-app-logger-dashboard",
-                                        children=html.Div([html.A("Select Files")]),
-                                        style={
-                                            "width": "60%",
-                                            "height": "50px",
-                                            "lineHeight": "80px",
-                                            "borderWidth": "2px",
-                                            "borderStyle": "dashed",
-                                            "borderRadius": "10px",
-                                            "textAlign": "center",
-                                            "background-color": "#f0f0f0",
-                                            "cursor": "pointer",
-                                            "margin-bottom": "20px",
-                                            "padding": "30px",
-                                        },
-                                        multiple=False,
-                                    ),
-                                ],
-                                className="upload-component",
-                            ),
-                            html.Div(
-                                [
-                                    html.Label("Upload Vote Log:"),
-                                    dcc.Upload(
-                                        id="upload-vote-logger-dashboard",
                                         children=html.Div([html.A("Select Files")]),
                                         style={
                                             "width": "60%",
@@ -902,13 +631,13 @@ if __name__ == "__main__":
         ],
         [
             State("upload-app-logger", "contents"),
-            State("upload-vote-logger", "contents"),
+            # State("upload-vote-logger", "contents"),
             State("upload-app-logger", "filename"),
-            State("upload-vote-logger", "filename"),
+            # State("upload-vote-logger", "filename"),
             State("upload-app-logger-dashboard", "contents"),
-            State("upload-vote-logger-dashboard", "contents"),
+            # State("upload-vote-logger-dashboard", "contents"),
             State("upload-app-logger-dashboard", "filename"),
-            State("upload-vote-logger-dashboard", "filename"),
+            # State("upload-vote-logger-dashboard", "filename"),
             State("data-store", "data"),
         ],
     )
@@ -916,13 +645,9 @@ if __name__ == "__main__":
         n_clicks_initial,
         n_clicks_dashboard,
         app_logger_contents_initial,
-        vote_logger_contents_initial,
         app_logger_filename_initial,
-        vote_logger_filename_initial,
         app_logger_contents_dashboard,
-        vote_logger_contents_dashboard,
         app_logger_filename_dashboard,
-        vote_logger_filename_dashboard,
         current_data,
     ):
         ctx = dash.callback_context
@@ -935,10 +660,7 @@ if __name__ == "__main__":
         try:
             if triggered_id == "submit-button":
                 # Handle initial upload
-                if (
-                    app_logger_contents_initial is not None
-                    and vote_logger_contents_initial is not None
-                ):
+                if app_logger_contents_initial is not None:
                     # Process app_logger
                     content_type, content_string = app_logger_contents_initial.split(",")
                     decoded = base64.b64decode(content_string)
@@ -948,13 +670,8 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         posted_users_by_episode_new,
                         toots_new,
-                    ) = load_data_from_string(app_logger_string)
-
-                    # Process vote_logger
-                    content_type, content_string = vote_logger_contents_initial.split(",")
-                    decoded = base64.b64decode(content_string)
-                    vote_logger_string = decoded.decode("utf-8")
-                    votes_new = load_votes_from_string(vote_logger_string)
+                        votes_new,
+                    ) = load_data(app_logger_string)
 
                     # Serialize the new data
                     serialized_new_data = serialize_data(
@@ -966,14 +683,11 @@ if __name__ == "__main__":
                     )
 
                     return serialized_new_data, "", ""
-                raise ValueError("Both Interaction Log and Vote Log files are required.")
+                raise ValueError("Output Log file required.")
 
             if triggered_id == "upload-button-dashboard":
                 # Handle dashboard upload
-                if (
-                    app_logger_contents_dashboard is not None
-                    and vote_logger_contents_dashboard is not None
-                ):
+                if app_logger_contents_dashboard is not None:
                     # Process app_logger
                     content_type, content_string = app_logger_contents_dashboard.split(",")
                     decoded = base64.b64decode(content_string)
@@ -983,13 +697,8 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         posted_users_by_episode_new,
                         toots_new,
-                    ) = load_data_from_string(app_logger_string)
-
-                    # Process vote_logger
-                    content_type, content_string = vote_logger_contents_dashboard.split(",")
-                    decoded = base64.b64decode(content_string)
-                    vote_logger_string = decoded.decode("utf-8")
-                    votes_new = load_votes_from_string(vote_logger_string)
+                        votes_new,
+                    ) = load_data(app_logger_string)
 
                     # Serialize the new data
                     serialized_new_data = serialize_data(
@@ -1001,9 +710,7 @@ if __name__ == "__main__":
                     )
 
                     return serialized_new_data, "", ""
-                raise ValueError(
-                    "Both Interaction Log and Vote Log files are required for dashboard upload."
-                )
+                raise ValueError("Output Log files required for dashboard upload.")
 
             raise dash.exceptions.PreventUpdate
 
@@ -1075,7 +782,7 @@ if __name__ == "__main__":
             )
 
         # Deserialize the data_store.
-        follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes = (
+        (follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes) = (
             deserialize_data(data_store)
         )
 

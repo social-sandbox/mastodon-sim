@@ -1,14 +1,34 @@
 import json
+import threading
 
 from concordia.utils import html as html_lib
 from IPython import display
 
+file_lock = threading.Lock()
 
-def write_logs(results):
-    # Write the results to the respective files
-    for content, file_name in results:
-        with open(file_name, "a") as f:
-            f.write(content)
+
+def write_item(out_item, output_filename):
+    with file_lock:
+        with open(output_filename, "a") as f:
+            print(json.dumps(out_item), file=f)  # adds the new line character
+
+
+class event_logger:
+    def __init__(self, event_type, output_filename):
+        self.episode_idx = None
+        self.output_filename = output_filename
+        self.type = event_type
+
+    def log(self, log_data):
+        if isinstance(log_data, list):
+            for log_item in log_data:
+                log_item["episode"] = self.episode_idx
+                log_item["event_type"] = self.type
+                write_item(log_item, self.output_filename)
+        else:
+            log_data["episode"] = self.episode_idx
+            log_data["event_type"] = self.type
+            write_item(log_data, self.output_filename)
 
 
 def read_token_data(file_path):
@@ -50,11 +70,11 @@ def post_analysis(env, model, players, memories, output_rootname):
             terminators=(),
         )
 
-    all_player_mem = memories[player.name].retrieve_recent(k=1000, add_time=True)
-    all_player_mem = ["Summary:", summary, "Memories:", *all_player_mem]
-    player_html = html_lib.PythonObjectToHTMLConverter(all_player_mem).convert()
-    player_logs.append(player_html)
-    player_log_names.append(f"{name}")
+        all_player_mem = memories[player.name].retrieve_recent(k=1000, add_time=True)
+        all_player_mem = ["Summary:", summary, "Memories:", *all_player_mem]
+        player_html = html_lib.PythonObjectToHTMLConverter(all_player_mem).convert()
+        player_logs.append(player_html)
+        player_log_names.append(f"{name}")
 
     # ## Build and display HTML log of the experiment
     gm_mem_html = html_lib.PythonObjectToHTMLConverter(all_gm_memories).convert()
@@ -67,7 +87,7 @@ def post_analysis(env, model, players, memories, output_rootname):
     )
 
     tabbed_html = html_lib.finalise_html(tabbed_html)
-    with open(output_rootname + "index5-55.html", "w", encoding="utf-8") as f:
+    with open(output_rootname + "_summary.html", "w", encoding="utf-8") as f:
         f.write(tabbed_html)
 
     display.HTML(tabbed_html)
