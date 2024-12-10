@@ -196,11 +196,11 @@ def build_agent(
         observation_summary,
         relevant_memories,
         self_perception,
-        opinions_on_candidate,
+        *opinions_on_candidate,
         time_display,
         # Components that do not provide pre_act context.
         identity_characteristics,
-        relevant_opinions,
+        *relevant_opinions,
     ]
 
     components_of_agent = {

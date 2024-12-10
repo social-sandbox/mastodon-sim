@@ -1020,6 +1020,21 @@ files = [
 ]
 
 [[package]]
+name = "dataclasses-json"
+version = "0.6.7"
+description = "Easily serialize dataclasses to and from JSON."
+optional = false
+python-versions = "<4.0,>=3.7"
+files = [
+    {file = "dataclasses_json-0.6.7-py3-none-any.whl", hash = "sha256:0dbf33f26c8d5305befd61b39d2b3414e8a407bedc2834dea9b8d642666fb40a"},
+    {file = "dataclasses_json-0.6.7.tar.gz", hash = "sha256:b6b3e528266ea45b9535223bc53ca645f5208833c29229e847b3f26a1cc55fc0"},
+]
+
+[package.dependencies]
+marshmallow = ">=3.18.0,<4.0.0"
+typing-inspect = ">=0.4.0,<1"
+
+[[package]]
 name = "debugpy"
 version = "1.8.5"
 description = "An implementation of the Debug Adapter Protocol for Python"
@@ -1150,6 +1165,20 @@ files = [
 [package.dependencies]
 dnspython = ">=2.0.0"
 idna = ">=2.0.0"
+
+[[package]]
+name = "eval-type-backport"
+version = "0.2.0"
+description = "Like `typing._eval_type`, but lets older Python versions use newer typing features."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "eval_type_backport-0.2.0-py3-none-any.whl", hash = "sha256:ac2f73d30d40c5a30a80b8739a789d6bb5e49fdffa66d7912667e2015d9c9933"},
+    {file = "eval_type_backport-0.2.0.tar.gz", hash = "sha256:68796cfbc7371ebf923f03bdf7bef415f3ec098aeced24e054b253a0e78f7b37"},
+]
+
+[package.extras]
+tests = ["pytest"]
 
 [[package]]
 name = "execnet"
@@ -1473,13 +1502,13 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "gdm-concordia"
-version = "1.7.0"
+version = "1.8.9"
 description = "A library for building a generative model of social interacions."
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "gdm-concordia-1.7.0.tar.gz", hash = "sha256:895b63f16cfa56aee2444b75f7fcfc69366c8e9b54a4bb4d9d4e989001765626"},
-    {file = "gdm_concordia-1.7.0-py3-none-any.whl", hash = "sha256:cc6f3f3b3540b334368046d579891cdda1f3319c59c6fa7af54334ecd057a7e4"},
+    {file = "gdm-concordia-1.8.9.tar.gz", hash = "sha256:0fcd02dca53abf2b5a05c50415140300ed211c6d07072e6ccf48cdb8f1e98e2c"},
+    {file = "gdm_concordia-1.8.9-py3-none-any.whl", hash = "sha256:b2b0e8cccb2341baa28567b9ecff1cb9c504a847e38ef46c2413a888ff7c7160"},
 ]
 
 [package.dependencies]
@@ -1487,9 +1516,9 @@ absl-py = "*"
 boto3 = "*"
 google-cloud-aiplatform = "*"
 google-generativeai = "*"
-immutabledict = "*"
 ipython = "*"
-langchain = "*"
+jinja2 = "*"
+langchain-community = "*"
 matplotlib = "*"
 mistralai = "*"
 numpy = "*"
@@ -1500,6 +1529,7 @@ python-dateutil = "*"
 reactivex = "*"
 retry = "*"
 termcolor = "*"
+together = "*"
 transformers = "*"
 typing-extensions = "*"
 
@@ -2173,6 +2203,17 @@ socks = ["socksio (==1.*)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
+name = "httpx-sse"
+version = "0.4.0"
+description = "Consume Server-Sent Event (SSE) messages with HTTPX."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "httpx-sse-0.4.0.tar.gz", hash = "sha256:1e81a3a3070ce322add1d3529ed42eb5f70817f45ed6ec915ab753f961139721"},
+    {file = "httpx_sse-0.4.0-py3-none-any.whl", hash = "sha256:f329af6eae57eaa2bdfd962b42524764af68075ea87370a2de920af5341e318f"},
+]
+
+[[package]]
 name = "huggingface-hub"
 version = "0.24.6"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
@@ -2254,17 +2295,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 files = [
     {file = "imagesize-1.4.1-py2.py3-none-any.whl", hash = "sha256:0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b"},
     {file = "imagesize-1.4.1.tar.gz", hash = "sha256:69150444affb9cb0d5cc5a92b3676f0b2fb7cd9ae39e947a5e11a36b4497cd4a"},
-]
-
-[[package]]
-name = "immutabledict"
-version = "4.2.0"
-description = "Immutable wrapper around dictionaries (a fork of frozendict)"
-optional = false
-python-versions = ">=3.8,<4.0"
-files = [
-    {file = "immutabledict-4.2.0-py3-none-any.whl", hash = "sha256:d728b2c2410d698d95e6200237feb50a695584d20289ad3379a439aa3d90baba"},
-    {file = "immutabledict-4.2.0.tar.gz", hash = "sha256:e003fd81aad2377a5a758bf7e1086cf3b70b63e9a5cc2f46bce8d0a2b4727c5f"},
 ]
 
 [[package]]
@@ -2831,86 +2861,118 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "0.2.16"
+version = "0.3.10"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain-0.2.16-py3-none-any.whl", hash = "sha256:8f59ee8b45f268df4b924ea3b9c63e49286efa756d16b3f6a9de5c6e502c36e1"},
-    {file = "langchain-0.2.16.tar.gz", hash = "sha256:ffb426a76a703b73ac69abad77cd16eaf03dda76b42cff55572f592d74944166"},
+    {file = "langchain-0.3.10-py3-none-any.whl", hash = "sha256:4ae38d4c9f9ec5cd1a16a505b451a57c0aab2807d6c9f8cb5b346d06301b2232"},
+    {file = "langchain-0.3.10.tar.gz", hash = "sha256:aef0f9bdaf4a4d3d50aec348438135987bda1d83070b49f77032f561d3a761d8"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
-langchain-core = ">=0.2.38,<0.3.0"
-langchain-text-splitters = ">=0.2.0,<0.3.0"
+langchain-core = ">=0.3.22,<0.4.0"
+langchain-text-splitters = ">=0.3.0,<0.4.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
-    {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1,<2", markers = "python_version < \"3.12\""},
+    {version = ">=1.26.2,<3", markers = "python_version >= \"3.12\""},
+    {version = ">=1.22.4,<2", markers = "python_version < \"3.12\""},
 ]
-pydantic = ">=1,<3"
+pydantic = ">=2.7.4,<3.0.0"
 PyYAML = ">=5.3"
 requests = ">=2,<3"
 SQLAlchemy = ">=1.4,<3"
-tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
+tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10"
+
+[[package]]
+name = "langchain-community"
+version = "0.3.10"
+description = "Community contributed LangChain integrations."
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "langchain_community-0.3.10-py3-none-any.whl", hash = "sha256:f718de973f60c6d0f10c71321e461cf41251cc74543f064b7b2ee7ae06b9a43f"},
+    {file = "langchain_community-0.3.10.tar.gz", hash = "sha256:f503e90cbb44ddb14afb141552a93fd9fbd0b216407315a6608f901861a938f9"},
+]
+
+[package.dependencies]
+aiohttp = ">=3.8.3,<4.0.0"
+dataclasses-json = ">=0.5.7,<0.7"
+httpx-sse = ">=0.4.0,<0.5.0"
+langchain = ">=0.3.10,<0.4.0"
+langchain-core = ">=0.3.22,<0.4.0"
+langsmith = ">=0.1.125,<0.2.0"
+numpy = [
+    {version = ">=1.26.2,<3", markers = "python_version >= \"3.12\""},
+    {version = ">=1.22.4,<2", markers = "python_version < \"3.12\""},
+]
+pydantic-settings = ">=2.4.0,<3.0.0"
+PyYAML = ">=5.3"
+requests = ">=2,<3"
+SQLAlchemy = ">=1.4,<3"
+tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.38"
+version = "0.3.23"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.2.38-py3-none-any.whl", hash = "sha256:8a5729bc7e68b4af089af20eff44fe4e7ca21d0e0c87ec21cef7621981fd1a4a"},
-    {file = "langchain_core-0.2.38.tar.gz", hash = "sha256:eb69dbedd344f2ee1f15bcea6c71a05884b867588fadc42d04632e727c1238f3"},
+    {file = "langchain_core-0.3.23-py3-none-any.whl", hash = "sha256:550c0b996990830fa6515a71a1192a8a0343367999afc36d4ede14222941e420"},
+    {file = "langchain_core-0.3.23.tar.gz", hash = "sha256:f9e175e3b82063cc3b160c2ca2b155832e1c6f915312e1204828f97d4aabf6e1"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.1.75,<0.2.0"
+langsmith = ">=0.1.125,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
-    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
+    {version = ">=2.5.2,<3.0.0", markers = "python_full_version < \"3.12.4\""},
 ]
 PyYAML = ">=5.3"
-tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
+tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10.0.0"
 typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-text-splitters"
-version = "0.2.4"
+version = "0.3.2"
 description = "LangChain text splitting utilities"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_text_splitters-0.2.4-py3-none-any.whl", hash = "sha256:2702dee5b7cbdd595ccbe43b8d38d01a34aa8583f4d6a5a68ad2305ae3e7b645"},
-    {file = "langchain_text_splitters-0.2.4.tar.gz", hash = "sha256:f7daa7a3b0aa8309ce248e2e2b6fc8115be01118d336c7f7f7dfacda0e89bf29"},
+    {file = "langchain_text_splitters-0.3.2-py3-none-any.whl", hash = "sha256:0db28c53f41d1bc024cdb3b1646741f6d46d5371e90f31e7e7c9fbe75d01c726"},
+    {file = "langchain_text_splitters-0.3.2.tar.gz", hash = "sha256:81e6515d9901d6dd8e35fb31ccd4f30f76d44b771890c789dc835ef9f16204df"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.38,<0.3.0"
+langchain-core = ">=0.3.15,<0.4.0"
 
 [[package]]
 name = "langsmith"
-version = "0.1.117"
+version = "0.1.147"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.117-py3-none-any.whl", hash = "sha256:e936ee9bcf8293b0496df7ba462a3702179fbe51f9dc28744b0fbec0dbf206ae"},
-    {file = "langsmith-0.1.117.tar.gz", hash = "sha256:a1b532f49968b9339bcaff9118d141846d52ed3d803f342902e7448edf1d662b"},
+    {file = "langsmith-0.1.147-py3-none-any.whl", hash = "sha256:7166fc23b965ccf839d64945a78e9f1157757add228b086141eb03a60d699a15"},
+    {file = "langsmith-0.1.147.tar.gz", hash = "sha256:2e933220318a4e73034657103b3b1a3a6109cc5db3566a7e8e03be8d6d7def7a"},
 ]
 
 [package.dependencies]
 httpx = ">=0.23.0,<1"
-orjson = ">=3.9.14,<4.0.0"
+orjson = {version = ">=3.9.14,<4.0.0", markers = "platform_python_implementation != \"PyPy\""}
 pydantic = [
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
     {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
 ]
 requests = ">=2,<3"
+requests-toolbelt = ">=1.0.0,<2.0.0"
+
+[package.extras]
+langsmith-pyo3 = ["langsmith-pyo3 (>=0.1.0rc2,<0.2.0)"]
 
 [[package]]
 name = "loguru"
@@ -3176,6 +3238,25 @@ files = [
     {file = "MarkupSafe-2.1.5-cp39-cp39-win_amd64.whl", hash = "sha256:fa173ec60341d6bb97a89f5ea19c85c5643c1e7dedebc22f5181eb73573142c5"},
     {file = "MarkupSafe-2.1.5.tar.gz", hash = "sha256:d283d37a890ba4c1ae73ffadf8046435c76e7bc2247bbb63c00bd1a709c6544b"},
 ]
+
+[[package]]
+name = "marshmallow"
+version = "3.23.1"
+description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "marshmallow-3.23.1-py3-none-any.whl", hash = "sha256:fece2eb2c941180ea1b7fcbd4a83c51bfdd50093fdd3ad2585ee5e1df2508491"},
+    {file = "marshmallow-3.23.1.tar.gz", hash = "sha256:3a8dfda6edd8dcdbf216c0ede1d1e78d230a6dc9c5a088f58c4083b974a0d468"},
+]
+
+[package.dependencies]
+packaging = ">=17.0"
+
+[package.extras]
+dev = ["marshmallow[tests]", "pre-commit (>=3.5,<5.0)", "tox"]
+docs = ["alabaster (==1.0.0)", "autodocsumm (==0.2.14)", "sphinx (==8.1.3)", "sphinx-issues (==5.0.0)", "sphinx-version-warning (==1.1.2)"]
+tests = ["pytest", "simplejson"]
 
 [[package]]
 name = "mastodon-py"
@@ -4334,6 +4415,60 @@ files = [
 ]
 
 [[package]]
+name = "pyarrow"
+version = "18.1.0"
+description = "Python library for Apache Arrow"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "pyarrow-18.1.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:e21488d5cfd3d8b500b3238a6c4b075efabc18f0f6d80b29239737ebd69caa6c"},
+    {file = "pyarrow-18.1.0-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:b516dad76f258a702f7ca0250885fc93d1fa5ac13ad51258e39d402bd9e2e1e4"},
+    {file = "pyarrow-18.1.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4f443122c8e31f4c9199cb23dca29ab9427cef990f283f80fe15b8e124bcc49b"},
+    {file = "pyarrow-18.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c0a03da7f2758645d17b7b4f83c8bffeae5bbb7f974523fe901f36288d2eab71"},
+    {file = "pyarrow-18.1.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:ba17845efe3aa358ec266cf9cc2800fa73038211fb27968bfa88acd09261a470"},
+    {file = "pyarrow-18.1.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:3c35813c11a059056a22a3bef520461310f2f7eea5c8a11ef9de7062a23f8d56"},
+    {file = "pyarrow-18.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:9736ba3c85129d72aefa21b4f3bd715bc4190fe4426715abfff90481e7d00812"},
+    {file = "pyarrow-18.1.0-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:eaeabf638408de2772ce3d7793b2668d4bb93807deed1725413b70e3156a7854"},
+    {file = "pyarrow-18.1.0-cp311-cp311-macosx_12_0_x86_64.whl", hash = "sha256:3b2e2239339c538f3464308fd345113f886ad031ef8266c6f004d49769bb074c"},
+    {file = "pyarrow-18.1.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f39a2e0ed32a0970e4e46c262753417a60c43a3246972cfc2d3eb85aedd01b21"},
+    {file = "pyarrow-18.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e31e9417ba9c42627574bdbfeada7217ad8a4cbbe45b9d6bdd4b62abbca4c6f6"},
+    {file = "pyarrow-18.1.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:01c034b576ce0eef554f7c3d8c341714954be9b3f5d5bc7117006b85fcf302fe"},
+    {file = "pyarrow-18.1.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:f266a2c0fc31995a06ebd30bcfdb7f615d7278035ec5b1cd71c48d56daaf30b0"},
+    {file = "pyarrow-18.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:d4f13eee18433f99adefaeb7e01d83b59f73360c231d4782d9ddfaf1c3fbde0a"},
+    {file = "pyarrow-18.1.0-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:9f3a76670b263dc41d0ae877f09124ab96ce10e4e48f3e3e4257273cee61ad0d"},
+    {file = "pyarrow-18.1.0-cp312-cp312-macosx_12_0_x86_64.whl", hash = "sha256:da31fbca07c435be88a0c321402c4e31a2ba61593ec7473630769de8346b54ee"},
+    {file = "pyarrow-18.1.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:543ad8459bc438efc46d29a759e1079436290bd583141384c6f7a1068ed6f992"},
+    {file = "pyarrow-18.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0743e503c55be0fdb5c08e7d44853da27f19dc854531c0570f9f394ec9671d54"},
+    {file = "pyarrow-18.1.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:d4b3d2a34780645bed6414e22dda55a92e0fcd1b8a637fba86800ad737057e33"},
+    {file = "pyarrow-18.1.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:c52f81aa6f6575058d8e2c782bf79d4f9fdc89887f16825ec3a66607a5dd8e30"},
+    {file = "pyarrow-18.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:0ad4892617e1a6c7a551cfc827e072a633eaff758fa09f21c4ee548c30bcaf99"},
+    {file = "pyarrow-18.1.0-cp313-cp313-macosx_12_0_arm64.whl", hash = "sha256:84e314d22231357d473eabec709d0ba285fa706a72377f9cc8e1cb3c8013813b"},
+    {file = "pyarrow-18.1.0-cp313-cp313-macosx_12_0_x86_64.whl", hash = "sha256:f591704ac05dfd0477bb8f8e0bd4b5dc52c1cadf50503858dce3a15db6e46ff2"},
+    {file = "pyarrow-18.1.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:acb7564204d3c40babf93a05624fc6a8ec1ab1def295c363afc40b0c9e66c191"},
+    {file = "pyarrow-18.1.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:74de649d1d2ccb778f7c3afff6085bd5092aed4c23df9feeb45dd6b16f3811aa"},
+    {file = "pyarrow-18.1.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:f96bd502cb11abb08efea6dab09c003305161cb6c9eafd432e35e76e7fa9b90c"},
+    {file = "pyarrow-18.1.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:36ac22d7782554754a3b50201b607d553a8d71b78cdf03b33c1125be4b52397c"},
+    {file = "pyarrow-18.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:25dbacab8c5952df0ca6ca0af28f50d45bd31c1ff6fcf79e2d120b4a65ee7181"},
+    {file = "pyarrow-18.1.0-cp313-cp313t-macosx_12_0_arm64.whl", hash = "sha256:6a276190309aba7bc9d5bd2933230458b3521a4317acfefe69a354f2fe59f2bc"},
+    {file = "pyarrow-18.1.0-cp313-cp313t-macosx_12_0_x86_64.whl", hash = "sha256:ad514dbfcffe30124ce655d72771ae070f30bf850b48bc4d9d3b25993ee0e386"},
+    {file = "pyarrow-18.1.0-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:aebc13a11ed3032d8dd6e7171eb6e86d40d67a5639d96c35142bd568b9299324"},
+    {file = "pyarrow-18.1.0-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d6cf5c05f3cee251d80e98726b5c7cc9f21bab9e9783673bac58e6dfab57ecc8"},
+    {file = "pyarrow-18.1.0-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:11b676cd410cf162d3f6a70b43fb9e1e40affbc542a1e9ed3681895f2962d3d9"},
+    {file = "pyarrow-18.1.0-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:b76130d835261b38f14fc41fdfb39ad8d672afb84c447126b84d5472244cfaba"},
+    {file = "pyarrow-18.1.0-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:0b331e477e40f07238adc7ba7469c36b908f07c89b95dd4bd3a0ec84a3d1e21e"},
+    {file = "pyarrow-18.1.0-cp39-cp39-macosx_12_0_x86_64.whl", hash = "sha256:2c4dd0c9010a25ba03e198fe743b1cc03cd33c08190afff371749c52ccbbaf76"},
+    {file = "pyarrow-18.1.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4f97b31b4c4e21ff58c6f330235ff893cc81e23da081b1a4b1c982075e0ed4e9"},
+    {file = "pyarrow-18.1.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4a4813cb8ecf1809871fd2d64a8eff740a1bd3691bbe55f01a3cf6c5ec869754"},
+    {file = "pyarrow-18.1.0-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:05a5636ec3eb5cc2a36c6edb534a38ef57b2ab127292a716d00eabb887835f1e"},
+    {file = "pyarrow-18.1.0-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:73eeed32e724ea3568bb06161cad5fa7751e45bc2228e33dcb10c614044165c7"},
+    {file = "pyarrow-18.1.0-cp39-cp39-win_amd64.whl", hash = "sha256:a1880dd6772b685e803011a6b43a230c23b566859a6e0c9a276c1e0faf4f4052"},
+    {file = "pyarrow-18.1.0.tar.gz", hash = "sha256:9386d3ca9c145b5539a1cfc75df07757dff870168c959b473a0bccbc3abc8c73"},
+]
+
+[package.extras]
+test = ["cffi", "hypothesis", "pandas", "pytest", "pytz"]
+
+[[package]]
 name = "pyasn1"
 version = "0.6.0"
 description = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
@@ -5129,6 +5264,20 @@ urllib3 = ">=1.21.1,<3"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+
+[[package]]
+name = "requests-toolbelt"
+version = "1.0.0"
+description = "A utility belt for advanced users of python-requests"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = [
+    {file = "requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6"},
+    {file = "requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"},
+]
+
+[package.dependencies]
+requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "retry"
@@ -6066,6 +6215,20 @@ mpmath = ">=1.1.0,<1.4"
 dev = ["hypothesis (>=6.70.0)", "pytest (>=7.1.0)"]
 
 [[package]]
+name = "tabulate"
+version = "0.9.0"
+description = "Pretty-print tabular data"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
+    {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
+]
+
+[package.extras]
+widechars = ["wcwidth"]
+
+[[package]]
 name = "tenacity"
 version = "8.5.0"
 description = "Retry code until it succeeds"
@@ -6167,6 +6330,34 @@ requests = ">=2.26.0"
 
 [package.extras]
 blobfile = ["blobfile (>=2)"]
+
+[[package]]
+name = "together"
+version = "1.2.12"
+description = "Python client for Together's Cloud Platform!"
+optional = false
+python-versions = "<4.0,>=3.8"
+files = [
+    {file = "together-1.2.12-py3-none-any.whl", hash = "sha256:4d0a04f4ea41d63330a499657bef6678f11cb4fce20998396bcc67736281e050"},
+    {file = "together-1.2.12.tar.gz", hash = "sha256:c343e91edb398bdf1ad409a80f079db43c6b3cd38a8657fe9ae0900ceb430ca9"},
+]
+
+[package.dependencies]
+aiohttp = ">=3.9.3,<4.0.0"
+click = ">=8.1.7,<9.0.0"
+eval-type-backport = ">=0.1.3,<0.3.0"
+filelock = ">=3.13.1,<4.0.0"
+numpy = [
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1.23.5", markers = "python_version < \"3.12\""},
+]
+pillow = ">=10.3.0,<11.0.0"
+pyarrow = ">=10.0.1"
+pydantic = ">=2.6.3,<3.0.0"
+requests = ">=2.31.0,<3.0.0"
+tabulate = ">=0.9.0,<0.10.0"
+tqdm = ">=4.66.2,<5.0.0"
+typer = ">=0.9,<0.13"
 
 [[package]]
 name = "tokenizers"
@@ -6555,6 +6746,21 @@ files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
 ]
+
+[[package]]
+name = "typing-inspect"
+version = "0.9.0"
+description = "Runtime inspection utilities for typing module."
+optional = false
+python-versions = "*"
+files = [
+    {file = "typing_inspect-0.9.0-py3-none-any.whl", hash = "sha256:9ee6fc59062311ef8547596ab6b955e1b8aa46242d854bfc78f4f6b0eff35f9f"},
+    {file = "typing_inspect-0.9.0.tar.gz", hash = "sha256:b23fc42ff6f6ef6954e4852c1fb512cdd18dbea03134f91f856a95ccc9461f78"},
+]
+
+[package.dependencies]
+mypy-extensions = ">=0.3.0"
+typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "tzdata"
@@ -7166,4 +7372,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<4.0"
-content-hash = "a21e3ec8cb0692e4fb7c0a1054abf63c040c40e33c3fe40b410b082a1182e47c"
+content-hash = "5ac69709a0953d5e3d9c5431ab18e8c9633d40957f0ac53acb45ca9ed1e5306f"

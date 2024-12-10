@@ -85,6 +85,7 @@ from sim_utils.concordia_utils import (
     SimpleGameRunner,
     build_agent_with_memories,
     init_objects,
+    save_to_json,
     sort_agents,
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
@@ -362,11 +363,11 @@ def run_sim(
         eval_event_logger.episode_idx = i
         action_event_logger.episode_idx = i
         for player in players:
-            player_dir = os.path.join("../player_data", player.name)
+            player_dir = os.path.join("output/player_checkpoints", player.name)
             os.makedirs(player_dir, exist_ok=True)
             file_path = os.path.join(player_dir, f"Episode_{i}.json")
             # Get JSON data from player
-            json_data = player.save_to_json()
+            json_data = save_to_json(player)
             with open(file_path, "w") as file:
                 file.write(json.dumps(json_data, indent=4))
         deploy_surveys(players, eval_config, eval_event_logger)
@@ -413,8 +414,8 @@ if __name__ == "__main__":
         # experiment_name = "bias"
         # experiment_name = "malicious"
         experiment_name = args.exp
-        N = 100
-        # N = 20
+        # N = 100
+        N = 20
         survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
         config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
