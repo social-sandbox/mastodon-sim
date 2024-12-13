@@ -18,7 +18,7 @@ import json
 
 from concordia.agents import entity_agent_with_logging
 from concordia.typing import entity_component
-from scenario_agents import candidate_agent, voter_agent
+from scenario_agents import basic_malicious_agent, candidate_agent, voter_agent
 
 from mastodon_sim.concordia import triggering
 
@@ -127,7 +127,7 @@ def sort_agents(agent_data):
         for name in agent_type_names[:-1]:
             if agent_info["role"] == name:
                 ag_names[name].append(agent_info["name"])
-        if agent_info["role"] == "malicious_agent":
+        if agent_info["role"] == "malicious":
             ag_names["malicious"][agent_info["name"]] = agent_info["supported_candidate"]
     return ag_names, player_configs
 
@@ -135,6 +135,7 @@ def sort_agents(agent_data):
 def build_agent_with_memories(obj_args, player_config):
     (formative_memory_factory, model, clock, time_step, candidate_info, ag_names) = obj_args
     mem = formative_memory_factory.make_memories(player_config)
+    print(ag_names["malicious"])
     if player_config.name in ag_names["candidate"]:
         agent = candidate_agent.build_agent(
             model=model,
@@ -146,7 +147,7 @@ def build_agent_with_memories(obj_args, player_config):
             ag_names=ag_names,
         )
     elif player_config.name in ag_names["malicious"]:
-        agent = malicious_agent.build_agent(
+        agent = basic_malicious_agent.build_agent(
             model=model,
             clock=clock,
             update_time_interval=time_step,

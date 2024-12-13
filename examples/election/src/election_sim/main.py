@@ -221,7 +221,7 @@ def post_seed_toots(agent_data, players, mastodon_apps):
 
 
 def get_post_times(players, ag_names):
-    num_posts_malicious = 15
+    num_posts_malicious = 30
     num_posts_nonmalicious = 5
     players_datetimes = {
         player: [
