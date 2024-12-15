@@ -2,10 +2,8 @@
 
 import argparse
 import json
-import os
 import requests
-
-from sim_utils.news_agent_utils import transform_news_headline_for_sim
+from sim_utils.news_agent_utils import transform_news_headline_for_sim #NA
 
 from agent_pop_utils import get_agent_configs
 
@@ -29,6 +27,9 @@ parser.add_argument(
     help="x.y format: x is the name of the config file associated with the survey data (use 'None' for uniform trait sampling) and y is the associated trait type",
 )
 parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
+parser.add_argument("--use_news_agent", type=str, default=1, help="use news agent in the simulation") #NA
+parser.add_argument("--news_headlines", type=str, default=None, help="news headlines to use in the simulation, None if you want to generate the headlines on run") #NA
+
 args = parser.parse_args()
 
 
@@ -42,8 +43,6 @@ def get_candidate_configs(args):
             "gender": "male",
             "policy_proposals": [
                 "providing tax breaks to local industry and creating jobs to help grow the economy."
-                # "pushing for more industrialization to push the economy of the time.",
-                # "curbing taxation on industrialists for social causes, as they are pushing the economy.",
             ],
         },
         "progressive": {
@@ -51,8 +50,6 @@ def get_candidate_configs(args):
             "gender": "male",
             "policy_proposals": [
                 "increasing regulation to protect the environment and expanding social programs."
-                # "slowing down industrialization as it is adversely affecting the environment is not sustainable.",
-                # "taxation of industrialists and direct it to social causes. ",
             ],
         },
     }
@@ -152,6 +149,69 @@ def fetch_and_transform_headlines(
             
             return mapped_headlines
 
+def gen_eval_config(evals_config_filename, candidates):
+    # a library of types of evaluation questions
+    query_lib = {}
+    # votepref
+    query_lib["vote_pref"] = {}
+    query_lib["vote_pref"]["question_template"] = {
+        "text": "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)",
+    }
+    query_lib["vote_pref"]["interaction_premise_template"] = {
+        "text": "{{playername}} is going to cast a vote for either {candidate1} or {candidate2}\n",
+        "static_labels": ["candidate1", "candidate2"],
+        "dynamic_labels": ["playername"],
+    }
+
+    # favorability
+    query_lib["favorability"] = {}
+    query_lib["favorability"]["question_template"] = {
+        "text": "Poll: Return a single numeric value ranging from 1 to 10",
+    }
+    query_lib["favorability"]["interaction_premise_template"] = {
+        "text": "{{playername}} has to rate their opinion on the election candidate: {candidate} on a scale of 1 to 10 - with 1 representing intensive dislike and 10 representing strong favourability.\n",
+        "static_labels": ["candidate"],
+        "dynamic_labels": ["playername"],
+    }
+
+    # vote_intent
+    query_lib["vote_intent"] = {}
+    query_lib["vote_intent"]["question_template"] = {
+        "text": "Friend: In one word, will you cast a vote? (reply yes, or no.)\n",
+    }
+
+    # the data encoding the evaluation questions that will be used
+    queries_data = [
+        {
+            "query_type": "vote_pref",
+            "interaction_premise_template": {
+                "candidate1": candidates[0],
+                "candidate2": candidates[1],
+            },
+        },
+        {
+            "query_type": "favorability",
+            "interaction_premise_template": {
+                "candidate": candidates[0],
+            },
+        },
+        {
+            "query_type": "favorability",
+            "interaction_premise_template": {
+                "candidate": candidates[1],
+            },
+        },
+        {"query_type": "vote_intent"},
+    ]
+
+    evals_config = {}
+    evals_config["query_lib"] = query_lib
+    evals_config["queries_data"] = dict(zip(range(len(queries_data)), queries_data, strict=False))
+
+    # write config to output location
+    with open(evals_config_filename, "w") as outfile:
+        json.dump(evals_config, outfile, indent=4)
+
 #NA generate news agent configs
 def get_news_agent_configs(n_agents, headlines=None):
     news_types = ["local", "national", "international"]
@@ -165,7 +225,8 @@ def get_news_agent_configs(n_agents, headlines=None):
             "name": "Storhampton Gazette",
             "type": "local",
             "coverage": "local news",
-            "schedule": "morning and evening",
+            "schedule": "hourly",
+            "mastodon_username": "storhampton_gazette",
             "seed_toot": "Good morning, Storhampton! Tune in for the latest local news updates.",
         },
         "national": {
@@ -173,12 +234,16 @@ def get_news_agent_configs(n_agents, headlines=None):
             "type": "national",
             "coverage": "national news",
             "schedule": "hourly",
+            "mastodon_username": "national_news_network",
+            "seed_toot": "Good morning, Storhampton! Tune in for the latest national news updates.",
         },
         "international": {
             "name": "Global News Network",
             "type": "international",
             "coverage": "international news",
             "schedule": "hourly",
+            "mastodon_username": "global_news_network",
+            "seed_toot": "Good morning, Storhampton! Tune in for the latest international news updates.",
         },
     }
 
@@ -202,13 +267,9 @@ def generate_news_agent_toot_post_times(agent):
     elif agent["schedule"] == "hourly":
         return [str(i) + ":00 AM" for i in range(1, 12)] + [str(i) + ":00 PM" for i in range(1, 12)]
 
+
 if __name__ == "__main__":
     candidate_configs, candidate_info = get_candidate_configs(args)
-    #NA get or initialize the news headlines for the news agent to post
-
-    news_headlines = fetch_and_transform_headlines(upload_file=False)
-    #NA generate news agent configs
-    news_agent_configs, news_info = get_news_agent_configs(n_agents=1, news_headlines)
 
     custom_call_to_action = """
     Describe an activity on Storhampton.social that {name} would engage in for the next {timedelta}.
@@ -263,7 +324,6 @@ if __name__ == "__main__":
         + [
             "Mayoral Elections: The upcoming mayoral election in Storhampton has become a heated affair.",
             "Social media has emerged as a key battleground in the race, with both candidates actively promoting themselves and engaging with voters.",
-            f"Voters in Storhampton are actively getting the latest local news from {news_info['local']['name']} social media account.",
             "Voters in Storhampton are actively participating in these social media discussions.",
             "Supporters of each candidate leave enthusiastic comments and share their posts widely.",
             f"Critics also chime in, for example attacking {candidate_info['conservative']['name']} as out-of-touch and beholden to corporate interests,",
@@ -306,8 +366,6 @@ if __name__ == "__main__":
             "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
             "role": "malicious",
         }
-       
-       ## Probably you'll need to change here to cause a malicious threat
         malicious_actor_config["goal"] = (
             malicious_actor_config["name"]
             + "'s goal is to"
@@ -342,18 +400,37 @@ if __name__ == "__main__":
         agent_pop_settings, candidate_configs, active_voter_config, malicious_actor_config
     )
 
+
     # add meta data
     config_data = {}
     config_data["agents"] = agent_configs
-    #NA add news agents to the config
-    config_data["news_agents"] = news_agent_configs
     config_data["shared_memories_template"] = shared_memories_template
     config_data["mastodon_usage_instructions"] = mastodon_usage_instructions
     config_data["candidate_info"] = candidate_info
     config_data["custom_call_to_action"] = custom_call_to_action
 
     config_data["agent_config_filename"] = args.cfg_name
-
+    config_data["evals_config_filename"] = "election_sentiment_eval_config"
     # write config to output location
     with open(config_data["agent_config_filename"], "w") as outfile:
         json.dump(config_data, outfile, indent=4)
+
+    candidate_names = [candidate["name"] for partisan_type, candidate in candidate_info.items()]
+    gen_eval_config(config_data["evals_config_filename"], candidate_names)
+
+    #NA get or initialize the news headlines for the news agent to post
+    if args.use_news_agent:
+        if args.news_headlines is not None:
+            news = fetch_and_transform_headlines(upload_file=True, file_dir=args.news_headlines)
+        else:
+            news = fetch_and_transform_headlines(upload_file=False)
+        #NA generate news agent configs
+        news_agent_configs, news_info = get_news_agent_configs(n_agents=1, news)
+        config_data["news_agents"] = news_agent_configs
+        config_data["news_info"] = news_info
+        #NA add to shared memories template
+        shared_memories_template.append(f"Voters in Storhampton are actively getting the latest local news from {news_info['local']['name']} social media account.",)
+        config_data["shared_memories_template"] = shared_memories_template
+    else:
+        config_data["news_agents"] = None
+        config_data["news_info"] = None
