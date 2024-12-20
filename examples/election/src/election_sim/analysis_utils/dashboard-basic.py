@@ -75,12 +75,12 @@ def get_int_dict(int_df):
             "episode": x.episode,
             "source": x.source_user,
             "target": get_target_user(x),
-            "toot_id": x.data["toot_id"],
+            "toot_id": str(x.data["toot_id"]),
         },
         axis=1,
     )
     int_df.int_data = int_df.apply(
-        lambda x: x.int_data | {"parent_toot_id": x.data["reply_to"]["toot_id"]}
+        lambda x: x.int_data | {"parent_toot_id": str(x.data["reply_to"]["toot_id"])}
         if x.label == "reply"
         else x.int_data,
         axis=1,
