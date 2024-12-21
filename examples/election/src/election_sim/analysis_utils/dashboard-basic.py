@@ -1110,7 +1110,7 @@ if __name__ == "__main__":
         )
 
         # Create the line graph showing vote distribution over time
-        episodes = sorted(votes.keys())
+        episodes = sorted(interactions_by_episode.keys())
         Bill_votes_over_time = []
         Bradley_votes_over_time = []
 
