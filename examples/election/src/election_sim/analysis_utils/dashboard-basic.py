@@ -147,6 +147,8 @@ def load_data(input_var):
     def get_toot_id(data):
         if "toot_id" in data:
             data["toot_id"] = str(data["toot_id"])
+        if "reply_to" in data:
+            data["reply_to"]["toot_id"] = str(data["reply_to"]["toot_id"])
         return data
 
     df["data"] = df.data.apply(get_toot_id)
@@ -963,13 +965,13 @@ if __name__ == "__main__":
                         reply_content = toots.get(reply_toot_id, {}).get(
                             "content", "No content available."
                         )
-                        user = toots.get(reply_toot_id, {}).get("user", "No user available.")
+                        user = toots.get(ot_id, {}).get("user", "No user available.")
                         interactions_content.append(
                             html.Div(
                                 [
                                     html.H4(f"Replied to toot (ID: {parent_toot_id}) by {user}"),
                                     html.P(parent_content),
-                                    html.H5(f"Reply (ID: {reply_toot_id}):"),
+                                    html.H5(f"Reply (ID: {ot_id}):"),
                                     html.P(reply_content),
                                 ],
                                 style={
