@@ -965,13 +965,13 @@ if __name__ == "__main__":
                         reply_content = toots.get(reply_toot_id, {}).get(
                             "content", "No content available."
                         )
-                        user = toots.get(ot_id, {}).get("user", "No user available.")
+                        user = toots.get(reply_toot_id, {}).get("user", "No user available.")
                         interactions_content.append(
                             html.Div(
                                 [
                                     html.H4(f"Replied to toot (ID: {parent_toot_id}) by {user}"),
                                     html.P(parent_content),
-                                    html.H5(f"Reply (ID: {ot_id}):"),
+                                    html.H5(f"Reply (ID: {reply_toot_id}):"),
                                     html.P(reply_content),
                                 ],
                                 style={
