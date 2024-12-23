@@ -184,3 +184,5 @@ lib/
 clientcred.secret
 notes.txt
 .yamllint
+
+.venv

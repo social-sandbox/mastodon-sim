@@ -1,0 +1,1952 @@
+[
+    {
+        "Name": "Jessica Thompson",
+        "User_Reference": "56r74ths",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 4,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 5,
+            "Tradition": 7,
+            "Benevolence": 4,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Jessica frequently engaged with politically charged content, showing a preference for conservative narratives and a critical stance towards liberal figures. She appears concerned about security and tradition, with a keen interest in political and societal issues."
+    },
+    {
+        "Name": "Michael Robertson",
+        "User_Reference": "89w7f36w",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 4,
+            "Tradition": 3,
+            "Benevolence": 7,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Michael is a politically engaged liberal, frequently discussing Democratic victories and policies. He values self-direction and universalism, often highlighting issues related to democracy and individual rights. His posts suggest a strong advocacy for liberal causes."
+    },
+    {
+        "Name": "Sam Jenkins",
+        "User_Reference": "2gykjlvy",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 5,
+            "Extraversion": 4,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 4,
+            "Stimulation": 4,
+            "Hedonism": 4,
+            "Achievement": 6,
+            "Power": 6,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 7,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Sam shows a consistent interest in conservative politics, often posting about pro-Trump narratives and reflecting a disbelief in mainstream media's portrayal of events. His posts imply a grounded approach to life, valuing security and tradition."
+    },
+    {
+        "Name": "Laura Mitchell",
+        "User_Reference": "jwreadb9p",
+        "Sex": "Female",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 4,
+            "Extraversion": 3,
+            "Agreeableness": 3,
+            "Neuroticism": 8
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 3,
+            "Hedonism": 4,
+            "Achievement": 2,
+            "Power": 2,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 3,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Laura seems to be struggling with personal issues and expressive about her complex emotional states. Her posts convey a need for support and stability, indicating higher neuroticism. She occasionally interacts with political content without showing a strong alignment towards a particular side."
+    },
+    {
+        "Name": "Rahul Desai",
+        "User_Reference": "rautl5si",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 5,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Rahul shows an interest in both cultural and international topics, often discussing entertainment and global news alongside political events. He appears balanced in views, with a moderate orientation and a focus on creative and personal freedom."
+    },
+    {
+        "Name": "Sam Robertson",
+        "User_Reference": "hxlz0vsx6",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 7,
+            "Power": 5,
+            "Security": 4,
+            "Conformity": 5,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Sam is interested in entertainment, particularly related to gaming and TV series like '24' and 'Lost.' He enjoys technology discussions and has practical questions about gadgets. His interests suggest moderate openness to experiences and a balanced approach to new ideas."
+    },
+    {
+        "Name": "Emily Chen",
+        "User_Reference": "6btspdnb",
+        "Sex": "Female",
+        "Political_Identity": "Moderate Liberal",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 8,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 4,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 7,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Emily is heavily focused on educational topics, career progression, and personal well-being. Her questions suggest she is goal-oriented, values security, and has moderate openness to experience. She shows a keen interest in education and helping others, indicating a balanced sense of benevolence."
+    },
+    {
+        "Name": "Michael Harris",
+        "User_Reference": "yjdt5nkf5",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 7,
+            "Extraversion": 5,
+            "Agreeableness": 4,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 7,
+            "Benevolence": 4,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Michael exhibits a strong interest in politics, media, and local Michigan issues. His interactions show a conservative leaning with a focus on security and tradition. He seems attentive to shifts in political landscapes and has a moderate interest in cultural topics related to animation and media."
+    },
+    {
+        "Name": "Jason Miller",
+        "User_Reference": "3wpzptch",
+        "Sex": "Male",
+        "Political_Identity": "Neutral",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 6,
+            "Achievement": 8,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 5,
+            "Tradition": 5,
+            "Benevolence": 5,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Jason is deeply involved in following sports transactions and player agreements, indicating high conscientiousness and achievement orientation. He engages with broader societal topics like crime and politics without a strong ideological bent, reflecting a neutral political identity. His interest suggests a moderate level of openness."
+    },
+    {
+        "Name": "Lisa Collins",
+        "User_Reference": "uoe7ktfkx",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 7,
+            "Agreeableness": 4,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 7,
+            "Conformity": 7,
+            "Tradition": 8,
+            "Benevolence": 5,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Lisa's focus on Texas politics, conservative legislation, and local civic issues indicates conservative political identity. Her interactions show interest in security and maintaining tradition while being involved in social issues. Her openness is moderate, with a slight preference for traditional values."
+    },
+    {
+        "Name": "Nathan Torres",
+        "User_Reference": "u2u8d7jmz",
+        "Sex": "Male",
+        "Political_Identity": "Moderate with a slight leaning towards liberal",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 6,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 3,
+            "Benevolence": 5,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Nathan enjoys discussing music and technology, often sharing updates about his collection. He is curious about sound systems and seems open to exploring both established and new formats. He expresses opinions on global and political affairs, but often through the lens of media."
+    },
+    {
+        "Name": "Zachary Patel",
+        "User_Reference": "8czbnxrc",
+        "Sex": "Male",
+        "Political_Identity": "Moderate with a focus on strategic thinking",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 7,
+            "Extraversion": 5,
+            "Agreeableness": 4,
+            "Neuroticism": 3
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 4,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 3,
+            "Benevolence": 4,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Zachary has a keen interest in strategy and gaming, showcasing a competitive streak. He frequently explores potential future scenarios and political outcomes, indicating a tactical mindset. His interests in tech and strategic games suggest a high level of analytical thinking."
+    },
+    {
+        "Name": "Emily Thompson",
+        "User_Reference": "1yvl4bo7",
+        "Sex": "Female",
+        "Political_Identity": "Libertarian",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 5,
+            "Extraversion": 4,
+            "Agreeableness": 3,
+            "Neuroticism": 3
+        },
+        "Schwartz_values": {
+            "Self-Direction": 9,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 4,
+            "Conformity": 2,
+            "Tradition": 3,
+            "Benevolence": 5,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Emily values free speech and has a deep interest in historical and political subjects, often questioning established narratives. Her discussions suggest a preference for independence and critical thinking. She appears to appreciate in-depth analysis and diverse perspectives on social issues."
+    },
+    {
+        "Name": "Rachel Kim",
+        "User_Reference": "3z5fe",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 6,
+            "Extraversion": 7,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 5,
+            "Hedonism": 7,
+            "Achievement": 5,
+            "Power": 6,
+            "Security": 6,
+            "Conformity": 6,
+            "Tradition": 5,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Rachel is engaged in a variety of hobbies from remodeling to biking, indicating a hands-on, active lifestyle. She often shares thoughts about local and national events, suggesting a pragmatic approach to issues. Her focus on community and practical solutions hints at a blend of traditional and modern values."
+    },
+    {
+        "Name": "Alex Thompson",
+        "User_Reference": "4l1qcd8o",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 7,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 3,
+            "Benevolence": 6,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Interested in historical narratives and community discussions. Participates in online gaming forums and has a helpful demeanour towards others seeking advice or assistance."
+    },
+    {
+        "Name": "Carlos Mendes",
+        "User_Reference": "488jhlao",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 6,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Engaged in political and sports discussions, showing a strong sense of social justice and concern for societal issues. Has a keen interest in football and global affairs."
+    },
+    {
+        "Name": "Chris Anderson",
+        "User_Reference": "rcbsu52y9",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 8,
+            "Extraversion": 6,
+            "Agreeableness": 6,
+            "Neuroticism": 3
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 6,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Focuses on personal achievements in fishing and enjoys traditional outdoor activities. Values stability and expresses political views aligning with conservative ideologies."
+    },
+    {
+        "Name": "Jessica Rodriguez",
+        "User_Reference": "55er3mk1",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 5,
+            "Tradition": 5,
+            "Benevolence": 6,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Identifies as a Latino Trump supporter, expressing strong individualism and a proactive stance on being part of a minority group supporting conservative politics. Enjoys gaming with a competitive edge."
+    },
+    {
+        "Name": "Sam Taylor",
+        "User_Reference": "19sahv18i5",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 5,
+            "Extraversion": 7,
+            "Agreeableness": 7,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 3,
+            "Benevolence": 8,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Passionate about LGBTQ and feminist issues, with advocacy for trans rights being a strong focus. Politically active, and uses humor and pop culture references in her engagements."
+    },
+    {
+        "Name": "Emily Johnson",
+        "User_Reference": "3ylm8miq",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 7,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 4,
+            "Hedonism": 4,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 8,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Emily has a keen interest in political events and societal norms, often discussing elections and governance. She values tradition and security, and while she engages in professional and leisure activities, her political identity appears to align conservatively."
+    },
+    {
+        "Name": "Michael Roberts",
+        "User_Reference": "hqc8ppgb",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Michael expresses moderate political views and frequently discusses social issues. He sometimes shows frustration in interactions but is open to considering various perspectives. His focus on personal and career changes suggests adaptability and an ongoing search for stability."
+    },
+    {
+        "Name": "Sara Mitchell",
+        "User_Reference": "jgmgshv7k",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 4,
+            "Extraversion": 6,
+            "Agreeableness": 7,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 7,
+            "Achievement": 4,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 3,
+            "Benevolence": 8,
+            "Universalism": 9
+        },
+        "Description based on interactions": "Sara appears to be a creative individual fascinated by personality psychology and seeking deeper connections. Her interactions suggest a liberal orientation, valuing self-expression, diversity, and inclusion, often questioning societal norms and exploring personal identity."
+    },
+    {
+        "Name": "James Carter",
+        "User_Reference": "dnwjr5wd",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 7,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 3,
+            "Hedonism": 4,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 8,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "James frequently engages in discussions about political figures and events, exhibiting a conservative stance. He values security and order, showing a preference for conformity and traditional values, with interactions reflecting a focus on factual reporting and specific interests."
+    },
+    {
+        "Name": "Daniel Brown",
+        "User_Reference": "iu4t1",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 6,
+            "Tradition": 7,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Daniel often discusses political issues and local news with a conservative perspective. His interest in economic and security matters suggests a preference for structured and traditional approaches. He values stability and improvement in communal systems, showing concern for societal norms."
+    },
+    {
+        "Name": "Callum Fletcher",
+        "User_Reference": "doy9y2c68",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 8,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 6,
+            "Hedonism": 7,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Enthusiastic about sports and politics, shows interest in the MMA and UFC. Shows a sense of humor and engages in political discourse. Displays a critical stance towards Democrats and shows support for conservative politics."
+    },
+    {
+        "Name": "Bill Thornton",
+        "User_Reference": "59e7c5om",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 5,
+            "Extraversion": 5,
+            "Agreeableness": 3,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 4,
+            "Hedonism": 4,
+            "Achievement": 5,
+            "Power": 6,
+            "Security": 7,
+            "Conformity": 8,
+            "Tradition": 8,
+            "Benevolence": 3,
+            "Universalism": 3
+        },
+        "Description based on interactions": "Displays strong support for Donald Trump and conservative politics. Critical of current political affairs and often posts about election controversies and irregularities. Appears to have a distrust in democratic processes and authority."
+    },
+    {
+        "Name": "Sophia McLeod",
+        "User_Reference": "l384s3jt",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 7,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 6,
+            "Hedonism": 4,
+            "Achievement": 5,
+            "Power": 3,
+            "Security": 6,
+            "Conformity": 4,
+            "Tradition": 3,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Informed about social and political issues. Displays a progressive outlook, especially in areas concerning social equality and healthcare. Engages in discussions about global news, with a focus on Canada and the U.S."
+    },
+    {
+        "Name": "David Banks",
+        "User_Reference": "i5ryeeor",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 4,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 3,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Displays strong support for Trump. Engages in online communities with a focus on conservative politics. Expresses satisfaction with political events aligning with his views. Displays a tendency towards risk-taking or adventurous career goals such as racing."
+    },
+    {
+        "Name": "Ethan Marshall",
+        "User_Reference": "3miru",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 5,
+            "Extraversion": 4,
+            "Agreeableness": 3,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 5,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 8,
+            "Tradition": 7,
+            "Benevolence": 4,
+            "Universalism": 3
+        },
+        "Description based on interactions": "Criticizes what he perceives as leftist censorship on platforms like Reddit. Strongly right-leaning and critical of Democratic figures. Shows interest in political history and conspiracies. Skeptical of mainstream narratives regarding political and social issues."
+    },
+    {
+        "Name": "Jessica White",
+        "User_Reference": "tli36nr4",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 4,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 6,
+            "Conformity": 3,
+            "Tradition": 2,
+            "Benevolence": 5,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Jessica is outspoken about her political beliefs and is critical of certain political figures. She is passionate about social justice issues, especially those related to gender and race."
+    },
+    {
+        "Name": "John Smith",
+        "User_Reference": "hqkhomyr",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 6,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 5,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "John enjoys discussions related to politics and has a conservative leaning. He takes interest in both historical and current events and often shares news related to political successes of conservative figures."
+    },
+    {
+        "Name": "Michael Johnson",
+        "User_Reference": "c7jvrdbts",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 7,
+            "Agreeableness": 7,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 4,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 5,
+            "Tradition": 5,
+            "Benevolence": 7,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Michael is pragmatic and expresses a balanced view on political and social issues. He enjoys participating in community discussions and values constructive dialogue."
+    },
+    {
+        "Name": "Sara Martin",
+        "User_Reference": "oobp398v5",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 8,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 3
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 4,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 6,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Sara follows political news closely and favors conservative viewpoints. She is interested in discussions about societal impacts and has a strong sense of duty and security."
+    },
+    {
+        "Name": "Daniel Evans",
+        "User_Reference": "836jh6yt",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 8,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 4,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Daniel is interested in firearms, self-defense, and supports conservative values. He engages in discussions around practical aspects of policies and enjoys sharing insights on equipment and personal experiences."
+    },
+    {
+        "Name": "Alex Thompson",
+        "User_Reference": "2cjsw9by",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 6,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Alex seems interested in music and its emotional effects, shows curiosity about alternative medicines, and exhibits concern about career prospects and financial matters. His interactions suggest a tendency toward reflection and a moderate level of social engagement, alongside occasional feelings of hopelessness."
+    },
+    {
+        "Name": "Jessica Smith",
+        "User_Reference": "t2gclhahd",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 5,
+            "Achievement": 5,
+            "Power": 3,
+            "Security": 6,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 6,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Jessica is politically aware, displaying strong interest and commentary on political issues and figures, particularly progressive topics. Her interactions indicate a broad curiosity about current events and social justice, along with a certain level of skepticism. She is likely introspective and values information that confirms her worldview."
+    },
+    {
+        "Name": "Daniel White",
+        "User_Reference": "kbvdll7ws",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 7,
+            "Extraversion": 4,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 4,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Daniel is focused on financial and practical aspects, often discussing issues related to property and bike transactions. He may have interests in maintaining personal security and traditional values. His interactions reflect a practicality and grounded approach to life."
+    },
+    {
+        "Name": "Christine Evans",
+        "User_Reference": "9idnxyz3",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 4,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 6,
+            "Tradition": 7,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Christine appears to have a focus on political outcomes, particularly those that affirm her conservative views. Her discussions reflect support for traditional and conservative principles, with a possible interest in stability and security. Christine tends to engage with content that reinforces her existing beliefs."
+    },
+    {
+        "Name": "Michael Reed",
+        "User_Reference": "5qbmygt9",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 6,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Michael showcases a diverse range of interests from gaming and TV shows to conspiracy theories and social observations. His posts reveal a blend of curiosity and cynicism, often reflecting on various facets of popular culture and its intersection with societal norms. He strikes a balance between skepticism and open-mindedness."
+    },
+    {
+        "Name": "Alex Jensen",
+        "User_Reference": "9s1hj7gr",
+        "Sex": "Non-binary",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 5,
+            "Extraversion": 4,
+            "Agreeableness": 6,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 6,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Alex is an inquisitive person interested in gaming and pop culture, especially around tactical shooters and anime like Evangelion. They enjoy engaging in playful discussions, often mixing humor with opinions, and have involvement in a-spec (aromantic/asexual) culture. Prone to moments of self-doubt but enjoys sharing their thoughts and experiences online."
+    },
+    {
+        "Name": "Samuel Riley",
+        "User_Reference": "rmr02k3g",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 3,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 7,
+            "Benevolence": 4,
+            "Universalism": 3
+        },
+        "Description based on interactions": "Samuel is engaged deeply in political discussions, showing a strong preference for conservative narratives and is critical of liberal perspectives. He actively questions the role of media and political establishments, expressing a clear skepticism towards mainstream narratives. He appears detail-oriented and motivated by political outcomes."
+    },
+    {
+        "Name": "Jake Thompson",
+        "User_Reference": "16xirz",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 7,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 8,
+            "Hedonism": 7,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 4,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Jake has a strong interest in gaming, particularly esports and streaming culture. He follows influencer and streamer news passionately. He approaches topics with energy and is technically savvy, engaging in community banter. Often dealing with pop cultural controversies and sharing humorous or shocking updates."
+    },
+    {
+        "Name": "Emily Mitchell",
+        "User_Reference": "5ua6snof",
+        "Sex": "Female",
+        "Political_Identity": "Undisclosed",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 8,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 4,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 8,
+            "Conformity": 6,
+            "Tradition": 5,
+            "Benevolence": 7,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Emily seems practical and prudent, with a balanced interest in investment and community interactions such as real estate and silver stacking. She also shows an appreciation for fantasy narratives as evidenced by references to popular games. She values reliability and consistent communication and appears diligent in transactions."
+    },
+    {
+        "Name": "Olivia Miles",
+        "User_Reference": "srgkdm88a",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 7,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 2,
+            "Benevolence": 8,
+            "Universalism": 9
+        },
+        "Description based on interactions": "Olivia is a progressive thinker who values self-expression and creativity. Her communication reflects an openness to diverse ideas and people. She keeps up-to-date with political outcomes while enjoying collaborations and discussions within varied cultural contexts. She seems to prioritize inclusivity and altruism."
+    },
+    {
+        "Name": "Marcus Hale",
+        "User_Reference": "khmh3b8rx",
+        "Sex": "Male",
+        "Political_Identity": "Moderate Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 7,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 8,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Marcus is interested in firearms and politics, particularly around conservative figures and moderate political events. He enjoys practical tasks and is likely responsible and detail-oriented, but with a balanced approach to life, showing moderate openness and extraversion."
+    },
+    {
+        "Name": "Aidan Turner",
+        "User_Reference": "gogctwobk",
+        "Sex": "Male",
+        "Political_Identity": "Libertarian",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 5,
+            "Extraversion": 4,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 5,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 6,
+            "Conformity": 4,
+            "Tradition": 3,
+            "Benevolence": 5,
+            "Universalism": 7
+        },
+        "Description based on interactions": "Aidan is engaged in hands-on hobbies like knife-making and is curious about his surroundings, showing interest in lesser-known local history, such as gypsum mines. His independent spirit and curiosity hint at a libertarian outlook, balanced by a moderate interest in universal concerns."
+    },
+    {
+        "Name": "Lisa Andersen",
+        "User_Reference": "gtxxb",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 7,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 8,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 3,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Lisa appears to be quite open-minded and socially engaged, with interests spanning sports, political issues, and technology. She seems to value knowledge and self-direction, and might lean towards liberal perspectives, given her broad engagement and global concerns."
+    },
+    {
+        "Name": "Rebecca Stone",
+        "User_Reference": "w06s1fcm",
+        "Sex": "Female",
+        "Political_Identity": "Left-leaning",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 9,
+            "Stimulation": 8,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 7,
+            "Universalism": 9
+        },
+        "Description based on interactions": "Rebecca is strongly engaged with political and social topics, with a marked interest in progressive politics and societal changes. Her interactions suggest a high level of openness to new ideas, diversity, and social activism."
+    },
+    {
+        "Name": "Jared Yates",
+        "User_Reference": "3qt7wtgz",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 6,
+            "Conformity": 5,
+            "Tradition": 5,
+            "Benevolence": 6,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Jared appears to be a moderate individual with diverse interests covering technology, horror movies, and political speculation. He seems balanced in his approach, able to engage with different discussions without extreme biases, indicative of a moderate leaning."
+    },
+    {
+        "Name": "Emily Johnson",
+        "User_Reference": "pef3ftb1p",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 7,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 6,
+            "Tradition": 7,
+            "Benevolence": 5,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Emily has an interest in sports, political developments, and societal concerns. Her focus on practicality suggests a moderate openness to change, with a balanced viewpoint on varying issues."
+    },
+    {
+        "Name": "Daniel Wong",
+        "User_Reference": "46ldeyud",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 5,
+            "Tradition": 4,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Daniel appears to be well-informed about global issues, especially in Asia. He values innovation, progress, and is interested in societal transformations, often contemplating future implications."
+    },
+    {
+        "Name": "Alex Smith",
+        "User_Reference": "3mfv4yh8",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 4,
+            "Conscientiousness": 5,
+            "Extraversion": 4,
+            "Agreeableness": 6,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 4,
+            "Hedonism": 3,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 6,
+            "Conformity": 6,
+            "Tradition": 5,
+            "Benevolence": 5,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Alex expresses mixed interests ranging from automotive issues to engagement in hobbies and minor personal grievances. Shows moderate openness to change but prioritizes stability."
+    },
+    {
+        "Name": "Carla Nguyen",
+        "User_Reference": "ierk9h5qk",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 5,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 5,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Carla is characterized by a keen interest in diverse cultures, travel, and entertainment media. Her curiosity drives her to explore different ideas and perspectives."
+    },
+    {
+        "Name": "Michael Johnson",
+        "User_Reference": "cwjsj6b8",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 7,
+            "Extraversion": 4,
+            "Agreeableness": 4,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 8,
+            "Power": 7,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 7,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Michael's interactions reflect a strong interest in politics and governance, with a focus on accountability and leadership. He tends to prioritize traditional values and achievement."
+    },
+    {
+        "Name": "James Carter",
+        "User_Reference": "1ojp5x98",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": "7",
+            "Conscientiousness": "8",
+            "Extraversion": "5",
+            "Agreeableness": "6",
+            "Neuroticism": "6"
+        },
+        "Schwartz_values": {
+            "Self-Direction": "7",
+            "Stimulation": "5",
+            "Hedonism": "4",
+            "Achievement": "6",
+            "Power": "5",
+            "Security": "8",
+            "Conformity": "5",
+            "Tradition": "6",
+            "Benevolence": "7",
+            "Universalism": "6"
+        },
+        "Description based on interactions": "James is cautious and seeks legal advice when faced with uncertainties. He values security and takes conscientious steps when making decisions."
+    },
+    {
+        "Name": "Karen Mitchell",
+        "User_Reference": "a95km3sbl",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": "5",
+            "Conscientiousness": "7",
+            "Extraversion": "6",
+            "Agreeableness": "5",
+            "Neuroticism": "4"
+        },
+        "Schwartz_values": {
+            "Self-Direction": "6",
+            "Stimulation": "6",
+            "Hedonism": "5",
+            "Achievement": "7",
+            "Power": "6",
+            "Security": "8",
+            "Conformity": "7",
+            "Tradition": "8",
+            "Benevolence": "6",
+            "Universalism": "5"
+        },
+        "Description based on interactions": "Karen is very interested in sports and politics, heavily favoring her alma mater and conservative values. She is involved in various discussions regarding current events."
+    },
+    {
+        "Name": "Lucas Almeida",
+        "User_Reference": "x3n5ng5rg",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": "9",
+            "Conscientiousness": "6",
+            "Extraversion": "5",
+            "Agreeableness": "6",
+            "Neuroticism": "5"
+        },
+        "Schwartz_values": {
+            "Self-Direction": "9",
+            "Stimulation": "7",
+            "Hedonism": "6",
+            "Achievement": "5",
+            "Power": "4",
+            "Security": "5",
+            "Conformity": "3",
+            "Tradition": "4",
+            "Benevolence": "7",
+            "Universalism": "7"
+        },
+        "Description based on interactions": "Lucas frequently engages in philosophical and political discussions, questioning societal norms and exploring diverse interests."
+    },
+    {
+        "Name": "Anna Stelzer",
+        "User_Reference": "onl9u",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": "8",
+            "Conscientiousness": "7",
+            "Extraversion": "5",
+            "Agreeableness": "6",
+            "Neuroticism": "5"
+        },
+        "Schwartz_values": {
+            "Self-Direction": "8",
+            "Stimulation": "6",
+            "Hedonism": "5",
+            "Achievement": "6",
+            "Power": "4",
+            "Security": "7",
+            "Conformity": "5",
+            "Tradition": "5",
+            "Benevolence": "8",
+            "Universalism": "8"
+        },
+        "Description based on interactions": "Anna follows political events closely and actively participates in discussions, often analyzing various perspectives in political debates."
+    },
+    {
+        "Name": "Mark Thompson",
+        "User_Reference": "i9bivkmv",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": "7",
+            "Conscientiousness": "6",
+            "Extraversion": "6",
+            "Agreeableness": "4",
+            "Neuroticism": "4"
+        },
+        "Schwartz_values": {
+            "Self-Direction": "7",
+            "Stimulation": "6",
+            "Hedonism": "6",
+            "Achievement": "7",
+            "Power": "5",
+            "Security": "8",
+            "Conformity": "7",
+            "Tradition": "7",
+            "Benevolence": "6",
+            "Universalism": "5"
+        },
+        "Description based on interactions": "Mark has interests in sports, music, and puzzles while maintaining a strong focus on traditional values and conservative views."
+    },
+    {
+        "Name": "Jordan Woods",
+        "User_Reference": "uwhv0jgwh",
+        "Sex": "Non-binary",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 7,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Jordan is interested in a wide range of topics, including politics, film, and social justice issues. They often participate in discussions about American politics and demonstrate a keen interest in advocating for progressive values."
+    },
+    {
+        "Name": "Wei Zhang",
+        "User_Reference": "6cqppw4v",
+        "Sex": "Male",
+        "Political_Identity": "Moderate with conservative leanings",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 6,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Wei is interested in technology, cryptocurrencies, and international news, particularly concerning China. His interactions suggest a balance of interest in conservative and liberal ideas."
+    },
+    {
+        "Name": "Michael Carter",
+        "User_Reference": "mjc43",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 8,
+            "Extraversion": 6,
+            "Agreeableness": 4,
+            "Neuroticism": 3
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 4,
+            "Hedonism": 6,
+            "Achievement": 8,
+            "Power": 8,
+            "Security": 7,
+            "Conformity": 7,
+            "Tradition": 8,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Michael shows a strong preference for conservative politics and financial strategies, focusing on stock market play and political victories for the Republican party."
+    },
+    {
+        "Name": "Elliot Green",
+        "User_Reference": "7h25shj6",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 6,
+            "Extraversion": 4,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 9,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 6,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Elliot is focused on social justice issues and exhibits a liberal perspective on political matters, often expressing concern about Trump and showing interest in progressive changes."
+    },
+    {
+        "Name": "Alex Parker",
+        "User_Reference": "125f66",
+        "Sex": "Female",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 7,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 6,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 7,
+            "Universalism": 9
+        },
+        "Description based on interactions": "Alex engages with political discussions, showcasing a tendency towards questioning authority and supporting left-leaning ideologies. She is critical of Trump’s policies and interested in poetry."
+    },
+    {
+        "Name": "Min-seo Kim",
+        "User_Reference": "3m9g6tmn",
+        "Sex": "Female",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 7,
+            "Neuroticism": 4
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 7,
+            "Power": 4,
+            "Security": 7,
+            "Conformity": 5,
+            "Tradition": 6,
+            "Benevolence": 9,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Min-seo is interested in international political events, particularly in Asia and Europe, and engages with topics that involve political leadership and international relationships. She values self-direction and benevolence, showing curiosity about both global conflicts and cultural events."
+    },
+    {
+        "Name": "Alejandro Garcia",
+        "User_Reference": "115k4e",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 7,
+            "Extraversion": 6,
+            "Agreeableness": 8,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 9,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 8,
+            "Power": 3,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 4,
+            "Benevolence": 8,
+            "Universalism": 9
+        },
+        "Description based on interactions": "Alejandro is tech-savvy and career-focused, interested in personal development and technology. He appears to be ambitious, frequently discussing career improvements and educational pursuits. He holds liberal views, often questioning traditional norms and expressing values of universalism and self-direction."
+    },
+    {
+        "Name": "Olivia Johnson",
+        "User_Reference": "ruv0hdke",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 8,
+            "Extraversion": 4,
+            "Agreeableness": 6,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 7,
+            "Power": 6,
+            "Security": 8,
+            "Conformity": 7,
+            "Tradition": 7,
+            "Benevolence": 6,
+            "Universalism": 5
+        },
+        "Description based on interactions": "Olivia is highly aware of international politics, especially concerning the U.S. and its foreign policies. She seems to prioritize national security and tradition, often engaging with news around political decisions and their societal impacts. Her commentary suggests a conservative stance."
+    },
+    {
+        "Name": "James Thompson",
+        "User_Reference": "9xafei5w",
+        "Sex": "Male",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 5,
+            "Extraversion": 5,
+            "Agreeableness": 7,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 8,
+            "Universalism": 7
+        },
+        "Description based on interactions": "James is heavily invested in Texas politics, focusing particularly on legal and civil rights issues. He expresses concern over policies affecting marginalized groups and seems motivated by social justice and equity, advocating for less traditional and more progressive changes in society."
+    },
+    {
+        "Name": "Lucas Bauer",
+        "User_Reference": "hgot9nph",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 7,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 5,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 6,
+            "Conformity": 6,
+            "Tradition": 5,
+            "Benevolence": 7,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Lucas enjoys discussions about structural and technical topics, often engaging with questions related to systems and operational functionalities. He presents a balanced view with moderate stances on political issues, showing preference for stability and security in societal structures."
+    },
+    {
+        "Name": "Astrid Nyholm",
+        "User_Reference": "2pduifou",
+        "Sex": "Female",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 5,
+            "Extraversion": 6,
+            "Agreeableness": 6,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 7,
+            "Stimulation": 6,
+            "Hedonism": 5,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 6,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Astrid has an interest in gaming and gender representation in media, often questioning why certain characters are featured prominently. Her interactions suggest a moderate worldview, open to both new experiences and traditional values."
+    },
+    {
+        "Name": "Nathan Cooper",
+        "User_Reference": "fm7z6",
+        "Sex": "Male",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 5,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 4,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 5,
+            "Power": 5,
+            "Security": 6,
+            "Conformity": 5,
+            "Tradition": 6,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Nathan displays a significant focus on technological and gaming content, often discussing technical issues and gaming mechanics. He seems to have a skeptical outlook, questioning fairness and authenticity in online environments."
+    },
+    {
+        "Name": "Riley Greene",
+        "User_Reference": "5hkg1q7z",
+        "Sex": "Non-binary",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 9,
+            "Conscientiousness": 4,
+            "Extraversion": 5,
+            "Agreeableness": 5,
+            "Neuroticism": 7
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 3,
+            "Tradition": 2,
+            "Benevolence": 7,
+            "Universalism": 8
+        },
+        "Description based on interactions": "Riley engages frequently with political discussions and current events, often focusing on social justice and political dynamics. Their contributions suggest a creative mindset and a strong inclination towards liberal values and societal change."
+    },
+    {
+        "Name": "Amelia Patel",
+        "User_Reference": "62fcg72j",
+        "Sex": "Female",
+        "Political_Identity": "Conservative",
+        "Big5_traits": {
+            "Openness": 6,
+            "Conscientiousness": 7,
+            "Extraversion": 4,
+            "Agreeableness": 5,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 5,
+            "Stimulation": 5,
+            "Hedonism": 4,
+            "Achievement": 6,
+            "Power": 5,
+            "Security": 7,
+            "Conformity": 6,
+            "Tradition": 7,
+            "Benevolence": 5,
+            "Universalism": 4
+        },
+        "Description based on interactions": "Amelia has a deep interest in political strategies and historical narratives, often discussing elections and political figures. Her comments reflect a preference for order and tradition, aligning with conservative values."
+    },
+    {
+        "Name": "Jonah Blake",
+        "User_Reference": "b4p1o5c6",
+        "Sex": "Male",
+        "Political_Identity": "Moderate",
+        "Big5_traits": {
+            "Openness": 7,
+            "Conscientiousness": 6,
+            "Extraversion": 5,
+            "Agreeableness": 4,
+            "Neuroticism": 6
+        },
+        "Schwartz_values": {
+            "Self-Direction": 6,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 6,
+            "Power": 4,
+            "Security": 5,
+            "Conformity": 4,
+            "Tradition": 5,
+            "Benevolence": 5,
+            "Universalism": 6
+        },
+        "Description based on interactions": "Jonah is engaged in entertainment discussions, often referencing popular media and actors. He seems to enjoy dynamic and vivid storytelling, indicative of a person who values creativity and enjoys exploring a range of genres and narratives."
+    },
+    {
+        "Name": "Jamie Parker",
+        "User_Reference": "bu8ajbst",
+        "Sex": "Non-binary",
+        "Political_Identity": "Liberal",
+        "Big5_traits": {
+            "Openness": 8,
+            "Conscientiousness": 6,
+            "Extraversion": 7,
+            "Agreeableness": 7,
+            "Neuroticism": 5
+        },
+        "Schwartz_values": {
+            "Self-Direction": 8,
+            "Stimulation": 7,
+            "Hedonism": 6,
+            "Achievement": 5,
+            "Power": 3,
+            "Security": 4,
+            "Conformity": 3,
+            "Tradition": 4,
+            "Benevolence": 8,
+            "Universalism": 9
+        },
+        "Description based on interactions": "Jamie enjoys discussing popular media and current affairs, indicating a strong interest in both pop culture and politics. Their engagement in discussions involving a variety of topics such as TV shows, politics, and community memes suggests a diverse set of interests and a tendency towards creative expression. Jamie values autonomy and creativity, is reasonably sociable, and displays a preference for inclusivity and social justice topics."
+    }
+]
