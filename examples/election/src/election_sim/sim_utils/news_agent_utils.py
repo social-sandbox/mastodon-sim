@@ -1,55 +1,61 @@
+import os
+
 import openai
 from openai import OpenAI
-import os
+
 
 def transform_news_headline_for_sim(headlines, batch_size=5):
     # Define simulation description and related content
-    simulation_description = "[Description of simulation about resource scarcity and societal collapse]"
-    news_article_title = "The State of Drought: How Water Scarcity is Shaping Policies in [Country Name]"
+    simulation_description = (
+        "[Description of simulation about resource scarcity and societal collapse]"
+    )
+    news_article_title = (
+        "The State of Drought: How Water Scarcity is Shaping Policies in [Country Name]"
+    )
     news_article_summary = (
         "Governments are faced with potentially dire consequences as regions suffer "
         "through prolonged drought, affecting millions of people."
     )
 
     system = (
-            f"Act as a journalist mapping real-world news articles to the events or characteristics of a given simulation.\n\n"
-            f"You will be provided with a description of a simulation, which includes its details, events, and scenarios. "
-            f"Your task is to identify parallels between current real-world news stories and the events described in the simulation. "
-            f"You should make connections that help readers understand how the simulation mirrors or differs from reality.\n\n"
-            f"**Steps**\n\n"
-            f"1. **Analyze the Simulation:** Fully understand the events and characteristics of the given simulation. "
-            f"Take note of key elements such as themes, scenarios, and notable events.\n\n"
-            f"2. **Understand the News Article:** Carefully read the provided news article. Identify the main points, themes, "
-            f"and significant facts that could relate back to elements of the simulation.\n\n"
-            f"3. **Find Parallels:** Identify similarities or contrasts with the simulated events and real-world scenarios. "
-            f"Reflect on aspects such as outcomes, causes, and potential consequences. Make sure to establish both the "
-            f"similarities and differences.\n\n"
-            f"4. **Provide Reasoning:** In your conclusion, explain why the simulation is relevant to the news article. "
-            f"Offer a thoughtful discussion of the potential insight or lessons learned from mapping the two together.\n\n"
-            f"**Output Format**\n\n"
-            f"- **Provide a brief summary of the news story.**\n"
-            f"- **Indicate the specific simulation elements that relate to the news story.**\n"
-            f"- **Explain how these elements parallel or differ from the real-world scenario.**\n"
-            f"- **Use bullet points for distinct aspects to compare/contrast, followed by a concluding discussion.**\n\n"
-            f"**Examples**\n\n"
-            f"*Simulation Description:* \"{simulation_description}\"\n\n"
-            f"*News Article Summary:* \"{news_article_title}. {news_article_summary}\"\n\n"
-            f"*Mapping:*\n\n"
-            f"- **Simulation Element:** In the simulation, resource scarcity leads to increased conflict among regions.\n"
-            f"  - **News Parallel:** The current article discusses water scarcity leading to potential political crisis and tensions.\n\n"
-            f"- **Simulation Element:** Simulated responses include rationing, local community support, and government intervention.\n"
-            f"  - **News Parallel:** The news highlights initiatives for rationing and regional diplomacy as governments try to "
-            f"mediate the effects of the drought.\n\n"
-            f"*Conclusion:*\n\n"
-            f"In comparing the simulation with the real-world context, it’s apparent that the challenges described in the model "
-            f"materialize similarly in this drought scenario, providing insight into the potential consequences if resource "
-            f"conflicts intensify.\n\n"
-            f"**Notes**\n\n"
-            f"- Be objective in presenting the connections.\n"
-            f"- When identifying parallels, provide enough context so readers can understand specifics without having knowledge "
-            f"of the simulation or news article in advance.\n"
-            f"- Use accessible language that makes complex connections easy for readers to follow.\n"
-        )
+        f"Act as a journalist mapping real-world news articles to the events or characteristics of a given simulation.\n\n"
+        f"You will be provided with a description of a simulation, which includes its details, events, and scenarios. "
+        f"Your task is to identify parallels between current real-world news stories and the events described in the simulation. "
+        f"You should make connections that help readers understand how the simulation mirrors or differs from reality.\n\n"
+        f"**Steps**\n\n"
+        f"1. **Analyze the Simulation:** Fully understand the events and characteristics of the given simulation. "
+        f"Take note of key elements such as themes, scenarios, and notable events.\n\n"
+        f"2. **Understand the News Article:** Carefully read the provided news article. Identify the main points, themes, "
+        f"and significant facts that could relate back to elements of the simulation.\n\n"
+        f"3. **Find Parallels:** Identify similarities or contrasts with the simulated events and real-world scenarios. "
+        f"Reflect on aspects such as outcomes, causes, and potential consequences. Make sure to establish both the "
+        f"similarities and differences.\n\n"
+        f"4. **Provide Reasoning:** In your conclusion, explain why the simulation is relevant to the news article. "
+        f"Offer a thoughtful discussion of the potential insight or lessons learned from mapping the two together.\n\n"
+        f"**Output Format**\n\n"
+        f"- **Provide a brief summary of the news story.**\n"
+        f"- **Indicate the specific simulation elements that relate to the news story.**\n"
+        f"- **Explain how these elements parallel or differ from the real-world scenario.**\n"
+        f"- **Use bullet points for distinct aspects to compare/contrast, followed by a concluding discussion.**\n\n"
+        f"**Examples**\n\n"
+        f'*Simulation Description:* "{simulation_description}"\n\n'
+        f'*News Article Summary:* "{news_article_title}. {news_article_summary}"\n\n'
+        f"*Mapping:*\n\n"
+        f"- **Simulation Element:** In the simulation, resource scarcity leads to increased conflict among regions.\n"
+        f"  - **News Parallel:** The current article discusses water scarcity leading to potential political crisis and tensions.\n\n"
+        f"- **Simulation Element:** Simulated responses include rationing, local community support, and government intervention.\n"
+        f"  - **News Parallel:** The news highlights initiatives for rationing and regional diplomacy as governments try to "
+        f"mediate the effects of the drought.\n\n"
+        f"*Conclusion:*\n\n"
+        f"In comparing the simulation with the real-world context, it’s apparent that the challenges described in the model "
+        f"materialize similarly in this drought scenario, providing insight into the potential consequences if resource "
+        f"conflicts intensify.\n\n"
+        f"**Notes**\n\n"
+        f"- Be objective in presenting the connections.\n"
+        f"- When identifying parallels, provide enough context so readers can understand specifics without having knowledge "
+        f"of the simulation or news article in advance.\n"
+        f"- Use accessible language that makes complex connections easy for readers to follow.\n"
+    )
 
     # Define town history
     town_history = [
@@ -98,8 +104,8 @@ def transform_news_headline_for_sim(headlines, batch_size=5):
     key = os.getenv("OPENAI_API_KEY")
     all_mapped_headlines = []
     client = OpenAI(api_key=key)
-    total_headlines = len(headlines) #function input
-    batches = [headlines[i:i + batch_size] for i in range(0, total_headlines, batch_size)]
+    total_headlines = len(headlines)  # function input
+    batches = [headlines[i : i + batch_size] for i in range(0, total_headlines, batch_size)]
 
     not_possible_count = 0
     for batch_number, batch_headlines in enumerate(batches, start=1):
@@ -107,30 +113,28 @@ def transform_news_headline_for_sim(headlines, batch_size=5):
         prompt = f"{batch_headlines_str}, Map ALL headlines in the list. I want ONLY the corresponding mapped heading. Use NER (for example, replace Trump with the name of the conservative candidate). Do NOT print the original heading or anything else. DO NOT index the headlines with anything. If there is no relevant mapping, print [not possible]"
         try:
             response = client.chat.completions.create(
-                model="gpt-4o",  
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": init_prompt},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
-                max_tokens=16183,  
+                max_tokens=16183,
             )
         except openai.RateLimitError as e:
             print(f"An error occurred during the API call: {e}")
-            continue  
+            continue
         summary = response.choices[0].message.content.strip()
-        
+
         print(f"\n--- Mapped Headlines for Batch {batch_number} ---\n")
         print(summary)
-        
+
         for line in summary.split("\n"):
-            if '[not possible]' not in line:
-                #remove the bullet point
+            if "[not possible]" not in line:
+                # remove the bullet point
                 line = line.replace("- ", "")
                 all_mapped_headlines.append(line)
             else:
                 not_possible_count += 1
-    
+
     return all_mapped_headlines, not_possible_count
-
-

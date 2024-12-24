@@ -2,10 +2,16 @@
 
 import argparse
 import json
-import requests
-from sim_utils.news_agent_utils import transform_news_headline_for_sim #NA
+import os
+import sys
 
+import requests
+
+# Add the src directory to the Python path
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from agent_pop_utils import get_agent_configs
+from sim_utils.news_agent_utils import transform_news_headline_for_sim  # NA
 
 parser = argparse.ArgumentParser(description="config")
 parser.add_argument(
@@ -27,8 +33,15 @@ parser.add_argument(
     help="x.y format: x is the name of the config file associated with the survey data (use 'None' for uniform trait sampling) and y is the associated trait type",
 )
 parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
-parser.add_argument("--use_news_agent", type=str, default=1, help="use news agent in the simulation") #NA
-parser.add_argument("--news_headlines", type=str, default=None, help="news headlines to use in the simulation, None if you want to generate the headlines on run") #NA
+parser.add_argument(
+    "--use_news_agent", type=str, default=1, help="use news agent in the simulation"
+)  # NA
+parser.add_argument(
+    "--news_headlines",
+    type=str,
+    default=None,
+    help="news headlines to use in the simulation, None if you want to generate the headlines on run",
+)  # NA
 
 args = parser.parse_args()
 
@@ -103,51 +116,52 @@ def get_candidate_configs(args):
         candidate_configs.append(agent)
 
     return candidate_configs, candidate_info
-#NA prefetching and transforming the headlines
-def fetch_and_transform_headlines(
-        upload_file=True, file_dir='./cached_headlines.json'
-        ):
-    
+
+
+# NA prefetching and transforming the headlines
+def fetch_and_transform_headlines(upload_file=True, file_dir="cached_headlines.json"):
     if upload_file:
+        os.chdir("src/election_sim")
         if file_dir is None:
             raise ValueError("Please provide a file directory")
         with open(file_dir) as f:
             headlines = json.load(f)
             return headlines
-    else: #generate headlines on fly
-        api_key = '28b2e2855863475b99f771933d38f2f5'
+    else:  # generate headlines on fly
+        api_key = "28b2e2855863475b99f771933d38f2f5"
 
         # Query parameters
-        query = 'environment sustainability climate'
+        query = "environment sustainability climate"
         url = (
-            'https://newsapi.org/v2/everything?'
-            f'q={query}&'
-            'language=en&'
-            'sortBy=publishedAt&'
-            'pageSize=100&'
-            f'apiKey={api_key}'
+            "https://newsapi.org/v2/everything?"
+            f"q={query}&"
+            "language=en&"
+            "sortBy=publishedAt&"
+            "pageSize=100&"
+            f"apiKey={api_key}"
         )
 
         response = requests.get(url)
         data = response.json()
-        if data.get('status') == 'ok':
-            articles = data.get('articles', [])
+        if data.get("status") == "ok":
+            articles = data.get("articles", [])
             raw_headlines = []
             for article in articles:
-                title = article.get('title')
-                if(title != None):
-                    #clean the  raw title
+                title = article.get("title")
+                if title != None:
+                    # clean the  raw title
                     clean_title = title.replace(" - ", " ")
-                    if clean_title == '[Removed]':
+                    if clean_title == "[Removed]":
                         continue
-                    #Check if cleaned_title is in the headlines, if so skip
+                    # Check if cleaned_title is in the headlines, if so skip
                     if clean_title in headlines:
                         continue
                     raw_headlines.append(clean_title)
-            
+
             mapped_headlines, _ = transform_news_headline_for_sim(raw_headlines)
-            
+
             return mapped_headlines
+
 
 def gen_eval_config(evals_config_filename, candidates):
     # a library of types of evaluation questions
@@ -212,7 +226,8 @@ def gen_eval_config(evals_config_filename, candidates):
     with open(evals_config_filename, "w") as outfile:
         json.dump(evals_config, outfile, indent=4)
 
-#NA generate news agent configs
+
+# NA generate news agent configs
 def get_news_agent_configs(n_agents, headlines=None):
     news_types = ["local", "national", "international"]
 
@@ -251,9 +266,13 @@ def get_news_agent_configs(n_agents, headlines=None):
     for i, news_type in enumerate(news_types):
         agent = news_info[news_type].copy()
         agent["role"] = "news"
-        agent["goal"] = f"to provide {news_info[news_type]['coverage']} to the users of Storhampton.social."
+        agent["goal"] = (
+            f"to provide {news_info[news_type]['coverage']} to the users of Storhampton.social."
+        )
         agent["context"] = ""
-        agent["seed_toot"] = news_info[news_type]['seed_toot'] if "seed_toot" in news_info[news_type] else ""
+        agent["seed_toot"] = (
+            news_info[news_type]["seed_toot"] if "seed_toot" in news_info[news_type] else ""
+        )
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
         if headlines is not None:
             agent["posts"] = headlines
@@ -261,10 +280,11 @@ def get_news_agent_configs(n_agents, headlines=None):
 
     return news_agent_configs, {k: news_info[k] for k in news_types}
 
+
 def generate_news_agent_toot_post_times(agent):
     if agent["schedule"] == "morning and evening":
         return ["8:00 AM", "6:00 PM"]
-    elif agent["schedule"] == "hourly":
+    if agent["schedule"] == "hourly":
         return [str(i) + ":00 AM" for i in range(1, 12)] + [str(i) + ":00 PM" for i in range(1, 12)]
 
 
@@ -400,7 +420,6 @@ if __name__ == "__main__":
         agent_pop_settings, candidate_configs, active_voter_config, malicious_actor_config
     )
 
-
     # add meta data
     config_data = {}
     config_data["agents"] = agent_configs
@@ -411,26 +430,29 @@ if __name__ == "__main__":
 
     config_data["agent_config_filename"] = args.cfg_name
     config_data["evals_config_filename"] = "election_sentiment_eval_config"
-    # write config to output location
-    with open(config_data["agent_config_filename"], "w") as outfile:
-        json.dump(config_data, outfile, indent=4)
 
     candidate_names = [candidate["name"] for partisan_type, candidate in candidate_info.items()]
     gen_eval_config(config_data["evals_config_filename"], candidate_names)
 
-    #NA get or initialize the news headlines for the news agent to post
+    # NA get or initialize the news headlines for the news agent to post
     if args.use_news_agent:
         if args.news_headlines is not None:
             news = fetch_and_transform_headlines(upload_file=True, file_dir=args.news_headlines)
+            os.chdir("../..")
         else:
             news = fetch_and_transform_headlines(upload_file=False)
-        #NA generate news agent configs
-        news_agent_configs, news_info = get_news_agent_configs(n_agents=1, news)
+        # NA generate news agent configs
+        news_agent_configs, news_info = get_news_agent_configs(n_agents=1, headlines=news)
         config_data["news_agents"] = news_agent_configs
         config_data["news_info"] = news_info
-        #NA add to shared memories template
-        shared_memories_template.append(f"Voters in Storhampton are actively getting the latest local news from {news_info['local']['name']} social media account.",)
+        # NA add to shared memories template
+        shared_memories_template.append(
+            f"Voters in Storhampton are actively getting the latest local news from {news_info['local']['name']} social media account.",
+        )
         config_data["shared_memories_template"] = shared_memories_template
+
     else:
         config_data["news_agents"] = None
         config_data["news_info"] = None
+    with open(config_data["agent_config_filename"], "w") as outfile:
+        json.dump(config_data, outfile, indent=4)
