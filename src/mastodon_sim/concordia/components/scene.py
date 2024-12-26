@@ -36,7 +36,7 @@ from concordia.document import interactive_document
 from concordia.environment import game_master as game_master_lib
 from concordia.language_model import language_model
 from concordia.thought_chains import thought_chains
-from concordia.typing import agent, component
+from concordia.typing import agent, component, entity
 from concordia.typing.entity import OutputType
 
 from mastodon_sim import mastodon_ops
@@ -45,6 +45,13 @@ from mastodon_sim.concordia.components.apps import COLOR_TYPE
 
 file_lock = threading.Lock()
 
+DEFAULT_CALL_TO_SPEECH = (
+    "Given the above, what is {name} likely to say next? Respond in"
+    ' the format `{name} -- "..."` For example, '
+    'Cristina -- "Hello! Mighty fine weather today, right?", '
+    'Ichabod -- "I wonder if the alfalfa is ready to harvest", or '
+    'Townsfolk -- "Good morning".\n'
+)
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     Based on {name}'s current goal, plans and observations, what SINGLE specific action would they likely perform on their phone right now, and what information would they need to perform it?
@@ -199,7 +206,42 @@ class _PhoneComponent(component.Component):
 
             output_now = ""
             for post in timeline:
-                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])}, Toot ID: {post['id']}\n "
+                media_desc = ""
+                if post["media_attachments"]:
+                    # media_lm = gpt_model.GptLanguageModel(model="gpt-4o-mini")
+                    media_contents = []
+                    for attachment in post["media_attachments"]:
+                        media_contents.append(attachment["url"])
+                    toot_headline = _clean_html(post["content"])
+                    call_to_speech = DEFAULT_CALL_TO_SPEECH.format(
+                        name=self._player.name,
+                    )
+                    call_to_action = (
+                        f"{media_contents!s}Context: Describe the following image attached in the toot which the character read on the Mastodon app. Draw from your world knowledge and the toot headline to describe it:"
+                        + toot_headline
+                        + "\n"
+                        + call_to_speech
+                    )
+                    media_desc = self._player.act(
+                        action_spec=entity.ActionSpec(
+                            call_to_action=call_to_action,
+                            output_type=entity.OutputType.FREE,
+                        )
+                    )
+                    # media_desc = media_lm.sample_text(prompt = call_to_action)
+                    media_desc = (
+                        media_desc.strip(self._player.name.split()[0])
+                        .strip()
+                        .strip(self._player.name.split()[1])
+                        .strip()
+                        .strip("--")
+                        .strip()
+                        .strip('"')
+                    )
+                    media_desc = "Description of attached image: \n" + media_desc
+                    print(media_desc)
+                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])} + {media_desc}, Toot ID: {post['id']}\n "
+
             self._player.observe(f"[Action done on phone]: Retrieved timeline: \n{output_now}")
             return [f"[Action done on phone]: Retrieved timeline: \n{output_now}"]
         chain_of_thought = interactive_document.InteractiveDocument(self._model)

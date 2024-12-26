@@ -383,14 +383,22 @@ class ScheduledPostAgent:
                 scheduled_time.hour == current_time.hour
                 and scheduled_time.minute == current_time.minute
             ):
-                self.mastodon_app.post_toot(self.mastodon_username, status=self.generate_post())
+                post = self.generate_post()
+                media = self.posts[post]
+                print(media)
+                if len(media) > 0:
+                    self.mastodon_app.post_toot(
+                        self.mastodon_username, status=post, media_links=media
+                    )
+                else:
+                    self.mastodon_app.post_toot(self.mastodon_username, status=post)
                 return True
         return False
 
     def generate_post(self):
         # Get next unused post
         while self.current_post_index < len(self.posts):
-            post = self.posts[self.current_post_index]
+            post = list(self.posts.keys())[self.current_post_index]
             self.current_post_index += 1
             if post not in self.used_posts:
                 self.used_posts.add(post)

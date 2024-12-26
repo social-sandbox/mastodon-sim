@@ -275,7 +275,8 @@ def get_news_agent_configs(n_agents, headlines=None):
         )
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
         if headlines is not None:
-            agent["posts"] = headlines
+            agent["posts"] = {h: [] for h in headlines}
+
         news_agent_configs.append(agent)
 
     return news_agent_configs, {k: news_info[k] for k in news_types}
