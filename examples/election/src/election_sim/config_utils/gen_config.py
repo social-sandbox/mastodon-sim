@@ -154,7 +154,7 @@ def fetch_and_transform_headlines(upload_file=True, file_dir="cached_headlines.j
                     if clean_title == "[Removed]":
                         continue
                     # Check if cleaned_title is in the headlines, if so skip
-                    if clean_title in headlines:
+                    if clean_title in raw_headlines:
                         continue
                     raw_headlines.append(clean_title)
 
