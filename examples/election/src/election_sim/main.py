@@ -9,6 +9,9 @@ import time
 import warnings
 from functools import partial
 
+import pdb
+
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
@@ -38,7 +41,7 @@ parser.add_argument(
 parser.add_argument(
     "--config",
     type=str,
-    default=None,
+    default="/Users/btg/Documents/Projects/mastodon-sim/examples/election/src/election_sim/N20_None_Big5_independent.json",
     help="config from which to optionally load experiment settings",
 )
 parser.add_argument(
@@ -50,7 +53,7 @@ parser.add_argument(
 parser.add_argument(
     "--server",
     type=str,
-    default="None",  # www.social-sandbox.com, www.socialsandbox2.com
+    default=None,  # www.social-sandbox.com, www.socialsandbox2.com
     help="config from which to optionally load experiment settings",
 )
 
@@ -60,8 +63,14 @@ parser.add_argument(
 parser.add_argument(
     "--news_headlines",
     type=str,
-    default="cached_headlines.json",
+    default="/Users/btg/Documents/Projects/mastodon-sim/examples/election/src/election_sim/cached_headlines.json",
     help="news headlines for the news agent, leave it None to generate the headlines",
+)  # NA
+parser.add_argument(
+    "--news_images",
+    type=str,
+    default="/Users/btg/Documents/Projects/mastodon-sim/examples/election/src/election_sim/image_repo.json",
+    help="news images for the news agent, leave it None to generate the images",
 )  # NA
 
 args = parser.parse_args()
@@ -584,7 +593,7 @@ if __name__ == "__main__":
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-            + f" --use_news_agent {args.use_news_agent} --news_headlines {args.news_headlines}"  # NA
+            + f" --use_news_agent {args.use_news_agent} --news_headlines {args.news_headlines} --news_images {args.news_images}"  # NA
         )
 
     with open(config_name) as file:
