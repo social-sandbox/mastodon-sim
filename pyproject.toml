@@ -56,6 +56,7 @@ dash = "^2.18.2"
 dash-cytoscape = "^1.0.2"
 scipy = "^1.14.1"
 requests = "^2.32.3"
+types-requests = "^2.32.0.20241016"
 
 [tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
 commitizen = ">=3.21.3"
