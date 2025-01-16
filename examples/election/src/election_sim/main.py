@@ -9,9 +9,6 @@ import time
 import warnings
 from functools import partial
 
-import pdb
-
-
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
@@ -149,7 +146,7 @@ def add_news_agent_to_mastodon_app(news_agent, action_logger, players, mastodon_
         )
         # We still need to give the news agent a phone to be able to post toots #TODO we are not sure if we need to do this
         # phones[n_agent["name"]] = apps.Phone(n_agent["name"], apps=[mastodon_apps[n_agent["name"].split()[0]]])
-        user_mapping[n_agent["mastodon_username"]] = f"user{len(players)+1+i:04d}"
+        user_mapping[n_agent["mastodon_username"]] = f"user{len(players) + 1 + i:04d}"
         # set a mapping of display name to user name for news agent
         mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
         mastodon_ops.update_bio(
@@ -198,7 +195,7 @@ def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname)
         for player in players
     }
     agent_names = [player.name for player in players]
-    user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
+    user_mapping = {player.name.split()[0]: f"user{i + 1:04d}" for i, player in enumerate(players)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 

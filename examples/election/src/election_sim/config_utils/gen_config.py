@@ -5,8 +5,6 @@ import json
 import os
 import sys
 
-import pdb
-
 import requests
 
 # Add the src directory to the Python path
@@ -283,7 +281,7 @@ def get_news_agent_configs(n_agents, headlines=None, news_images=None):
             news_info[news_type]["seed_toot"] if "seed_toot" in news_info[news_type] else ""
         )
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
-        #Running sim only with headlines
+        # Running sim only with headlines
         if headlines is not None and news_images is None:
             agent["posts"] = {h: [] for h in headlines}
         elif headlines is not None and news_images is not None:
@@ -466,9 +464,9 @@ if __name__ == "__main__":
         else:
             news = fetch_and_transform_headlines(upload_file=False)
 
-        if args.news_images == 'generate':
-            #TODO: generate news images on the fly
-            #generate_news_images(news)
+        if args.news_images == "generate":
+            # TODO: generate news images on the fly
+            # generate_news_images(news)
             pass
         elif args.news_images is not None:
             news_images = json.load(open(args.news_images))
@@ -476,10 +474,12 @@ if __name__ == "__main__":
             news_images = None
 
         # NA generate news agent configs
-        news_agent_configs, news_info = get_news_agent_configs(n_agents=1, headlines=news, news_images=news_images)
+        news_agent_configs, news_info = get_news_agent_configs(
+            n_agents=1, headlines=news, news_images=news_images
+        )
         config_data["news_agents"] = news_agent_configs
         config_data["news_info"] = news_info
-        #print(config_data["news_agents"]["posts"])
+        # print(config_data["news_agents"]["posts"])
         # NA add to shared memories template
         shared_memories_template.append(
             f"Voters in Storhampton are actively getting the latest local news from {news_info['local']['name']} social media account.",
