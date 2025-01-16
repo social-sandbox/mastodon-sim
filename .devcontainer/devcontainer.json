@@ -23,7 +23,8 @@
                 "visualstudioexptteam.vscodeintellicode",
                 "amazonwebservices.aws-toolkit-vscode",
                 "mark-tucker.aws-cli-configure",
-                "vivaxy.vscode-conventional-commits"
+                "vivaxy.vscode-conventional-commits",
+                "sourcegraph.cody-ai"
             ],
             "settings": {
                 "coverage-gutters.coverageFileNames": [
