@@ -192,7 +192,7 @@ def print_notifications(notifications: list[AttribAccessDict]) -> None:  # noqa:
         return
 
     for notif in notifications:
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"ID: {notif['id']}")
         print(f"Type: {notif['type']}")
         print(f"Created at: {notif['created_at']}")

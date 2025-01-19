@@ -134,7 +134,7 @@ def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname)
         for player in players
     }
     agent_names = [player.name for player in players]
-    user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
+    user_mapping = {player.name.split()[0]: f"user{i + 1:04d}" for i, player in enumerate(players)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 

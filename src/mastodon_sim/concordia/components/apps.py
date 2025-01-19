@@ -355,7 +355,7 @@ class Phone:
     {self.player_name} has a smartphone.
     {self.player_name} uses their phone frequently to achieve their daily goals.
     {self.player_name}'s phone has only the following apps available:
-    {', '.join(self.app_names())}."
+    {", ".join(self.app_names())}."
     """)
 
     def app_names(self):

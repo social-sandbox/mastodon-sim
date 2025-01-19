@@ -31,19 +31,7 @@ def gen_users(file_path, batch_size=5):
             "Agreeableness": "Rate on a scale from 1 to 10",
             "Neuroticism": "Rate on a scale from 1 to 10"
         },
-        "Schwartz_values": {
-            "Self-Direction": "Rate on a scale from 1 to 10",
-            "Stimulation": "Rate on a scale from 1 to 10",
-            "Hedonism": "Rate on a scale from 1 to 10",
-            "Achievement": "Rate on a scale from 1 to 10",
-            "Power": "Rate on a scale from 1 to 10",
-            "Security": "Rate on a scale from 1 to 10",
-            "Conformity": "Rate on a scale from 1 to 10",
-            "Tradition": "Rate on a scale from 1 to 10",
-            "Benevolence": "Rate on a scale from 1 to 10",
-            "Universalism": "Rate on a scale from 1 to 10"
-        },
-        "Description based on interactions": "Make observations about the user based on their interactions"
+        "context": "Make observations about the user based on their interactions"
     }
 
     Assign scores thoughtfully: Use the scales provided to assign scores that accurately reflect the persona's characteristics based on the interactions.
@@ -104,4 +92,4 @@ def gen_users(file_path, batch_size=5):
 
 
 if __name__ == "__main__":
-    gen_users("/Users/gayatrikrishnakumar/Desktop/World_Adapter/formatted_comments.json")
+    gen_users("")  # path to formatted comments
