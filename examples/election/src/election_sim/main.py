@@ -580,7 +580,9 @@ if __name__ == "__main__":
         N = 20
         survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        config_name = (
+            f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        )
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"

@@ -8,6 +8,7 @@ import sys
 import requests
 
 # Add the src directory to the Python path
+root_path = "/mnt/c/Users/maxpu/Dropbox/scripts/Projects/socialsandbox/mastodon-sim/"
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from agent_pop_utils import get_agent_configs
@@ -275,7 +276,13 @@ def get_news_agent_configs(n_agents, headlines=None):
         )
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
         if headlines is not None:
-            agent["posts"] = {h: [] for h in headlines}
+            # agent["posts"] = {h: [''] for h in headlines}
+            with open(ROOT_PATH + "examples/election/src/election_sim/image_repo.json") as f:
+                headline_and_image_post_dict = json.load(f)
+            print(headline_and_image_post_dict)
+            agent["posts"] = {
+                k: [ROOT_PATH + img for img in v] for k, v in headline_and_image_post_dict.items()
+            }
 
         news_agent_configs.append(agent)
 
