@@ -423,8 +423,9 @@ def run_sim(
     output_rootname,
 ):
     time_step = datetime.timedelta(minutes=30)
-    SETUP_TIME = datetime.datetime(year=2024, month=10, day=1, hour=8)  # noqa: DTZ001
-    START_TIME = datetime.datetime(year=2024, month=10, day=1, hour=8)  # noqa: DTZ001
+    today = datetime.date.today()
+    SETUP_TIME = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=8)  # noqa: DTZ001
+    START_TIME = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=8)  # noqa: DTZ001
     clock = game_clock.MultiIntervalClock(
         start=SETUP_TIME, step_sizes=[time_step, datetime.timedelta(seconds=10)]
     )
@@ -580,7 +581,7 @@ if __name__ == "__main__":
         N = 20
         survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        config_name = f"testN{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"

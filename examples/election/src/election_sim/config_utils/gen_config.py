@@ -1,6 +1,7 @@
 """A script for generating sim config files"""
 
 import argparse
+import datetime
 import json
 import os
 import sys
@@ -8,6 +9,7 @@ import sys
 import requests
 
 # Add the src directory to the Python path
+ROOT_PATH = "/mnt/c/Users/maxpu/Dropbox/scripts/Projects/socialsandbox/mastodon-sim/"
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from agent_pop_utils import get_agent_configs
@@ -273,9 +275,15 @@ def get_news_agent_configs(n_agents, headlines=None):
         agent["seed_toot"] = (
             news_info[news_type]["seed_toot"] if "seed_toot" in news_info[news_type] else ""
         )
-        agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
         if headlines is not None:
-            agent["posts"] = {h: [] for h in headlines}
+            # agent["posts"] = {h: [''] for h in headlines}
+            with open(ROOT_PATH + "examples/election/src/election_sim/image_repo.json") as f:
+                headline_and_image_post_dict = json.load(f)
+            print(headline_and_image_post_dict)
+            agent["posts"] = {
+                k: [ROOT_PATH + img for img in v] for k, v in headline_and_image_post_dict.items()
+            }
+        agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
 
         news_agent_configs.append(agent)
 
@@ -283,10 +291,19 @@ def get_news_agent_configs(n_agents, headlines=None):
 
 
 def generate_news_agent_toot_post_times(agent):
-    if agent["schedule"] == "morning and evening":
-        return ["8:00 AM", "6:00 PM"]
+    # if agent["schedule"] == "morning and evening":
+    #     return ["8:00 AM", "6:00 PM"]
+    num_posts = len(agent["posts"])
+
     if agent["schedule"] == "hourly":
-        return [str(i) + ":00 AM" for i in range(1, 12)] + [str(i) + ":00 PM" for i in range(1, 12)]
+        today = datetime.date.today()
+        start_date = datetime.datetime(
+            year=today.year, month=today.month, day=today.day, hour=8, minute=0
+        )
+        datetimes = (start_date + datetime.timedelta(minutes=30 * it) for it in range(num_posts))
+        formatted_times = [td.strftime("%H:%M %p") for td in datetimes]
+    return formatted_times
+    # return [str(i) + ":00 AM" for i in range(8, 12)] + [str(i) + ":00 PM" for i in range(1, agent[''])]
 
 
 if __name__ == "__main__":
