@@ -25,6 +25,12 @@ parser.add_argument(
     help="x.y format: x is the name of the config file associated with the survey data (use 'None' for uniform trait sampling) and y is the associated trait type",
 )
 parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
+parser.add_argument(
+    "--reddit_json_path",
+    type=str,
+    default=None,
+    help="Path to Reddit-based JSON file for agent data (if you want to load from JSON).",
+)
 args = parser.parse_args()
 
 
@@ -293,7 +299,18 @@ if __name__ == "__main__":
     }
     # generate all agent config object
     agent_configs = get_agent_configs(
-        agent_pop_settings, candidate_configs, active_voter_config, malicious_actor_config
+        agent_pop_settings={
+            "trait_type": trait_type,
+            "survey_config_name": survey_cfg if survey_cfg != "None" else None,
+        },
+        candidate_configs=candidate_configs,
+        active_voter_config={
+            "goal": "Their goal is have a good day and vote in the election.",
+            "context": "",
+            "num_agents": args.num_agents - len(candidate_configs),
+        },
+        malicious_actor_config=malicious_actor_config,
+        reddit_json_path=args.reddit_json_path,
     )
 
     # add meta data

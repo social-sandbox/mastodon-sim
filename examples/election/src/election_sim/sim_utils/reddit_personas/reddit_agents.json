@@ -1,9 +1,7 @@
 [
   {
     "Name": "Jessica Thompson",
-    "User_Reference": "56r74ths",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 7,
@@ -15,9 +13,7 @@
   },
   {
     "Name": "Michael Robertson",
-    "User_Reference": "89w7f36w",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 6,
@@ -29,9 +25,7 @@
   },
   {
     "Name": "Sam Jenkins",
-    "User_Reference": "2gykjlvy",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 5,
@@ -43,9 +37,7 @@
   },
   {
     "Name": "Laura Mitchell",
-    "User_Reference": "jwreadb9p",
     "Sex": "Female",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 4,
@@ -57,9 +49,7 @@
   },
   {
     "Name": "Rahul Desai",
-    "User_Reference": "rautl5si",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -71,9 +61,7 @@
   },
   {
     "Name": "Sam Robertson",
-    "User_Reference": "hxlz0vsx6",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 7,
@@ -85,9 +73,7 @@
   },
   {
     "Name": "Emily Chen",
-    "User_Reference": "6btspdnb",
     "Sex": "Female",
-    "Political_Identity": "Moderate Liberal",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 8,
@@ -99,9 +85,7 @@
   },
   {
     "Name": "Michael Harris",
-    "User_Reference": "yjdt5nkf5",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 7,
@@ -113,9 +97,7 @@
   },
   {
     "Name": "Jason Miller",
-    "User_Reference": "3wpzptch",
     "Sex": "Male",
-    "Political_Identity": "Neutral",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 7,
@@ -127,9 +109,7 @@
   },
   {
     "Name": "Lisa Collins",
-    "User_Reference": "uoe7ktfkx",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -141,9 +121,7 @@
   },
   {
     "Name": "Nathan Torres",
-    "User_Reference": "u2u8d7jmz",
     "Sex": "Male",
-    "Political_Identity": "Moderate with a slight leaning towards liberal",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -155,9 +133,7 @@
   },
   {
     "Name": "Zachary Patel",
-    "User_Reference": "8czbnxrc",
     "Sex": "Male",
-    "Political_Identity": "Moderate with a focus on strategic thinking",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 7,
@@ -169,9 +145,7 @@
   },
   {
     "Name": "Emily Thompson",
-    "User_Reference": "1yvl4bo7",
     "Sex": "Female",
-    "Political_Identity": "Libertarian",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 5,
@@ -183,9 +157,7 @@
   },
   {
     "Name": "Rachel Kim",
-    "User_Reference": "3z5fe",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 6,
@@ -197,9 +169,7 @@
   },
   {
     "Name": "Alex Thompson",
-    "User_Reference": "4l1qcd8o",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 6,
@@ -211,9 +181,7 @@
   },
   {
     "Name": "Carlos Mendes",
-    "User_Reference": "488jhlao",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 7,
@@ -225,9 +193,7 @@
   },
   {
     "Name": "Chris Anderson",
-    "User_Reference": "rcbsu52y9",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 8,
@@ -239,9 +205,7 @@
   },
   {
     "Name": "Jessica Rodriguez",
-    "User_Reference": "55er3mk1",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -253,9 +217,7 @@
   },
   {
     "Name": "Sam Taylor",
-    "User_Reference": "19sahv18i5",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 5,
@@ -267,9 +229,7 @@
   },
   {
     "Name": "Emily Johnson",
-    "User_Reference": "3ylm8miq",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 7,
@@ -281,9 +241,7 @@
   },
   {
     "Name": "Michael Roberts",
-    "User_Reference": "hqc8ppgb",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -295,9 +253,7 @@
   },
   {
     "Name": "Sara Mitchell",
-    "User_Reference": "jgmgshv7k",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 4,
@@ -309,9 +265,7 @@
   },
   {
     "Name": "James Carter",
-    "User_Reference": "dnwjr5wd",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 7,
@@ -323,9 +277,7 @@
   },
   {
     "Name": "Daniel Brown",
-    "User_Reference": "iu4t1",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 6,
@@ -337,9 +289,7 @@
   },
   {
     "Name": "Callum Fletcher",
-    "User_Reference": "doy9y2c68",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -351,9 +301,7 @@
   },
   {
     "Name": "Bill Thornton",
-    "User_Reference": "59e7c5om",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 5,
@@ -365,9 +313,7 @@
   },
   {
     "Name": "Sophia McLeod",
-    "User_Reference": "l384s3jt",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 7,
@@ -379,9 +325,7 @@
   },
   {
     "Name": "David Banks",
-    "User_Reference": "i5ryeeor",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -393,9 +337,7 @@
   },
   {
     "Name": "Ethan Marshall",
-    "User_Reference": "3miru",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 5,
@@ -407,9 +349,7 @@
   },
   {
     "Name": "Jessica White",
-    "User_Reference": "tli36nr4",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 5,
@@ -421,9 +361,7 @@
   },
   {
     "Name": "John Smith",
-    "User_Reference": "hqkhomyr",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 7,
@@ -435,9 +373,7 @@
   },
   {
     "Name": "Michael Johnson",
-    "User_Reference": "c7jvrdbts",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -449,9 +385,7 @@
   },
   {
     "Name": "Sara Martin",
-    "User_Reference": "oobp398v5",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 8,
@@ -463,9 +397,7 @@
   },
   {
     "Name": "Daniel Evans",
-    "User_Reference": "836jh6yt",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 8,
@@ -477,9 +409,7 @@
   },
   {
     "Name": "Alex Thompson",
-    "User_Reference": "2cjsw9by",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 5,
@@ -491,9 +421,7 @@
   },
   {
     "Name": "Jessica Smith",
-    "User_Reference": "t2gclhahd",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 6,
@@ -505,9 +433,7 @@
   },
   {
     "Name": "Daniel White",
-    "User_Reference": "kbvdll7ws",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 7,
@@ -519,9 +445,7 @@
   },
   {
     "Name": "Christine Evans",
-    "User_Reference": "9idnxyz3",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -533,9 +457,7 @@
   },
   {
     "Name": "Michael Reed",
-    "User_Reference": "5qbmygt9",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 5,
@@ -547,9 +469,7 @@
   },
   {
     "Name": "Alex Jensen",
-    "User_Reference": "9s1hj7gr",
     "Sex": "Non-binary",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 5,
@@ -561,9 +481,7 @@
   },
   {
     "Name": "Samuel Riley",
-    "User_Reference": "rmr02k3g",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 7,
@@ -575,9 +493,7 @@
   },
   {
     "Name": "Jake Thompson",
-    "User_Reference": "16xirz",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -589,9 +505,7 @@
   },
   {
     "Name": "Emily Mitchell",
-    "User_Reference": "5ua6snof",
     "Sex": "Female",
-    "Political_Identity": "Undisclosed",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 8,
@@ -603,9 +517,7 @@
   },
   {
     "Name": "Olivia Miles",
-    "User_Reference": "srgkdm88a",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 5,
@@ -617,9 +529,7 @@
   },
   {
     "Name": "Marcus Hale",
-    "User_Reference": "khmh3b8rx",
     "Sex": "Male",
-    "Political_Identity": "Moderate Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -631,9 +541,7 @@
   },
   {
     "Name": "Aidan Turner",
-    "User_Reference": "gogctwobk",
     "Sex": "Male",
-    "Political_Identity": "Libertarian",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 5,
@@ -645,9 +553,7 @@
   },
   {
     "Name": "Lisa Andersen",
-    "User_Reference": "gtxxb",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 7,
@@ -659,9 +565,7 @@
   },
   {
     "Name": "Rebecca Stone",
-    "User_Reference": "w06s1fcm",
     "Sex": "Female",
-    "Political_Identity": "Left-leaning",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 6,
@@ -673,9 +577,7 @@
   },
   {
     "Name": "Jared Yates",
-    "User_Reference": "3qt7wtgz",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 6,
@@ -687,9 +589,7 @@
   },
   {
     "Name": "Emily Johnson",
-    "User_Reference": "pef3ftb1p",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -701,9 +601,7 @@
   },
   {
     "Name": "Daniel Wong",
-    "User_Reference": "46ldeyud",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 7,
@@ -715,9 +613,7 @@
   },
   {
     "Name": "Alex Smith",
-    "User_Reference": "3mfv4yh8",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 4,
       "Conscientiousness": 5,
@@ -729,9 +625,7 @@
   },
   {
     "Name": "Carla Nguyen",
-    "User_Reference": "ierk9h5qk",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 5,
@@ -743,9 +637,7 @@
   },
   {
     "Name": "Michael Johnson",
-    "User_Reference": "cwjsj6b8",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 7,
@@ -757,9 +649,7 @@
   },
   {
     "Name": "James Carter",
-    "User_Reference": "1ojp5x98",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": "7",
       "Conscientiousness": "8",
@@ -771,9 +661,7 @@
   },
   {
     "Name": "Karen Mitchell",
-    "User_Reference": "a95km3sbl",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": "5",
       "Conscientiousness": "7",
@@ -785,9 +673,7 @@
   },
   {
     "Name": "Lucas Almeida",
-    "User_Reference": "x3n5ng5rg",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": "9",
       "Conscientiousness": "6",
@@ -799,9 +685,7 @@
   },
   {
     "Name": "Anna Stelzer",
-    "User_Reference": "onl9u",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": "8",
       "Conscientiousness": "7",
@@ -813,9 +697,7 @@
   },
   {
     "Name": "Mark Thompson",
-    "User_Reference": "i9bivkmv",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": "7",
       "Conscientiousness": "6",
@@ -827,9 +709,7 @@
   },
   {
     "Name": "Jordan Woods",
-    "User_Reference": "uwhv0jgwh",
     "Sex": "Non-binary",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 7,
@@ -841,9 +721,7 @@
   },
   {
     "Name": "Wei Zhang",
-    "User_Reference": "6cqppw4v",
     "Sex": "Male",
-    "Political_Identity": "Moderate with conservative leanings",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -855,9 +733,7 @@
   },
   {
     "Name": "Michael Carter",
-    "User_Reference": "mjc43",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 8,
@@ -869,9 +745,7 @@
   },
   {
     "Name": "Elliot Green",
-    "User_Reference": "7h25shj6",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 6,
@@ -883,9 +757,7 @@
   },
   {
     "Name": "Alex Parker",
-    "User_Reference": "125f66",
     "Sex": "Female",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 5,
@@ -897,9 +769,7 @@
   },
   {
     "Name": "Min-seo Kim",
-    "User_Reference": "3m9g6tmn",
     "Sex": "Female",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 6,
@@ -911,9 +781,7 @@
   },
   {
     "Name": "Alejandro Garcia",
-    "User_Reference": "115k4e",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 7,
@@ -925,9 +793,7 @@
   },
   {
     "Name": "Olivia Johnson",
-    "User_Reference": "ruv0hdke",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 8,
@@ -939,9 +805,7 @@
   },
   {
     "Name": "James Thompson",
-    "User_Reference": "9xafei5w",
     "Sex": "Male",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 5,
@@ -953,9 +817,7 @@
   },
   {
     "Name": "Lucas Bauer",
-    "User_Reference": "hgot9nph",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 7,
@@ -967,9 +829,7 @@
   },
   {
     "Name": "Astrid Nyholm",
-    "User_Reference": "2pduifou",
     "Sex": "Female",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 5,
@@ -981,9 +841,7 @@
   },
   {
     "Name": "Nathan Cooper",
-    "User_Reference": "fm7z6",
     "Sex": "Male",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 5,
       "Conscientiousness": 6,
@@ -995,9 +853,7 @@
   },
   {
     "Name": "Riley Greene",
-    "User_Reference": "5hkg1q7z",
     "Sex": "Non-binary",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 9,
       "Conscientiousness": 4,
@@ -1009,9 +865,7 @@
   },
   {
     "Name": "Amelia Patel",
-    "User_Reference": "62fcg72j",
     "Sex": "Female",
-    "Political_Identity": "Conservative",
     "Big5_traits": {
       "Openness": 6,
       "Conscientiousness": 7,
@@ -1023,9 +877,7 @@
   },
   {
     "Name": "Jonah Blake",
-    "User_Reference": "b4p1o5c6",
     "Sex": "Male",
-    "Political_Identity": "Moderate",
     "Big5_traits": {
       "Openness": 7,
       "Conscientiousness": 6,
@@ -1037,9 +889,7 @@
   },
   {
     "Name": "Jamie Parker",
-    "User_Reference": "bu8ajbst",
     "Sex": "Non-binary",
-    "Political_Identity": "Liberal",
     "Big5_traits": {
       "Openness": 8,
       "Conscientiousness": 6,
@@ -1048,5 +898,905 @@
       "Neuroticism": 5
     },
     "context": "Jamie enjoys discussing popular media and current affairs, indicating a strong interest in both pop culture and politics. Their engagement in discussions involving a variety of topics such as TV shows, politics, and community memes suggests a diverse set of interests and a tendency towards creative expression. Jamie values autonomy and creativity, is reasonably sociable, and displays a preference for inclusivity and social justice topics."
+  },
+  {
+    "Name": "Michael Thompson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 6
+    },
+    "context": "Michael tends to engage with politically charged discussions, showcasing a preference for conservative viewpoints. He seems skeptical of liberal figures and focuses on political news, alongside a keen interest in topics like immigration policies and personal narratives about high-profile political figures. He exhibits moderate neuroticism, reflected in his concerns about political and social issues."
+  },
+  {
+    "Name": "Jessica Lee",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 6,
+      "Extraversion": 7,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Jessica is engaged with liberal political news and tends to highlight achievements and victories of Democratic candidates. She often focuses on contemporary social justice issues, opposing conservative policies and presenting arguments against authoritarian figures. Her openness to experience is evident in her interest in diverse political narratives."
+  },
+  {
+    "Name": "Ethan Kim",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 8,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 6
+    },
+    "context": "Ethan frequently interacts with predictions and news related to conservative wins, showing a strong interest in conservative political forecasts. His conversations often touch upon a skepticism of online communities leaning left, indicating a critical view of opposing political ideologies. His conscientiousness is reflected in structured discussions about political strategies."
+  },
+  {
+    "Name": "Laura Smith",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 5,
+      "Extraversion": 4,
+      "Agreeableness": 6,
+      "Neuroticism": 8
+    },
+    "context": "Laura shows a deep engagement with personal and emotional topics alongside occasional political discussions. Her high neuroticism is evident through shared concerns about mental health and personal struggles, which dominate her interactions. She also engages in debates, reflecting a critical but open-minded stance on political and social issues."
+  },
+  {
+    "Name": "Rohan Patel",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 6,
+      "Extraversion": 7,
+      "Agreeableness": 5,
+      "Neuroticism": 6
+    },
+    "context": "Rohan is a culturally inclined individual, balancing interests in music, gaming, and political events. His interactions reveal a mix of personal hobbies and political updates, indicating a moderate viewpoint. He partakes in social activities and enjoys engaging community challenges, suggesting a moderately outgoing personality."
+  },
+  {
+    "Name": "Alex Thompson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 6,
+      "Extraversion": 4,
+      "Agreeableness": 5,
+      "Neuroticism": 5
+    },
+    "context": "Alex frequently discusses television series and video games, showing an interest in storytelling and technology. He seems pragmatic, focused on both entertainment and understanding complex topics like philosophy."
+  },
+  {
+    "Name": "Emma Johnson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 8,
+      "Extraversion": 5,
+      "Agreeableness": 7,
+      "Neuroticism": 6
+    },
+    "context": "Emma is involved in educational and career discussions, often seeking balance between personal well-being and professional growth. She shows concern for community, indicating a reflective and conscientious personality."
+  },
+  {
+    "Name": "David Myers",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 6
+    },
+    "context": "David is interested in news and political affairs, often discussing societal impacts and media. He shows a focus on current events and cultural shifts, sometimes with a critical tone."
+  },
+  {
+    "Name": "Jake Rodgers",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 5
+    },
+    "context": "Jake follows sports and political developments, frequently discussing athletes and national news topics. His interactions suggest a practical approach to current events and moderate interest in community affairs."
+  },
+  {
+    "Name": "Sophia Martinez",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Sophia is engaged in political and social issues, particularly focusing on Texas politics and community concerns. She appears to balance traditional values with a pragmatic view on regional developments."
+  },
+  {
+    "Name": "Aidan Guzman",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 8,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 4
+    },
+    "context": "Aidan is likely an audio and technology enthusiast with a deep interest in music formats and audio quality. Their interactions suggest a focus on consumer electronics and investment in collections. They are systematically interested in political updates, particularly related to conservative policies, likely due to media consumption or a keen interest in politics."
+  },
+  {
+    "Name": "Eva Chang",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 3
+    },
+    "context": "Eva seems highly engaged in online gaming communities and political discussions. They likely balance their time between digital interaction and keeping up with current events, indicating a systematic yet adventurous approach to gathering information and entertainment."
+  },
+  {
+    "Name": "Marcus Ballard",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 3
+    },
+    "context": "Marcus appears to be interested in historical political topics, strategic gaming, and issues concerning free speech censorship. His participation in forums suggests a reflective nature with moderate political and social engagement."
+  },
+  {
+    "Name": "Sophia Kline",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 6,
+      "Extraversion": 7,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Sophia is an active participant in outdoor sports and recreational communities, particularly interested in Onewheel activities. Her posts show an inclination towards creative DIY projects and community participation, reflecting a vibrant lifestyle with a balanced view on personal and political matters."
+  },
+  {
+    "Name": "James Patterson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 8,
+      "Extraversion": 6,
+      "Agreeableness": 7,
+      "Neuroticism": 5
+    },
+    "context": "James is an individual who enjoys intellectual pursuits such as studying alternate history and participating in gaming communities. He shows responsibility when asking practical questions about travel and school. He exhibits a balanced approach to social interactions, possibly being involved in online communities, demonstrating commitment through continued engagement and inquiry."
+  },
+  {
+    "Name": "Mariana Silva",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 6
+    },
+    "context": "Mariana is highly engaged with current events, particularly around politics and sports in Brazil. Her attention to detailed reporting and cultural engagements shows a broad interest in social advocacy and political dynamics. Although she seems interested in social change, she may also have moderate levels of stress due to her engagement with contentious issues."
+  },
+  {
+    "Name": "Ethan Jones",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 8,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 7
+    },
+    "context": "Ethan appears to care deeply about politics and current affairs, often referencing conservative viewpoints and expressing skepticism about mainstream narratives. His interest in fishing and the outdoors suggests a connection to hobbies that provide relaxation and reflection. Ethan may experience some anxiety regarding political events, indicated by his engagement with political conspiracy issues."
+  },
+  {
+    "Name": "Carlos Ramirez",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 8,
+      "Extraversion": 4,
+      "Agreeableness": 5,
+      "Neuroticism": 4
+    },
+    "context": "Carlos is an LGBTQ latino who supports Trump, indicating a complexity in his political views that diverges from mainstream expectations. Engagement in gaming communities suggests focused interests, possibly serving as a platform for socializing and diverse interactions. His questioning nature indicates a thoughtful and considerate approach to understanding different perspectives."
+  },
+  {
+    "Name": "Sophia Lopez",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 7,
+      "Extraversion": 7,
+      "Agreeableness": 8,
+      "Neuroticism": 6
+    },
+    "context": "Sophia is a trans woman who is actively engaged in political discourse, particularly around women's rights and LGBTQ issues. Her strong focus on activism and resilience in social issues suggests she is open-minded and values equality. Her emotional expression may at times be heightened due to the impactful topics she cares about."
+  },
+  {
+    "Name": "Emily Johnson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 5
+    },
+    "context": "Emily is interested in political topics with a conservative bent, showing support for Trump. She also has varied interests, such as technology and exams, indicating a well-organized and thorough mindset, with interests in personal achievements and hobbies."
+  },
+  {
+    "Name": "David Ross",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 5,
+      "Extraversion": 4,
+      "Agreeableness": 3,
+      "Neuroticism": 6
+    },
+    "context": "David considers himself a moderate with specific strong opinions, especially on issues related to trans rights. His interactions suggest he's dealing with career transitions and familial political dynamics, showing a preference for practical advice and somewhat high-stress levels."
+  },
+  {
+    "Name": "Samantha Evans",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 4,
+      "Extraversion": 5,
+      "Agreeableness": 7,
+      "Neuroticism": 8
+    },
+    "context": "Samantha has a creative and explorative personality, frequently questioning societal norms and being interested in personal identity topics. She is seeking deep connections and values authenticity, often expressing frustration with superficiality."
+  },
+  {
+    "Name": "Michael Stone",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 3,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 3,
+      "Neuroticism": 4
+    },
+    "context": "Michael supports Trump and has a firm political stance. He seems pragmatic and occasionally exhibits a cynical view of current events, expecting straightforwardness from others. His interests lie in practical topics rather than abstract discussions."
+  },
+  {
+    "Name": "Robert Greene",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 7,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Robert is interested in issues related to education, local community news, and social justice, indicating a socially aware personality. He is also engaged in sports and local events, showing a community-oriented and extroverted disposition."
+  },
+  {
+    "Name": "Jamie Wilson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 5,
+      "Extraversion": 7,
+      "Agreeableness": 4,
+      "Neuroticism": 3
+    },
+    "context": "Jamie is engaged in conversations about political topics, particularly with a critical view of the Democratic party in the US. He also has a strong interest in sports like UFC and BMX, indicating a preference for active and competitive environments. The user shows a level of sarcasm and humor in their interactions and appears to keep up with global trends in sports and politics, especially connected to the US and New Zealand."
+  },
+  {
+    "Name": "Patricia Clarkson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 6,
+      "Extraversion": 3,
+      "Agreeableness": 2,
+      "Neuroticism": 8
+    },
+    "context": "Patricia expresses strong opinions on the US political situation, particularly in favor of Donald Trump. She seems disillusioned with the current state of the country and is fed up with the political process. Her interactions contain negativity towards the Democratic party and mainstream politics, indicating high political engagement but a low openness to opposing views."
+  },
+  {
+    "Name": "Alex Nguyen",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 4
+    },
+    "context": "Alex displays a broad interest in news across politics, social issues, and health concerns. He demonstrates an analytical mindset, indicated by sharing and discussing research findings, and is particularly interested in Canadian and international news, suggesting a global perspective. Alex's general tone suggests a balanced political perspective and an open-minded approach."
+  },
+  {
+    "Name": "Tyler McKinney",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 4,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 5
+    },
+    "context": "Tyler is supportive of Donald Trump, indicating conservative political views. He engages with people in light-hearted and sometimes self-indulgent or comedic topics, such as racing careers and handling personal threats. His posts suggest a mix of seeking personal growth and maintaining a sense of humor about life."
+  },
+  {
+    "Name": "Jordan Parker",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 3,
+      "Conscientiousness": 5,
+      "Extraversion": 4,
+      "Agreeableness": 2,
+      "Neuroticism": 7
+    },
+    "context": "Jordan is outspoken about perceived censorship and political bias against conservative views on online platforms. His posts reflect frustration and skepticism towards mainstream media and established political systems. He seems to gravitate towards conspiracy theories or alternative narratives and is highly critical of the Democratic party and liberal media."
+  },
+  {
+    "Name": "Jessica Anderson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 3,
+      "Neuroticism": 8
+    },
+    "context": "Jessica shows strong political opinions and emotions, particularly towards conservative figures, and actively expresses her disdain for policies she disagrees with. She engages with political discussions often, indicating strong ideological beliefs and high levels of concern for social issues. Her frequent use of emotionally charged language suggests high neuroticism."
+  },
+  {
+    "Name": "Brian Mitchell",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 6,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 4
+    },
+    "context": "Brian frequently engages in discussions around politics, gaming, and military history. He seems open to exploring different perspectives occasionally, though he tends to exhibit a conservative leaning. His discussive demeanor and slight disagreeableness suggest he enjoys debating his views with others."
+  },
+  {
+    "Name": "Lucas Rivera",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Lucas appears to have a strong interest in music, culture, and social justice issues. His interactions suggest an appreciation for diverse perspectives and creative expression. He engages in societal critiques and values inclusivity, indicating moderate traits of agreeableness and openness."
+  },
+  {
+    "Name": "David Stone",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 3
+    },
+    "context": "David's focus seems to revolve around political events and general existential queries, with a particular interest in the conservative political victories. He appears practical and somewhat skeptical, preferring a structured approach to information and current events."
+  },
+  {
+    "Name": "Daniel Reed",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 8,
+      "Extraversion": 7,
+      "Agreeableness": 4,
+      "Neuroticism": 2
+    },
+    "context": "Daniel exhibits a strong interest in firearms, gear, and related gadgets, indicative of someone who values preparedness and discipline. His posts reflect an enthusiastic engagement in these hobbies, with a conservative streak evident through political affirmations. He is likely to be systematic and assertive in his interactions."
+  },
+  {
+    "Name": "Ethan Carter",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 6,
+      "Agreeableness": 7,
+      "Neuroticism": 6
+    },
+    "context": "This user seems curious and open-minded, seeking advice on music and career while also showing interest in various intellectual and philosophical topics. They also ask for help in challenging life situations, indicating some emotional volatility."
+  },
+  {
+    "Name": "Ava Thompson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 8,
+      "Extraversion": 5,
+      "Agreeableness": 4,
+      "Neuroticism": 4
+    },
+    "context": "This user frequently engages with politically charged content, showing strong conservative inclinations. They are analytical and focused, paying attention to political developments and media narratives."
+  },
+  {
+    "Name": "Lucas Adams",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 5,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "This user shows interest in social and personal issues, contributing to discussions in a balanced manner. They maintain a relatively neutral stance in political contexts but have a slight liberal tendency."
+  },
+  {
+    "Name": "Sophia Nguyen",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 7,
+      "Neuroticism": 4
+    },
+    "context": "The user demonstrates a moderate engagement with current events and thoughtful reflections on cultural references, suggesting a well-rounded and open-minded perspective."
+  },
+  {
+    "Name": "Jason Parker",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 4,
+      "Extraversion": 6,
+      "Agreeableness": 6,
+      "Neuroticism": 6
+    },
+    "context": "This user displays high creativity and openness through diverse topics, often questioning societal norms and taboos. They may experience some emotional ups and downs but try to maintain a progressive view."
+  },
+  {
+    "Name": "Alex Thompson",
+    "Sex": "Non-binary",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 6,
+      "Agreeableness": 7,
+      "Neuroticism": 5
+    },
+    "context": "Alex demonstrates a wide range of interests from gaming and anime to political discourse. They engage in communities with a light-hearted and curious nature, often seeking assistance or discussion, suggesting an openness to new experiences and moderate sociability."
+  },
+  {
+    "Name": "John Miller",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 3,
+      "Neuroticism": 6
+    },
+    "context": "John is highly engaged in political discourse with a focus on conservative viewpoints. His posts indicate a strong critique of media and liberal political figures, suggesting lower agreeableness and higher conscientiousness, reflecting a structured and direct personality."
+  },
+  {
+    "Name": "Emily Smith",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 4,
+      "Extraversion": 7,
+      "Agreeableness": 6,
+      "Neuroticism": 4
+    },
+    "context": "Emily shows a high level of engagement in various forms of entertainment media, including sports, gaming, and online streaming cultures. Her participation indicates high openness and a sociable yet relaxed approach to digital communities."
+  },
+  {
+    "Name": "Michael Garcia",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 8,
+      "Extraversion": 3,
+      "Agreeableness": 5,
+      "Neuroticism": 6
+    },
+    "context": "Michael is primarily focused on practical concerns such as financial matters and collectibles, along with maintaining a meticulous approach to transactions. His interactions suggest a methodical and somewhat reserved personality."
+  },
+  {
+    "Name": "Sarah Johnson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 5,
+      "Extraversion": 4,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Sarah's interaction, focused on political discussions, reflects her engagement with current events and a progressive political stance. Her participation is low-key yet consistent, suggesting moderate sociability and adaptability."
+  },
+  {
+    "Name": "James Carter",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 4
+    },
+    "context": "Engages in discussions around firearms, looking for cost-effective solutions, and outdoor activities suggesting an interest in practical concerns and self-reliance. Also shows an interest in political content, especially related to Trump, indicating a potential conservative alignment."
+  },
+  {
+    "Name": "Alex Jackson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 5,
+      "Extraversion": 4,
+      "Agreeableness": 6,
+      "Neuroticism": 6
+    },
+    "context": "Displays a mix of interests from practical skills such as knife-making to issues surrounding homelessness and voting processes. This suggests a curious mind that explores various topics and might be moderate or independent in political leaning. Potential recent challenges with family and housing suggest higher sensitivity in personal life."
+  },
+  {
+    "Name": "Emily Turner",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 6,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 5
+    },
+    "context": "Interested in sports, entertainment, and political events highlighted by critiques of political processes and media. Likely to have liberal views due to engagement with a variety of social issues and current events, including sports, politics, and general inquiries about new trends and technology."
+  },
+  {
+    "Name": "Samantha Gray",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 5
+    },
+    "context": "Engages heavily in political discourse with a leaning towards liberal viewpoints, particularly focused on Trump and associated controversies. Demonstrates high openness through engagement with current and possibly contentious topics. Lower agreeableness may reflect a confrontational approach to political discussion."
+  },
+  {
+    "Name": "Michael Reed",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 4
+    },
+    "context": "Shares an interest in horror and thriller genres, looking for specific titles and exploring classic films. Involvement in discussing political outcomes such as Trump's election win indicates a conservative lean. Tends to engage in a community-focused manner, such as participating in trivia and recommending content."
+  },
+  {
+    "Name": "Charlotte Davis",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 4,
+      "Extraversion": 7,
+      "Agreeableness": 5,
+      "Neuroticism": 4
+    },
+    "context": "Charlotte has varied interests ranging from sports to some aspects of daily life like water safety and technology bugs. This indicates a moderate level of openness but not particularly structured or overly agreeable. She is likely sociable given her interest in discussing current events and topics like sports."
+  },
+  {
+    "Name": "Jonathan Lee",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Jonathan appears to be very informed about global issues and shows a tendency towards progressive values based on his focus on environmental issues, social research, and forward-thinking topics like digital nomads and societal views. His conscientiousness is reflected in his attention to detail in global affairs."
+  },
+  {
+    "Name": "Mark Stevens",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 6,
+      "Extraversion": 4,
+      "Agreeableness": 3,
+      "Neuroticism": 6
+    },
+    "context": "Mark shows interest in niche and personal finance topics, indicating a more traditional and pragmatic mindset. His interactions reflect skepticism towards governmental roles and a preference for individual accountability."
+  },
+  {
+    "Name": "Sophia Mendes",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 4,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 5
+    },
+    "context": "Sophia is adventurous with high openness, evident in her travel and movie interests. Her flexible plans and interests might indicate lower conscientiousness but suggests that she values experiences over routine."
+  },
+  {
+    "Name": "Daniel Weaver",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 8,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 4
+    },
+    "context": "Daniel is deeply involved in political discourse and shows a strong commitment to following and understanding political processes and implications, demonstrating high conscientiousness and a liberal political stance. His engagement in arts and history also highlights his openness."
+  },
+  {
+    "Name": "Karen Williams",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 3,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Karen appears to be seeking practical advice and assistance, suggesting a pragmatic approach to life. Her interactions indicate a focus on problem-solving rather than expressing personal beliefs or emotions, indicating moderate neuroticism and conscientiousness."
+  },
+  {
+    "Name": "Mark Thompson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 6,
+      "Extraversion": 6,
+      "Agreeableness": 4,
+      "Neuroticism": 6
+    },
+    "context": "Mark's titles suggest a strong interest in political and sports discussions, often involving conservative themes like Notre Dame sports and political updates. This indicates lower openness to diverse viewpoints and moderate conscientiousness due to structured presentation of facts."
+  },
+  {
+    "Name": "Lucas Oliveira",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 5
+    },
+    "context": "Lucas frequently engages in philosophical and speculative discussions, indicating high openness. His interest in varied topics from political shifts to cultural narratives shows a balanced approach, suggesting moderate scores in agreeableness and neuroticism."
+  },
+  {
+    "Name": "Emily Davis",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 8,
+      "Extraversion": 6,
+      "Agreeableness": 7,
+      "Neuroticism": 5
+    },
+    "context": "Emily is engaged deeply in political threads, showing high conscientiousness to details and updates. Her liberal political identity is reflected in her focus on various political events and discussions, and she seems well-informed and considerate in her interactions."
+  },
+  {
+    "Name": "David Smith",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 6,
+      "Extraversion": 4,
+      "Agreeableness": 6,
+      "Neuroticism": 4
+    },
+    "context": "David shows a balanced interest in cultural trivia, lifestyle, and some political content, indicating moderate openness. His interaction style suggests he is methodical and prefers routine, leading to moderate conscientiousness without much neuroticism."
+  },
+  {
+    "Name": "Alex Thompson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 7,
+      "Neuroticism": 4
+    },
+    "context": "Alex frequently engages with a variety of topics including politics, movies, and technology. Shows a particular interest in progressive political issues and film industry insights."
+  },
+  {
+    "Name": "Zoe Chen",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 5,
+      "Extraversion": 6,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Zoe has a balanced interest in global politics and cultural topics ranging from cryptocurrency to historical artifacts. Displays interest in rational discourse and curiosity about technological and social changes."
+  },
+  {
+    "Name": "John Baker",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 4,
+      "Conscientiousness": 7,
+      "Extraversion": 5,
+      "Agreeableness": 4,
+      "Neuroticism": 5
+    },
+    "context": "John shows a strong interest in conservative politics and economic strategies, with a focus on stock market investments and political victories. Displays a skeptical attitude towards liberal political figures."
+  },
+  {
+    "Name": "Emma Lewis",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 5,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 6
+    },
+    "context": "Emma engages with a wide range of topics including literature, politics, and personal lifestyle. Expresses a progressive political stance and a penchant for intellectual and creative pursuits."
+  },
+  {
+    "Name": "Michael Smith",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 4,
+      "Extraversion": 4,
+      "Agreeableness": 5,
+      "Neuroticism": 6
+    },
+    "context": "Michael tends to focus on political commentary, especially regarding criticisms of conservative figures, with a hint of sarcasm. Shows an artistic inclination and concern about economic and social justice."
+  },
+  {
+    "Name": "Sung-hyeon Lee",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 6,
+      "Conscientiousness": 8,
+      "Extraversion": 5,
+      "Agreeableness": 4,
+      "Neuroticism": 5
+    },
+    "context": "Sung-hyeon appears to be interested in international and political events, particularly surrounding South Korea, eastern Europe, and prominent personalities like Trump and Netanyahu. He often engages with global and political news, implying a conservative leaning and a structured mindset."
+  },
+  {
+    "Name": "Carlos Mart\u00ednez",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 7,
+      "Extraversion": 6,
+      "Agreeableness": 6,
+      "Neuroticism": 4
+    },
+    "context": "Carlos seems focused on technology, personal finance, and self-improvement. His inquiries about investments and career progress suggest a conscientious and goal-oriented personality that weighs risks and rewards pragmatically."
+  },
+  {
+    "Name": "Michelle Reed",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 5,
+      "Agreeableness": 5,
+      "Neuroticism": 6
+    },
+    "context": "Michelle is deeply engaged with current events, particularly those involving international conflicts and human rights. Her concerns about political activities and social justice issues highlight liberal inclinations and a capacity for empathy."
+  },
+  {
+    "Name": "Nathaniel Jefferson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Nathaniel is focused on social and political issues within Texas, with a particular emphasis on justice and democratic processes. His high openness score reflects curiosity and acceptance of diverse lifestyles, while his liberal leaning shapes his engagement with progressive issues."
+  },
+  {
+    "Name": "Emily Carter",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 4,
+      "Extraversion": 4,
+      "Agreeableness": 5,
+      "Neuroticism": 7
+    },
+    "context": "Emily is involved in varied topics ranging from technical game mechanics to social interactions, indicating a creative outlook. Her interactions suggest high openness and moderate neuroticism, sometimes reflecting on concerns about gaming environments and social stressors."
+  },
+  {
+    "Name": "Lena Eriksson",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 7,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 6,
+      "Neuroticism": 4
+    },
+    "context": "Lena enjoys engaging in discussions about women's empowerment and shows interest in Norse culture. She seems to have a balanced approach in terms of political ideology. Her conversations suggest a thoughtful but cautious personality."
+  },
+  {
+    "Name": "Michael Chan",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 7,
+      "Agreeableness": 7,
+      "Neuroticism": 6
+    },
+    "context": "Michael is highly interested in technology and gaming, engaging actively in discussions about streaming and video games. He appears to be socially active, likely keeping up with current events, suggesting a progressive worldview with a higher level of openness to new experiences."
+  },
+  {
+    "Name": "Jordan Lee",
+    "Sex": "Non-binary",
+    "Big5_traits": {
+      "Openness": 9,
+      "Conscientiousness": 4,
+      "Extraversion": 6,
+      "Agreeableness": 5,
+      "Neuroticism": 7
+    },
+    "context": "Jordan is often engaged with political discourse, showing concern with national and international politics. Their interactions suggest a high openness to different ideas but may also express anxiety about political and social issues."
+  },
+  {
+    "Name": "Chris Johnson",
+    "Sex": "Male",
+    "Big5_traits": {
+      "Openness": 5,
+      "Conscientiousness": 6,
+      "Extraversion": 5,
+      "Agreeableness": 4,
+      "Neuroticism": 6
+    },
+    "context": "Chris is highly engaged with politics, with a focus on American political dynamics. His interactions reveal a critical view of liberal policies, indicating a conservative standpoint. Chris often discusses historical political figures and election analyses."
+  },
+  {
+    "Name": "Emma Patel",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 5,
+      "Extraversion": 7,
+      "Agreeableness": 6,
+      "Neuroticism": 5
+    },
+    "context": "Emma shows a strong interest in entertainment and pop culture, particularly films and television. She is curious and engages actively with content related to movies and characters, indicating high levels of openness and a moderate social engagement."
+  },
+  {
+    "Name": "Alexandra Ramirez",
+    "Sex": "Female",
+    "Big5_traits": {
+      "Openness": 8,
+      "Conscientiousness": 6,
+      "Extraversion": 7,
+      "Agreeableness": 7,
+      "Neuroticism": 5
+    },
+    "context": "Alexandra is likely a creative and open-minded individual who engages in discussions about popular culture, politics, and analysis. Her interest in writing prompts, meme ideas, and exploring themes in media suggest a high level of openness. She may be moderately organized, enjoys social interactions, and shows a balanced emotional state."
   }
 ]
