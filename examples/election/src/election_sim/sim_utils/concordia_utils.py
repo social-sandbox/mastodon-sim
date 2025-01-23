@@ -140,7 +140,7 @@ class AllActComponent(entity_component.ActingComponent):
         )
 
 
-def init_objects(model, embedder, shared_memories, clock):
+def init_concordia_objects(model, embedder, shared_memories, clock):
     shared_context = model.sample_text(  # TODO: deprecated?
         "Summarize the following passage in a concise and insightful fashion. "
         + "Make sure to include information about Mastodon:\n"
@@ -670,7 +670,7 @@ class SimpleGameRunner:
             # 1. Player takes action
             action = player.act(self.action_spec)
             event_statement = f"{player.name} attempted action: {action}"
-
+            print(event_statement)
             # 2. Log the action (ensure this is thread-safe)
             self.log.append(
                 {

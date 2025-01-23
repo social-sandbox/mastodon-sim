@@ -95,7 +95,7 @@ from sim_utils.agent_speech_utils import (
 from sim_utils.concordia_utils import (
     SimpleGameRunner,
     build_agent_with_memories,
-    init_objects,
+    init_concordia_objects,
     sort_agents,
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
@@ -298,7 +298,8 @@ def post_seed_toots_news_agents(news_agent, mastodon_apps):
 
 
 def get_post_times(players, ag_names):
-    num_posts_malicious = 15
+    num_posts_malicious = 30
+    num_posts_candidates = 30
     num_posts_nonmalicious = 5
     players_datetimes = {
         player: [
@@ -310,7 +311,7 @@ def get_post_times(players, ag_names):
             )  # Zeroing out seconds and microseconds for cleaner output
             for _ in range(
                 num_posts_malicious
-                if player.name in list(ag_names["malicious"].keys())
+                if player.name in list(ag_names["malicious"].keys()) + ag_names["candidate"]
                 else num_posts_nonmalicious
             )
         ]
@@ -436,7 +437,7 @@ def run_sim(
         blank_memory_factory,
         formative_memory_factory,
         game_master_memory,
-    ) = init_objects(model, embedder, shared_memories, clock)
+    ) = init_concordia_objects(model, embedder, shared_memories, clock)
 
     NUM_PLAYERS = len(agent_data)
     ag_names, player_configs = sort_agents(agent_data)
@@ -581,7 +582,9 @@ if __name__ == "__main__":
         N = 20
         survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-        config_name = f"testN{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        config_name = (
+            f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        )
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
@@ -619,7 +622,7 @@ if __name__ == "__main__":
         json.dump(eval_config_data, outfile, indent=4)
 
     if USE_MASTODON_SERVER:
-        clear_mastodon_server(len(config_data["agents"]))
+        clear_mastodon_server(len(config_data["agents"]) + int(args.use_news_agent))
 
     # simulation parameter inputs
     episode_length = args.T
