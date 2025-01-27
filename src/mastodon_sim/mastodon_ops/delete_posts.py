@@ -49,6 +49,7 @@ def delete_posts(
         recent_count (int | None): Number of recent posts to delete.
         delete_all (bool): Whether to delete all posts.
     """
+    logger.debug(f"Starting delete_posts for user: {login_user}")
     load_dotenv(find_dotenv())  # Load environment variables from .env file
 
     try:
@@ -77,6 +78,7 @@ def delete_posts(
 
         for post_id in post_ids:
             try:
+                logger.info(f"Attempting to delete post with ID: {post_id}")
                 mastodon.status_delete(post_id)
                 logger.info(f"Successfully deleted post with ID: {post_id}")
             except Exception as e:
