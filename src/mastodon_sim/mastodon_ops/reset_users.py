@@ -30,9 +30,12 @@ from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.login import login
 from mastodon_sim.mastodon_ops.unfollow import unfollow
 
+print("Loading reset_users.py")
+
 
 def reset_profile(mastodon) -> None:
     """Reset a user's profile information."""
+    logger.debug("Starting reset_profile")
     try:
         mastodon.account_update_credentials(display_name="", note="")
         logger.info("Profile information reset successfully.")
@@ -42,6 +45,7 @@ def reset_profile(mastodon) -> None:
 
 def unfollow_all_users(mastodon, login_user: str) -> None:
     """Unfollow all users that the current user is following."""
+    logger.debug("Starting unfollow_all_users")
     try:
         following = mastodon.account_following(mastodon.me()["id"])
         total_following = len(following)
@@ -51,6 +55,7 @@ def unfollow_all_users(mastodon, login_user: str) -> None:
 
         for user in following:
             try:
+                logger.debug(f"Raw following ID before parsing: {user['id']}")
                 unfollow(login_user=login_user, unfollow_user=user["acct"])
                 unfollowed_count += 1
             except Exception as e:
@@ -65,7 +70,10 @@ def unfollow_all_users(mastodon, login_user: str) -> None:
 
 def remove_favourites_and_boosts(mastodon) -> None:
     """Remove all favourites (likes) and boosts (reblogs) for a user."""
+    logger.debug("Starting remove_favourites_and_boosts")
     try:
+        # Add debug logging before favorites API call
+        logger.debug("Fetching favorites...")
         favourites = mastodon.favourites()
         removed_favourites = 0
         for favourite in favourites:
@@ -111,8 +119,9 @@ def reset_user(login_user: str, skip_confirm: bool = False) -> None:
                 return
 
         logger.info(f"Starting comprehensive reset process for user: {login_user}")
-
+        logger.debug(f"Initiating delete_posts for {login_user}")
         delete_posts(login_user=login_user, delete_all=True, skip_confirm=True)
+        logger.debug("Completed delete_posts operation")
         remove_favourites_and_boosts(mastodon)
         unfollow_all_users(mastodon, login_user)
         reset_profile(mastodon)

@@ -7,7 +7,7 @@ from mastodon_sim.logging_config import logger
 from mastodon_sim.mastodon_ops.env_utils import get_env_variable
 
 
-def get_client() -> Mastodon:
+def get_client(access_token: str | None = None) -> Mastodon:
     """
     Get the Mastodon client using environment variables for configuration.
 
@@ -21,7 +21,12 @@ def get_client() -> Mastodon:
         client_secret = get_env_variable("MASTODON_CLIENT_SECRET")
 
         mastodon = Mastodon(
-            client_id=client_id, client_secret=client_secret, api_base_url=api_base_url
+            client_id=client_id,
+            client_secret=client_secret,
+            access_token=access_token,
+            api_base_url=api_base_url,
+            version_check_mode="none",
+            ratelimit_method="wait",
         )
         logger.debug("Successfully created Mastodon client.")
         return mastodon

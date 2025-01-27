@@ -15,6 +15,8 @@ from typing import Any, Literal, get_type_hints
 import docstring_parser  # pytype: disable=import-error  # Fails on GitHub.
 import termcolor
 
+from mastodon_sim.logging_config import logger
+
 # from election_sim.sim_utils.misc_sim_utils import event_logger
 # event_logger_class = TypeVar('event_logger', bound=event_logger)
 
@@ -381,7 +383,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     A social media application similar to Twitter that allows users to interact on social media.
     """
 
-    action_logger: Any = None
+    action_logger: Any = logger
     perform_operations: bool = True
     _log_color: COLOR_TYPE = dataclasses.field(default="blue", init=False)
     _mastodon_ops: Any = dataclasses.field(default=None, init=False)
@@ -452,7 +454,13 @@ class MastodonSocialNetworkApp(PhoneApp):
         bio_message = f'Profile updated successfully: "{bio}"'
         self._print(bio_message, emoji="✅")
         self.action_logger.log(
-            {"source_user": current_user_full, "label": "update_profile", "data": {"new_bio": bio}}
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "update_profile",
+                    "data": {"new_bio": bio},
+                }
+            )
         )
 
         return bio_message
@@ -498,13 +506,16 @@ class MastodonSocialNetworkApp(PhoneApp):
         follow_message = (
             f"current_user (@{current_username}) followed target_user (@{target_username})"
         )
-        self._print(follow_message, emoji="➕")  # noqa: RUF001
+        self._print(follow_message, emoji="➕")
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "follow",
-                "data": {"target_user": target_user_full},
-            }
+            "INFO",
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "follow",
+                    "data": {"target_user": target_user_full},
+                }
+            ),
         )
         return follow_message
 
@@ -533,11 +544,14 @@ class MastodonSocialNetworkApp(PhoneApp):
         )
         self._print(unfollow_message, emoji="✅")
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "unfollow",
-                "data": {"target_user": target_user_full},
-            }
+            "INFO",
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "unfollow",
+                    "data": {"target_user": target_user_full},
+                }
+            ),
         )
         return unfollow_message
 
@@ -699,11 +713,14 @@ class MastodonSocialNetworkApp(PhoneApp):
         else:
             return_msg = f'{current_user} posted a toot!: "{status}"\n'
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "post",
-                "data": {"toot_id": toot_id, "post_text": status},
-            }
+            "INFO",
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "post",
+                    "data": {"toot_id": toot_id, "post_text": status},
+                }
+            ),
         )
         return return_msg
 
@@ -821,15 +838,20 @@ class MastodonSocialNetworkApp(PhoneApp):
                 f"{current_user} replied to a toot with toot id {in_reply_to_id} : {status}"
             )
             self.action_logger.log(
-                {
-                    "source_user": current_user_full,
-                    "label": "reply",
-                    "data": {
-                        "reply_to": {"target_user": target_user_full, "toot_id": in_reply_to_id},
-                        "toot_id": toot_id,
-                        "post_text": status,
-                    },
-                }
+                str(
+                    {
+                        "source_user": current_user_full,
+                        "label": "reply",
+                        "data": {
+                            "reply_to": {
+                                "target_user": target_user_full,
+                                "toot_id": in_reply_to_id,
+                            },
+                            "toot_id": toot_id,
+                            "post_text": status,
+                        },
+                    }
+                )
             )
         except ValueError as e:
             self._print(f"Invalid input, regular toot posted: {e!s}", emoji="❌")
@@ -924,11 +946,13 @@ class MastodonSocialNetworkApp(PhoneApp):
         str_timeline = self.print_and_return_timeline(timeline)
 
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "get_own_timeline",
-                "data": {"num_posts_retreived": len(timeline)},  # TODO: add timeline here
-            }
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "get_own_timeline",
+                    "data": {"num_posts_retreived": len(timeline)},  # TODO: add timeline here
+                }
+            )
         )
 
         return "Own Mastodon Timeline:\n" + str_timeline
@@ -1016,13 +1040,16 @@ class MastodonSocialNetworkApp(PhoneApp):
         full_output = f"{retrieval_message}\n{notifications_string}"
         self._print(full_output)
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "read_notification",
-                "data": {
-                    "num_notifications_retreived": len(notifications)
-                },  # TODO: add notifications timeline here
-            }
+            "INFO",
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "read_notification",
+                    "data": {
+                        "num_notifications_retreived": len(notifications)
+                    },  # TODO: add notifications timeline here
+                }
+            ),
         )
 
         return full_output
@@ -1051,11 +1078,14 @@ class MastodonSocialNetworkApp(PhoneApp):
             )
         self._print(like_message, emoji="✅")
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "like_toot",
-                "data": {"toot_id": toot_id, "target_user": target_user_full},
-            }
+            "INFO",
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "like_toot",
+                    "data": {"toot_id": toot_id, "target_user": target_user_full},
+                }
+            ),
         )
         return like_message
 
@@ -1082,11 +1112,13 @@ class MastodonSocialNetworkApp(PhoneApp):
             emoji="✅",
         )
         self.action_logger.log(
-            {
-                "source_user": current_user_full,
-                "label": "boost_toot",
-                "data": {"toot_id": toot_id, "target_user": target_user_full},
-            }
+            str(
+                {
+                    "source_user": current_user_full,
+                    "label": "boost_toot",
+                    "data": {"toot_id": toot_id, "target_user": target_user_full},
+                }
+            )
         )
 
     # @app_action
