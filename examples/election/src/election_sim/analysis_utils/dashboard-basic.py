@@ -75,12 +75,12 @@ def get_int_dict(int_df):
             "episode": x.episode,
             "source": x.source_user,
             "target": get_target_user(x),
-            "toot_id": x.data["toot_id"],
+            "toot_id": str(x.data["toot_id"]),
         },
         axis=1,
     )
     int_df.int_data = int_df.apply(
-        lambda x: x.int_data | {"parent_toot_id": x.data["reply_to"]["toot_id"]}
+        lambda x: x.int_data | {"parent_toot_id": str(x.data["reply_to"]["toot_id"])}
         if x.label == "reply"
         else x.int_data,
         axis=1,
@@ -129,6 +129,27 @@ def load_data(input_var):
         df = pd.read_json(input_var, lines=True)
     else:
         df = pd.read_json(StringIO(input_var), lines=True)
+
+    names = list(df.source_user.unique())
+    name_dict = dict(zip([n.split()[0] for n in names], names, strict=False))
+    print(name_dict)
+
+    # replace all first name occurence with fullnames in target field
+    def replace_full(data):
+        if "target_user" in data:
+            if len(data["target_user"].split()) == 1:
+                data.update(target_user=name_dict[data["target_user"]])
+        return data
+
+    df.loc[:, "data"] = df.loc[:, "data"].apply(lambda x: replace_full(x))
+
+    # make sure all tootids are strings
+    def get_toot_id(data):
+        if "toot_id" in data:
+            data["toot_id"] = str(data["toot_id"])
+        return data
+
+    df["data"] = df.data.apply(get_toot_id)
 
     eval_df, int_df, edge_df = post_process_output(df)
 
@@ -460,14 +481,14 @@ if __name__ == "__main__":
                                             },
                                             # Specific styles for "Bill" and "Bradley" nodes
                                             {
-                                                "selector": '[id="Bill"]',
+                                                "selector": '[id="Bill Fredrickson"]',
                                                 "style": {
                                                     "background-color": "blue",
                                                     "border-color": "#000000",
                                                 },
                                             },
                                             {
-                                                "selector": '[id="Bradley"]',
+                                                "selector": '[id="Bradley Carter"]',
                                                 "style": {
                                                     "background-color": "orange",
                                                     "border-color": "#000000",
@@ -877,14 +898,14 @@ if __name__ == "__main__":
             },
             # Specific styles for "Bill" and "Bradley" nodes
             {
-                "selector": '[id="Bill"]',
+                "selector": '[id="Bill Fredrickson"]',
                 "style": {
                     "background-color": "blue",
                     "border-color": "#000000",
                 },
             },
             {
-                "selector": '[id="Bradley"]',
+                "selector": '[id="Bradley Carter"]',
                 "style": {
                     "background-color": "orange",
                     "border-color": "#000000",
@@ -1110,7 +1131,7 @@ if __name__ == "__main__":
         )
 
         # Create the line graph showing vote distribution over time
-        episodes = sorted(votes.keys())
+        episodes = sorted(interactions_by_episode.keys())
         Bill_votes_over_time = []
         Bradley_votes_over_time = []
 
@@ -1313,6 +1334,7 @@ if __name__ == "__main__":
         name_options = [{"label": name, "value": name} for name in unique_names]
 
         # Set episode slider properties
+        episodes = sorted(interactions_by_episode.keys())
         slider_min = min(episodes)
         slider_max = max(episodes)
         slider_value = selected_episode if selected_episode in episodes else slider_min
