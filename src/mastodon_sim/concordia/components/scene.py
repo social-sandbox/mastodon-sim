@@ -80,9 +80,15 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
   """)
 
+_MALICIOUS_PHONE_CALL_TO_ACTION = textwrap.dedent("""\
+    Based on {name}'s current goal, plans and observations, what post would they make? If they recently made a post, they can choose to reply to another post from their recent observations.
+  """)
 
 _PHONE_ACTION_SPEC = agent.ActionSpec(
     call_to_action=_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
+)
+_MALICIOUS_PHONE_ACTION_SPEC = agent.ActionSpec(
+    call_to_action=_MALICIOUS_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
 )
 
 
@@ -110,6 +116,10 @@ def build(
     memory = memory_factory.make_blank_memory()
     phone_component = _PhoneComponent(model, player, phone)
     # reflectionx =
+    phone_spec = _PHONE_ACTION_SPEC
+    if player.name.split(" ")[0] == "Glenn":
+        phone_spec = _MALICIOUS_PHONE_ACTION_SPEC
+        print(_MALICIOUS_PHONE_CALL_TO_ACTION)
     return game_master_lib.GameMaster(
         model=model,
         memory=memory,
@@ -117,7 +127,7 @@ def build(
         name="PhoneGameMaster",
         players=(player,),
         components=(phone_component,),
-        action_spec=_PHONE_ACTION_SPEC,
+        action_spec=phone_spec,
         update_thought_chain=(thought_chains.identity,),
         player_observes_event=False,
     )

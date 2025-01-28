@@ -362,7 +362,7 @@ def build_agent(
         question="".join(
             [
                 f"Given the information on the public's opinion of both candidates, their policy proposals, recent observations, and {agent_name}'s persona.",
-                f"Generate a general plan for {agent_name} to sway public opinion towards voting for {supported_candidate}.",
+                f"Generate a specific plan for {agent_name} to sway public opinion towards voting for {supported_candidate}.",
                 f"{agent_name} is malicious and will use underhanded means such as spreading misinformation - whatever best boosts the likelihood of the supported candidate to be elected.",
                 f"Remember that {agent_name} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
             ]
