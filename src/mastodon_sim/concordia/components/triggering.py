@@ -90,8 +90,7 @@ class SceneTriggeringComponent(component.Component):
     def _get_player_from_event(self, event_statement: str) -> deprecated_agent.BasicAgent | None:
         document = interactive_document.InteractiveDocument(self._model)
         document.statement(
-            f"Event: {event_statement}. This event states that someone interacted"
-            " with their phone."
+            f"Event: {event_statement}. This event states that someone interacted with their phone."
         )
         with open(self._file) as f:
             data = json.load(f)
