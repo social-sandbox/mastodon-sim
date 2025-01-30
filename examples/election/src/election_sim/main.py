@@ -9,6 +9,8 @@ import time
 import warnings
 from functools import partial
 
+from dotenv import load_dotenv
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
@@ -55,13 +57,16 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--use_news_agent", type=str, default=1, help="use news agent in the simulation"
+    "--use_news_agent",
+    type=str,
+    default="with_images",
+    help="use news agent in the simulation 'with_images', else without",
 )  # NA
 parser.add_argument(
-    "--news_headlines",
+    "--news_file",
     type=str,
-    default="cached_headlines.json",
-    help="news headlines for the news agent, leave it None to generate the headlines",
+    default="v1_news_no_bias",
+    help="news headlines and image locations for the news agent.",
 )  # NA
 
 args = parser.parse_args()
@@ -83,6 +88,14 @@ if USE_MASTODON_SERVER:
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
+# Add the src directory to the Python path
+load_dotenv()
+ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
+if ROOT_PROJ_PATH is not None:
+    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+else:
+    sys.exit("No add absolute path found as environment variable.")
+
 MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
 random.seed(SEED)
@@ -95,7 +108,7 @@ from sim_utils.agent_speech_utils import (
 from sim_utils.concordia_utils import (
     SimpleGameRunner,
     build_agent_with_memories,
-    init_objects,
+    init_concordia_objects,
     sort_agents,
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
@@ -298,7 +311,8 @@ def post_seed_toots_news_agents(news_agent, mastodon_apps):
 
 
 def get_post_times(players, ag_names):
-    num_posts_malicious = 15
+    num_posts_malicious = 30
+    num_posts_candidates = 30
     num_posts_nonmalicious = 5
     players_datetimes = {
         player: [
@@ -310,7 +324,7 @@ def get_post_times(players, ag_names):
             )  # Zeroing out seconds and microseconds for cleaner output
             for _ in range(
                 num_posts_malicious
-                if player.name in list(ag_names["malicious"].keys())
+                if player.name in list(ag_names["malicious"].keys()) + ag_names["candidate"]
                 else num_posts_nonmalicious
             )
         ]
@@ -384,7 +398,7 @@ class ScheduledPostAgent:
                 and scheduled_time.minute == current_time.minute
             ):
                 post = self.generate_post()
-                media = self.posts[post]
+                media = [ROOT_PATH + img_filepath for img_filepath in self.posts[post]]
                 print(media)
                 if len(media) > 0:
                     self.mastodon_app.post_toot(
@@ -436,7 +450,7 @@ def run_sim(
         blank_memory_factory,
         formative_memory_factory,
         game_master_memory,
-    ) = init_objects(model, embedder, shared_memories, clock)
+    ) = init_concordia_objects(model, embedder, shared_memories, clock)
 
     NUM_PLAYERS = len(agent_data)
     ag_names, player_configs = sort_agents(agent_data)
@@ -581,11 +595,15 @@ if __name__ == "__main__":
         N = 20
         survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-        config_name = f"testN{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+
+        config_name = (
+            args.news_file
+            + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+        )
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-            + f" --use_news_agent {args.use_news_agent} --news_headlines {args.news_headlines}"  # NA
+            + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
         )
 
     with open(config_name) as file:
@@ -619,7 +637,7 @@ if __name__ == "__main__":
         json.dump(eval_config_data, outfile, indent=4)
 
     if USE_MASTODON_SERVER:
-        clear_mastodon_server(len(config_data["agents"]))
+        clear_mastodon_server(len(config_data["agents"]) + int(len(args.use_news_agent) > 0))
 
     # simulation parameter inputs
     episode_length = args.T
