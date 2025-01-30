@@ -87,7 +87,6 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
   """)
 
-
 _PHONE_ACTION_SPEC = agent.ActionSpec(
     call_to_action=_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
 )
@@ -195,6 +194,7 @@ class _PhoneComponent(component.Component):
         print(f"Self state: {self._state}")
         assert isinstance(self._phone.apps[0], apps.MastodonSocialNetworkApp)
         app = self._phone.apps[0]
+
         if self._state == "":
             self._state += "You retrieved your timeline\n"
             p_username = app.public_get_username(self._player.name.split()[0])
@@ -217,10 +217,8 @@ class _PhoneComponent(component.Component):
                         name=self._player.name,
                     )
                     call_to_action = (
-                        f"{media_contents!s}Context: Describe the following image attached in the toot which the character read on the Mastodon app. Draw from your world knowledge and the toot headline to describe it:"
+                        f"{media_contents!s} Context: Sussinctly describe this image in the form of an impression that it made on {self._player.name.split()[0]} when they viewed it alongside the following text of the toot they just read on the Mastodon app:"
                         + toot_headline
-                        + "\n"
-                        + call_to_speech
                     )
                     media_desc = self._player.act(
                         action_spec=entity.ActionSpec(
@@ -238,12 +236,13 @@ class _PhoneComponent(component.Component):
                         .strip()
                         .strip('"')
                     )
-                    media_desc = "Description of attached image: \n" + media_desc
+                    media_desc = "Impression of attached image: \n" + media_desc
                     print(media_desc)
                 output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])} + {media_desc}, Toot ID: {post['id']}\n "
 
             self._player.observe(f"[Action done on phone]: Retrieved timeline: \n{output_now}")
             return [f"[Action done on phone]: Retrieved timeline: \n{output_now}"]
+
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
         check_post = chain_of_thought.yes_no_question(
@@ -262,11 +261,20 @@ class _PhoneComponent(component.Component):
                 return [
                     f"The following phone action was not conducted because it has already been done - {event_statement}"
                 ]
+
         self._state += "\n" + event_statement.strip()
         action_names = [a.name for a in app.actions()]
         chain_of_thought.statement(app.description())
         action_index = chain_of_thought.multiple_choice_question(
-            "In the above transcript, what action did the user perform? If the transcript mentions multiple actions, pick the one that is the most specific and the given information is sufficient to perform it. Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline. Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
+            " ".join(
+                [
+                    "In the above transcript, what actions did the user perform?",
+                    "If the transcript mentions multiple actions, pick ones that contribute content, like making a post or reply.",
+                    "Also the one that is the most specific and the given information is sufficient to perform it.",
+                    "Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline.",
+                    "Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
+                ]
+            ),
             answers=action_names,
         )
         # print(action_index)

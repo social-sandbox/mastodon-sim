@@ -83,14 +83,28 @@ class GptLanguageModel(language_model.LanguageModel):
             messages.append({"role": "user", "content": prompt})
             stop_param = terminators
 
-        response = self._client.chat.completions.create(  # type: ignore
-            model=self._model_name,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout=timeout,
-            **({"stop": stop_param} if stop_param is not None else {}),
-        )
+        has_result = False
+        while not has_result:
+            try:
+                response = self._client.chat.completions.create(  # type: ignore
+                    model=self._model_name,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    **({"stop": stop_param} if stop_param is not None else {}),
+                )
+                has_result = True
+            except openai.APIError as e:
+                # Handle API error here, e.g. retry or log
+                print(f"OpenAI API returned an API Error: {e}")
+                print(prompt)
+            except openai.APIConnectionError as e:
+                # Handle connection error here
+                print(f"Failed to connect to OpenAI API: {e}")
+            except openai.RateLimitError as e:
+                # Handle rate limit error (we recommend using exponential backoff)
+                print(f"OpenAI API request exceeded rate limit: {e}")
 
         if self._measurements is not None:
             answer = response.choices[0].message.content

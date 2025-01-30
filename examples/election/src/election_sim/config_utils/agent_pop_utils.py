@@ -431,7 +431,11 @@ def get_agent_configs(
             agent[field] = agent_demographics[field][ait]
         agent["role"] = "active_voter"
         agent["goal"] = active_voter_config["goal"]
-        agent["context"] = f"{agent['name']} is a person who {active_voter_config['context']}"
+        agent["context"] = (
+            f"{agent['name']} is a person who {active_voter_config['context']}"
+            if len(active_voter_config["context"])
+            else ""
+        )
         agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
         agent["party"] = ""
         agent["seed_toot"] = ""

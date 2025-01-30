@@ -7,10 +7,15 @@ import os
 import sys
 
 import requests
+from dotenv import load_dotenv
 
+load_dotenv()
 # Add the src directory to the Python path
-ROOT_PATH = "/mnt/c/Users/maxpu/Dropbox/scripts/Projects/socialsandbox/mastodon-sim/"
-
+ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
+if ROOT_PROJ_PATH is not None:
+    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+else:
+    sys.exit("No add absolute path found as environment variable.")
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from agent_pop_utils import get_agent_configs
 from sim_utils.news_agent_utils import transform_news_headline_for_sim  # NA
@@ -36,13 +41,16 @@ parser.add_argument(
 )
 parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
 parser.add_argument(
-    "--use_news_agent", type=str, default=1, help="use news agent in the simulation"
+    "--use_news_agent",
+    type=str,
+    default="without_images",
+    help="use news agent in the simulation 'with_images', else without",
 )  # NA
 parser.add_argument(
-    "--news_headlines",
+    "--news_file",
     type=str,
-    default=None,
-    help="news headlines to use in the simulation, None if you want to generate the headlines on run",
+    default="v1_news_no_bias",
+    help="news headlines to use in the simulation",
 )  # NA
 
 args = parser.parse_args()
@@ -123,10 +131,10 @@ def get_candidate_configs(args):
 # NA prefetching and transforming the headlines
 def fetch_and_transform_headlines(upload_file=True, file_dir="cached_headlines.json"):
     if upload_file:
-        os.chdir("src/election_sim")
+        # os.chdir("src/election_sim")
         if file_dir is None:
             raise ValueError("Please provide a file directory")
-        with open(file_dir) as f:
+        with open("src/election_sim/news_data" + file_dir) as f:
             headlines = json.load(f)
             return headlines
     else:  # generate headlines on fly
@@ -230,7 +238,7 @@ def gen_eval_config(evals_config_filename, candidates):
 
 
 # NA generate news agent configs
-def get_news_agent_configs(n_agents, headlines=None):
+def get_news_agent_configs(n_agents, news=None, include_images=True):
     news_types = ["local", "national", "international"]
 
     # Limit the news types to the first n_agent elements
@@ -275,13 +283,9 @@ def get_news_agent_configs(n_agents, headlines=None):
         agent["seed_toot"] = (
             news_info[news_type]["seed_toot"] if "seed_toot" in news_info[news_type] else ""
         )
-        if headlines is not None:
-            # agent["posts"] = {h: [''] for h in headlines}
-            with open(ROOT_PATH + "examples/election/src/election_sim/image_repo.json") as f:
-                headline_and_image_post_dict = json.load(f)
-            print(headline_and_image_post_dict)
+        if news is not None:
             agent["posts"] = {
-                k: [ROOT_PATH + img for img in v] for k, v in headline_and_image_post_dict.items()
+                k: [img for img in v] if include_images else [] for k, v in news.items()
             }
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
 
@@ -310,37 +314,31 @@ if __name__ == "__main__":
     candidate_configs, candidate_info = get_candidate_configs(args)
 
     custom_call_to_action = """
-    Describe an activity on Storhampton.social that {name} would engage in for the next {timedelta}.
-    Choose actions that together take about {timedelta} to complete.
-    It is critical to pay close attention to known information about {name}'s personality,
-    preferences, habits, plans and background when crafting this activity. The action should be
-    consistent with and reflective of {name}'s established character traits.
+    {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
 
-    Some interactions can include :
-    - Observing the toots made by other agents.
-    - Posting on Storhampton.social
-    - Liking other toots
-    - Replying to the toots made by other agents.
-    - Boosting toots made by other agents
+    Describe the kinds of social media engagement {name} receives and how they engage with the content of other users within this time period, in particular what social media actions they take.
+    Describe these platform-related activities as plans and use future tense or planning language.
+    Be specific, creative, and detailed in your description.
+    Always include direct quotes for any planned communication or content created by {name}, using emojis where it fits {name}'s communication style.
+    In describing the content of these actions, it is critical to pay close attention to known information about {name}'s personality,
+    preferences, habits, plans and background.
+    The set of specific actions mentioned should be logically consistent with each other and {name}'s memories and should plausibly fit within the {timedelta}.
+    Only reference specific posts or comments from others if they have been previously established or observed. Do not invent content of other users.
 
+    Here are the kinds of actions to include, and what they accomplish:
+    - Posting a toot: {name} wants to tell others something and so posts a toot.
+    - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
+    - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
+    - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
 
-    Here's an example for some hypothetical programmer named Sarah:
+    Here's an example description for a hypothetical Storhampton resident, specifically a programmer named Sarah:
 
-    "Sarah checks her feed and replies if necessary.
-    Then she may post a toot on Mastodon about her ideas on topic X along the lines of:
-    'Just discovered an intriguing new language for low-latency systems programming.
-    Has anyone given it a try? Curious about potential real-world applications. 🤔
-    #TechNews #ProgrammingLanguages'"
-
-
-    Ensure your response is specific, creative, and detailed. Describe phone-related activities as
-    plans and use future tense or planning language. Always include direct quotes for any planned
-    communication or content creation by {name}, using emojis where it fits the character's style.
-    Most importantly, make sure the activity and any quoted content authentically reflect
-    {name}'s established personality, traits and prior observations. Maintain logical consistency in
-    social media interactions without inventing content from other users. Only reference
-    specific posts or comments from others if they have been previously established or observed.
-
+    "Sarah will check her home timeline on Storhampton.social and plans to engage posts about the upcoming election.
+    Then she will post the following toot reflecting what she has observed in light of her interests:
+    'Has anyone heard anything from the candidates about teaching technology to kids in our community?
+    I just think this is such an important issue for us. The next generation of Storhamptons needs employable skills!
+    Curious what others think. 🤔
+    #StorhamptonElection #STEM'".
     """
 
     town_history = [
@@ -371,7 +369,7 @@ if __name__ == "__main__":
     )
     mastodon_usage_instructions = [
         "To share content on Mastodon, you write a 'toot' (equivalent to a tweet or post).",
-        "Toots can be up to 500 characters long, allowing for more detailed expressions than some other platforms.",
+        "Toots can be up to 500 characters long.",
         "Your home timeline shows toots from people you follow and boosted (reblogged) content.",
         "You can reply to toots, creating threaded conversations.",
         "Favorite (like) toots to show appreciation or save them for later.",
@@ -454,13 +452,21 @@ if __name__ == "__main__":
 
     # NA get or initialize the news headlines for the news agent to post
     if args.use_news_agent:
-        if args.news_headlines is not None:
-            news = fetch_and_transform_headlines(upload_file=True, file_dir=args.news_headlines)
-            os.chdir("../..")
-        else:
-            news = fetch_and_transform_headlines(upload_file=False)
+        # if args.news_file is not None:
+        #     news = fetch_and_transform_headlines(upload_file=True, file_dir=args.news_file)
+        # else:
+        #     news = fetch_and_transform_headlines(upload_file=False)
+        root_name = ROOT_PATH + "examples/election/news_data/"
+        with open(root_name + args.news_file + ".json") as f:
+            news = json.load(f)
+        include_images = args.use_news_agent == "with_images"
+        print(news)
+        print("Including images" if include_images else "NOT including images")
+
         # NA generate news agent configs
-        news_agent_configs, news_info = get_news_agent_configs(n_agents=1, headlines=news)
+        news_agent_configs, news_info = get_news_agent_configs(
+            n_agents=1, news=news, include_images=include_images
+        )
         config_data["news_agents"] = news_agent_configs
         config_data["news_info"] = news_info
         # NA add to shared memories template

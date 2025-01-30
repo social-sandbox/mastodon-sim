@@ -9,6 +9,8 @@ import time
 import warnings
 from functools import partial
 
+from dotenv import load_dotenv
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
@@ -55,13 +57,16 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--use_news_agent", type=str, default=1, help="use news agent in the simulation"
+    "--use_news_agent",
+    type=str,
+    default="with_images",
+    help="use news agent in the simulation 'with_images', else without",
 )  # NA
 parser.add_argument(
-    "--news_headlines",
+    "--news_file",
     type=str,
-    default="cached_headlines.json",
-    help="news headlines for the news agent, leave it None to generate the headlines",
+    default="v1_news_no_bias",
+    help="news headlines and image locations for the news agent.",
 )  # NA
 
 args = parser.parse_args()
@@ -82,6 +87,14 @@ if USE_MASTODON_SERVER:
     check_env()
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
+
+# Add the src directory to the Python path
+load_dotenv()
+ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
+if ROOT_PROJ_PATH is not None:
+    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+else:
+    sys.exit("No add absolute path found as environment variable.")
 
 MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
@@ -385,7 +398,7 @@ class ScheduledPostAgent:
                 and scheduled_time.minute == current_time.minute
             ):
                 post = self.generate_post()
-                media = self.posts[post]
+                media = [ROOT_PATH + img_filepath for img_filepath in self.posts[post]]
                 print(media)
                 if len(media) > 0:
                     self.mastodon_app.post_toot(
@@ -582,13 +595,15 @@ if __name__ == "__main__":
         N = 20
         survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
+
         config_name = (
-            f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+            args.news_file
+            + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
         )
 
         os.system(
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-            + f" --use_news_agent {args.use_news_agent} --news_headlines {args.news_headlines}"  # NA
+            + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
         )
 
     with open(config_name) as file:
@@ -622,7 +637,7 @@ if __name__ == "__main__":
         json.dump(eval_config_data, outfile, indent=4)
 
     if USE_MASTODON_SERVER:
-        clear_mastodon_server(len(config_data["agents"]) + int(args.use_news_agent))
+        clear_mastodon_server(len(config_data["agents"]) + int(len(args.use_news_agent) > 0))
 
     # simulation parameter inputs
     episode_length = args.T
