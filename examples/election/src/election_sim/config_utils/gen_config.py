@@ -11,11 +11,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 # Add the src directory to the Python path
+
 ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
 if ROOT_PROJ_PATH is not None:
     ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
 else:
     sys.exit("No add absolute path found as environment variable.")
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from agent_pop_utils import get_agent_configs
 from sim_utils.news_agent_utils import transform_news_headline_for_sim  # NA
@@ -283,6 +285,7 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
         agent["seed_toot"] = (
             news_info[news_type]["seed_toot"] if "seed_toot" in news_info[news_type] else ""
         )
+
         if news is not None:
             agent["posts"] = {
                 k: [img for img in v] if include_images else [] for k, v in news.items()
