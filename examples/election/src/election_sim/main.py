@@ -413,14 +413,19 @@ if __name__ == "__main__":
 
         config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
-        os.system(
-            f"python src/election_sim/config_utils/gen_config.py "
-            f"--exp_name {experiment_name} "
-            f"--survey {survey} "
-            f"--cfg_name {config_name} "
-            f"--num_agents {N} "
-            f"--reddit_json_path /Users/gayatrikrishnakumar/Documents/mastodon-sim/examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
-        )
+        if survey == "Reddit.Big5":
+            os.system(
+                f"python src/election_sim/config_utils/gen_config.py "
+                f"--exp_name {experiment_name} "
+                f"--survey {survey} "
+                f"--cfg_name {config_name} "
+                f"--num_agents {N} "
+                f"--reddit_json_path /Users/gayatrikrishnakumar/Documents/mastodon-sim/examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+            )
+        else:
+            os.system(
+                f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+            )
 
     with open(config_name) as file:
         config_data = json.load(file)
