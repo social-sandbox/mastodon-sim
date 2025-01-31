@@ -453,7 +453,7 @@ if __name__ == "__main__":
             "num_agents": args.num_agents - len(candidate_configs),
         },
         malicious_actor_config=malicious_actor_config,
-        reddit_json_path=args.reddit_json_path,
+        reddit_json_path=ROOT_PATH + args.reddit_json_path,
     )
 
     # add meta data

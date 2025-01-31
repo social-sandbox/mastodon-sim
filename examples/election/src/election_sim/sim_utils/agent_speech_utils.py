@@ -46,9 +46,9 @@ class agent_query:
         for component_name, component in query_text.items():
             if "static_labels" in component:
                 # print(component)
-                assert component["static_labels"] == list(query_data[component_name].keys()), (
-                    "query data doesn't match query"
-                )
+                assert component["static_labels"] == list(
+                    query_data[component_name].keys()
+                ), "query data doesn't match query"
                 self.question_template += component["text"].format(**query_data[component_name])
             else:
                 self.question_template += component["text"]

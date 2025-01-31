@@ -614,7 +614,7 @@ if __name__ == "__main__":
         else:
             os.system(
                 f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-                 + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+                + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
             )
 
     with open(config_name) as file:
