@@ -202,7 +202,7 @@ def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname)
         for player in players
     }
     agent_names = [player.name for player in players]
-    user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
+    user_mapping = {player.name.split()[0]: f"user{i + 1:04d}" for i, player in enumerate(players)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
@@ -593,18 +593,29 @@ if __name__ == "__main__":
         experiment_name = args.exp
         # N=100
         N = 20
-        survey = "None.Big5"
+        # survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-
+        survey = "Reddit.Big5"
         config_name = (
             args.news_file
             + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
         )
 
-        os.system(
-            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-            + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
-        )
+        if survey == "Reddit.Big5":
+            os.system(
+                f"python src/election_sim/config_utils/gen_config.py "
+                f"--exp_name {experiment_name} "
+                f"--survey {survey} "
+                f"--cfg_name {config_name} "
+                f"--num_agents {N} "
+                f"--reddit_json_path examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+                f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+            )
+        else:
+            os.system(
+                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+                 + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+            )
 
     with open(config_name) as file:
         config_data = json.load(file)
