@@ -88,11 +88,7 @@ if USE_MASTODON_SERVER:
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
-<<<<<<< HEAD
 # Add the src directory to the Python path
-=======
-
->>>>>>> origin/reddit_personas
 load_dotenv()
 ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
 if ROOT_PROJ_PATH is not None:
@@ -599,21 +595,11 @@ if __name__ == "__main__":
         N = 20
         # survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-<<<<<<< HEAD
-
+        survey = "Reddit.Big5"
         config_name = (
             args.news_file
             + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
         )
-
-        os.system(
-            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-            + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
-        )
-=======
-        survey = "Reddit.Big5"
-
-        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
 
         if survey == "Reddit.Big5":
             os.system(
@@ -623,12 +609,13 @@ if __name__ == "__main__":
                 f"--cfg_name {config_name} "
                 f"--num_agents {N} "
                 f"--reddit_json_path examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+                f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
             )
         else:
             os.system(
                 f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+                 + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
             )
->>>>>>> origin/reddit_personas
 
     with open(config_name) as file:
         config_data = json.load(file)
