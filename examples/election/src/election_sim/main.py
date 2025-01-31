@@ -113,7 +113,7 @@ from sim_utils.concordia_utils import (
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
 
-os.chdir("examples/election/")gril th 
+os.chdir("examples/election/")
 
 
 def clear_mastodon_server(max_num_players):
