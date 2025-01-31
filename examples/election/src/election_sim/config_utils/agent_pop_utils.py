@@ -1,7 +1,45 @@
+import json
 import random
 import sys
 
 import pandas as pd
+
+
+def read_reddit_agents(json_file_path):
+    """Reads the Reddit-based JSON file containing agent data."""
+    with open(json_file_path) as f:
+        data = json.load(f)
+    return data
+
+
+def make_agent_from_reddit_row(row, default_role="active_voter"):
+    """
+    Converts one JSON entry (row) into the structure expected by the simulation.
+
+    'row' is expected to have keys like:
+      {
+        "Name": "...",
+        "Sex": "...",
+        "Big5_traits": {"Openness": 5, ...},
+        "context": "...",
+        ...
+      }
+    """
+    agent = {}
+    agent["name"] = row["Name"]
+    agent["gender"] = row["Sex"].lower()
+    agent["traits"] = {
+        "openness": row["Big5_traits"].get("Openness", 5),
+        "conscientiousness": row["Big5_traits"].get("Conscientiousness", 5),
+        "extraversion": row["Big5_traits"].get("Extraversion", 5),
+        "agreeableness": row["Big5_traits"].get("Agreeableness", 5),
+        "neuroticism": row["Big5_traits"].get("Neuroticism", 5),
+    }
+    agent["context"] = row["context"]
+    agent["party"] = ""  # row.get("Political_Identity", "")
+    agent["seed_toot"] = ""
+    return agent
+
 
 # define survey-to-trait maps
 Schwartz_TwIVI_map = {
@@ -414,33 +452,46 @@ def get_trait_demographics(traits_type, survey_source, num_agents):
 
 
 def get_agent_configs(
-    agent_pop_settings, candidate_configs, active_voter_config, malicious_actor_config=None
+    agent_pop_settings,
+    candidate_configs,
+    active_voter_config,
+    malicious_actor_config=None,
+    reddit_json_path=None,
 ):
-    agent_demographics = get_trait_demographics(
-        agent_pop_settings["trait_type"],
-        agent_pop_settings["survey_config_name"],
-        active_voter_config["num_agents"],
-    )
-    demographic_list = ["traits", "gender"]
-    print(agent_demographics)
-    agent_configs = []
-    for ait, name in enumerate(agent_demographics["fake_names"]):
-        agent = {}
-        agent["name"] = name
-        for field in demographic_list:
-            agent[field] = agent_demographics[field][ait]
-        agent["role"] = "active_voter"
-        agent["goal"] = active_voter_config["goal"]
-        agent["context"] = (
-            f"{agent['name']} is a person who {active_voter_config['context']}"
-            if len(active_voter_config["context"])
-            else ""
+    if reddit_json_path:
+        reddit_rows = read_reddit_agents(reddit_json_path)
+        agent_configs_list = []
+        count = 0
+        for row in reddit_rows[: active_voter_config["num_agents"]]:
+            agent = make_agent_from_reddit_row(row)
+            count += 1
+            agent["role"] = "active_voter"
+            agent["goal"] = active_voter_config["goal"]
+            agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
+            agent_configs_list.append(agent)
+    else:
+        agent_demographics = get_trait_demographics(
+            agent_pop_settings["trait_type"],
+            agent_pop_settings["survey_config_name"],
+            active_voter_config["num_agents"],
         )
-        agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
-        agent["party"] = ""
-        agent["seed_toot"] = ""
-        if (malicious_actor_config is not None) and (name == malicious_actor_config["name"]):
-            agent.update(malicious_actor_config)
-        agent_configs.append(agent)
-    agent_configs = candidate_configs + agent_configs
-    return agent_configs
+        demographic_list = ["traits", "gender"]
+        agent_configs_list = []
+        for ait, name in enumerate(agent_demographics["fake_names"]):
+            agent = {}
+            agent["name"] = name
+            for field in demographic_list:
+                agent[field] = agent_demographics[field][ait]
+            agent["role"] = "active_voter"
+            agent["goal"] = active_voter_config["goal"]
+            agent["context"] = f"{agent['name']} is a person who {active_voter_config['context']}"
+            agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
+            agent["party"] = ""
+            agent["seed_toot"] = ""
+            agent_configs_list.append(agent)
+    all_agents = candidate_configs + agent_configs_list
+    if malicious_actor_config is not None:
+        for agent in all_agents:
+            if agent["name"] == malicious_actor_config["name"]:
+                agent.update(malicious_actor_config)
+    return all_agents

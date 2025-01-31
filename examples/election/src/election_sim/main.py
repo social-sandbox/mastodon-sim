@@ -88,7 +88,11 @@ if USE_MASTODON_SERVER:
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
+<<<<<<< HEAD
 # Add the src directory to the Python path
+=======
+
+>>>>>>> origin/reddit_personas
 load_dotenv()
 ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
 if ROOT_PROJ_PATH is not None:
@@ -113,7 +117,7 @@ from sim_utils.concordia_utils import (
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
 
-os.chdir("examples/election/")
+os.chdir("examples/election/")gril th 
 
 
 def clear_mastodon_server(max_num_players):
@@ -202,7 +206,7 @@ def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname)
         for player in players
     }
     agent_names = [player.name for player in players]
-    user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
+    user_mapping = {player.name.split()[0]: f"user{i + 1:04d}" for i, player in enumerate(players)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
@@ -593,8 +597,9 @@ if __name__ == "__main__":
         experiment_name = args.exp
         # N=100
         N = 20
-        survey = "None.Big5"
+        # survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
+<<<<<<< HEAD
 
         config_name = (
             args.news_file
@@ -605,6 +610,25 @@ if __name__ == "__main__":
             f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
             + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
         )
+=======
+        survey = "Reddit.Big5"
+
+        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
+
+        if survey == "Reddit.Big5":
+            os.system(
+                f"python src/election_sim/config_utils/gen_config.py "
+                f"--exp_name {experiment_name} "
+                f"--survey {survey} "
+                f"--cfg_name {config_name} "
+                f"--num_agents {N} "
+                f"--reddit_json_path examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+            )
+        else:
+            os.system(
+                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+            )
+>>>>>>> origin/reddit_personas
 
     with open(config_name) as file:
         config_data = json.load(file)
