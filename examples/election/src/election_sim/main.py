@@ -72,6 +72,14 @@ if USE_MASTODON_SERVER:
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
+
+load_dotenv()
+ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
+if ROOT_PROJ_PATH is not None:
+    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+else:
+    sys.exit("No add absolute path found as environment variable.")
+
 MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
 random.seed(SEED)
@@ -89,7 +97,7 @@ from sim_utils.concordia_utils import (
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
 
-os.chdir("/Users/gayatrikrishnakumar/Documents/mastodon-sim/examples/election")
+os.chdir("examples/election/")gril th 
 
 
 def clear_mastodon_server(max_num_players):
@@ -420,11 +428,11 @@ if __name__ == "__main__":
                 f"--survey {survey} "
                 f"--cfg_name {config_name} "
                 f"--num_agents {N} "
-                f"--reddit_json_path /Users/gayatrikrishnakumar/Documents/mastodon-sim/examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+                f"--reddit_json_path examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
             )
         else:
             os.system(
-                f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
             )
 
     with open(config_name) as file:
