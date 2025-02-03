@@ -92,7 +92,7 @@ else:
 load_dotenv()
 ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
 if ROOT_PROJ_PATH is not None:
-    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+    ROOT_PATH = ROOT_PROJ_PATH + "mastodon-sim/"
 else:
     sys.exit("No add absolute path found as environment variable.")
 
@@ -109,6 +109,7 @@ from sim_utils.concordia_utils import (
     SimpleGameRunner,
     build_agent_with_memories,
     init_concordia_objects,
+    save_to_json,
     sort_agents,
 )
 from sim_utils.misc_sim_utils import event_logger, post_analysis
@@ -153,7 +154,7 @@ def add_news_agent_to_mastodon_app(news_agent, action_logger, players, mastodon_
         )
         # We still need to give the news agent a phone to be able to post toots #TODO we are not sure if we need to do this
         # phones[n_agent["name"]] = apps.Phone(n_agent["name"], apps=[mastodon_apps[n_agent["name"].split()[0]]])
-        user_mapping[n_agent["mastodon_username"]] = f"user{len(players)+1+i:04d}"
+        user_mapping[n_agent["mastodon_username"]] = f"user{len(players) + 1 + i:04d}"
         # set a mapping of display name to user name for news agent
         mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
         mastodon_ops.update_bio(
@@ -542,6 +543,14 @@ def run_sim(
         print(f"Episode: {i}")
         eval_event_logger.episode_idx = i
         action_event_logger.episode_idx = i
+        for player in players:
+            player_dir = os.path.join("output/player_checkpoints", player.name)
+            os.makedirs(player_dir, exist_ok=True)
+            file_path = os.path.join(player_dir, f"Episode_{i}.json")
+            # Get JSON data from player
+            json_data = save_to_json(player)
+            with open(file_path, "w") as file:
+                file.write(json.dumps(json_data, indent=4))
         deploy_surveys(players, eval_config, eval_event_logger)
 
         start_timex = time.time()
@@ -591,7 +600,7 @@ if __name__ == "__main__":
         # experiment_name = "bias"
         # experiment_name = "malicious"
         experiment_name = args.exp
-        # N=100
+        # N = 100
         N = 20
         # survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"

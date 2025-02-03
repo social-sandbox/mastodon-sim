@@ -36,7 +36,7 @@ from concordia.document import interactive_document
 from concordia.environment import game_master as game_master_lib
 from concordia.language_model import language_model
 from concordia.thought_chains import thought_chains
-from concordia.typing import agent, component, entity
+from concordia.typing import agent, component
 from concordia.typing.entity import OutputType
 
 from mastodon_sim import mastodon_ops
@@ -116,6 +116,7 @@ def build(
     memory = memory_factory.make_blank_memory()
     phone_component = _PhoneComponent(model, player, phone)
     # reflectionx =
+    phone_spec = _PHONE_ACTION_SPEC
     return game_master_lib.GameMaster(
         model=model,
         memory=memory,
@@ -123,7 +124,7 @@ def build(
         name="PhoneGameMaster",
         players=(player,),
         components=(phone_component,),
-        action_spec=_PHONE_ACTION_SPEC,
+        action_spec=phone_spec,
         update_thought_chain=(thought_chains.identity,),
         player_observes_event=False,
     )
@@ -221,9 +222,10 @@ class _PhoneComponent(component.Component):
                         + toot_headline
                     )
                     media_desc = self._player.act(
-                        action_spec=entity.ActionSpec(
+                        action_spec=agent.ActionSpec(
                             call_to_action=call_to_action,
-                            output_type=entity.OutputType.FREE,
+                            output_type=OutputType.FREE,
+                            tag="media",
                         )
                     )
                     # media_desc = media_lm.sample_text(prompt = call_to_action)

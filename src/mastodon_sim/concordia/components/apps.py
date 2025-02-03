@@ -702,7 +702,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             {
                 "source_user": current_user_full,
                 "label": "post",
-                "data": {"toot_id": toot_id, "post_text": status},
+                "data": {"toot_id": str(toot_id), "post_text": status},
             }
         )
         return return_msg
@@ -1054,7 +1054,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             {
                 "source_user": current_user_full,
                 "label": "like_toot",
-                "data": {"toot_id": toot_id, "target_user": target_user_full},
+                "data": {"toot_id": str(toot_id), "target_user": target_user_full},
             }
         )
         return like_message
@@ -1085,7 +1085,7 @@ class MastodonSocialNetworkApp(PhoneApp):
             {
                 "source_user": current_user_full,
                 "label": "boost_toot",
-                "data": {"toot_id": toot_id, "target_user": target_user_full},
+                "data": {"toot_id": str(toot_id), "target_user": target_user_full},
             }
         )
 
