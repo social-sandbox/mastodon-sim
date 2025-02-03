@@ -92,7 +92,7 @@ else:
 load_dotenv()
 ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
 if ROOT_PROJ_PATH is not None:
-    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+    ROOT_PATH = ROOT_PROJ_PATH + "mastodon-sim/"
 else:
     sys.exit("No add absolute path found as environment variable.")
 

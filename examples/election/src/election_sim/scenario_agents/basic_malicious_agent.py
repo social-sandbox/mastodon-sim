@@ -1,7 +1,8 @@
+import ast
 import datetime
 import json
 import random
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from decimal import ROUND_HALF_UP, Decimal
 
 import numpy as np
@@ -13,9 +14,13 @@ from concordia.associative_memory import (
 from concordia.clocks import game_clock
 from concordia.components import agent as new_components
 from concordia.components.agent import action_spec_ignored
+from concordia.document import interactive_document
 from concordia.language_model import language_model
 from concordia.memory_bank import legacy_associative_memory
+from concordia.typing import clock as gc
+from concordia.typing import entity as entity_lib
 from concordia.typing import entity_component, logging
+from concordia.utils import helper_functions
 from concordia.utils import measurements as measurements_lib
 
 
@@ -29,7 +34,135 @@ def _get_class_name(object_: object) -> str:
     return object_.__class__.__name__
 
 
-DEFAULT_PRE_ACT_KEY = "ACTION LIKELY TO BE CONDUCTED"
+DEFAULT_PRE_ACT_KEY = "[Suggested Action]"
+
+
+class AllActComponent(entity_component.ActingComponent):
+    def __init__(
+        self,
+        model: language_model.LanguageModel,
+        clock: gc.GameClock,
+        component_order: Sequence[str] | None = None,
+        pre_act_key: str = DEFAULT_PRE_ACT_KEY,
+        logging_channel: logging.LoggingChannel = logging.NoOpLoggingChannel,
+    ):
+        self._model = model
+        self._clock = clock
+        if component_order is None:
+            self._component_order = None
+        else:
+            self._component_order = tuple(component_order)
+        if self._component_order is not None:
+            if len(set(self._component_order)) != len(self._component_order):
+                raise ValueError(
+                    "The component order contains duplicate components: "
+                    + ", ".join(self._component_order)
+                )
+
+        self._pre_act_key = pre_act_key
+        self._logging_channel = logging_channel
+
+    def _context_for_action(
+        self,
+        contexts: entity_component.ComponentContextMapping,
+    ) -> str:
+        if self._component_order is None:
+            return "\n".join(context for context in contexts.values() if context)
+        order = self._component_order + tuple(
+            sorted(set(contexts.keys()) - set(self._component_order))
+        )
+        return "\n".join(contexts[name] for name in order if contexts[name])
+
+    def get_action_attempt(
+        self,
+        contexts: entity_component.ComponentContextMapping,
+        action_spec: entity_lib.ActionSpec,
+    ) -> str:
+        prompt = interactive_document.InteractiveDocument(self._model)
+        context = self._context_for_action(contexts)
+        prompt.statement(context + "\n")
+
+        call_to_action = action_spec.call_to_action.format(
+            name=self.get_entity().name,
+            timedelta=helper_functions.timedelta_to_readable_str(self._clock.get_step_size()),
+        )
+
+        if action_spec.output_type == entity_lib.OutputType.FREE:
+            if not action_spec.tag == "media":
+                if action_spec.tag == "phone":
+                    cot_call = (
+                        "Think step by step on what singular action to take. You should most likely choose the suggested in [Suggested Action], unless otherwise necessary. The possible actions are as follows:\n"
+                        + call_to_action
+                    )
+                    output = self.get_entity().name + " "
+                    output += prompt.open_question(
+                        call_to_action,
+                        max_tokens=400,
+                        answer_prefix=output,
+                        # This terminator protects against the model providing extra context
+                        # after the end of a directly spoken response, since it normally
+                        # puts a space after a quotation mark only in these cases.
+                        terminators=('" ', "\n"),
+                        question_label="Exercise",
+                    )
+                    thoughts = "Current thought on action to take: " + output + "\n"
+                    prompt.statement(thoughts)
+                output = self.get_entity().name + " "
+                output += prompt.open_question(
+                    call_to_action,
+                    max_tokens=500,
+                    answer_prefix=output,
+                    # This terminator protects against the model providing extra context
+                    # after the end of a directly spoken response, since it normally
+                    # puts a space after a quotation mark only in these cases.
+                    terminators=('" ', "\n"),
+                    question_label="Exercise",
+                )
+            else:
+                media_str, call_to_action = call_to_action.split("Context", 1)
+                call_to_action = "Context" + call_to_action
+                media_list = ast.literal_eval(media_str.strip())
+                output = self.get_entity().name + " "
+                output += self._model.sample_text(
+                    prompt=context + "\n" + call_to_action,
+                    media=media_list,
+                )
+            self._log(output, prompt)
+            return output
+        if action_spec.output_type == entity_lib.OutputType.CHOICE:
+            idx = prompt.multiple_choice_question(
+                question=call_to_action, answers=action_spec.options
+            )
+            output = action_spec.options[idx]
+            self._log(output, prompt)
+            return output
+        if action_spec.output_type == entity_lib.OutputType.FLOAT:
+            prefix = self.get_entity().name + " "
+            sampled_text = prompt.open_question(
+                call_to_action,
+                max_tokens=2200,
+                answer_prefix=prefix,
+            )
+            self._log(sampled_text, prompt)
+            try:
+                return str(float(sampled_text))
+            except ValueError:
+                return "0.0"
+        else:
+            raise NotImplementedError(
+                f"Unsupported output type: {action_spec.output_type}. "
+                "Supported output types are: FREE, CHOICE, and FLOAT."
+            )
+
+    def _log(self, result: str, prompt: interactive_document.InteractiveDocument):
+        self._logging_channel(
+            {
+                "Key": self._pre_act_key,
+                "Value": result,
+                "Prompt": prompt.view().text().splitlines(),
+            }
+        )
+
 
 # Default probabilities for different Mastodon operations
 DEFAULT_ACTION_PROBABILITIES = {
@@ -413,7 +546,7 @@ def build_agent(
             # Place goal after the instructions.
             component_order.insert(1, goal_label)
 
-    act_component = new_components.concat_act_component.ConcatActComponent(
+    act_component = AllActComponent(
         model=model,
         clock=clock,
         component_order=component_order,

@@ -36,7 +36,7 @@ from concordia.document import interactive_document
 from concordia.environment import game_master as game_master_lib
 from concordia.language_model import language_model
 from concordia.thought_chains import thought_chains
-from concordia.typing import agent, component, entity
+from concordia.typing import agent, component
 from concordia.typing.entity import OutputType
 
 from mastodon_sim import mastodon_ops
@@ -87,15 +87,8 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
   """)
 
-_MALICIOUS_PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s current goal, plans and observations, what post would they make? If they recently made a post, they can choose to reply to another post from their recent observations.
-  """)
-
 _PHONE_ACTION_SPEC = agent.ActionSpec(
     call_to_action=_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
-)
-_MALICIOUS_PHONE_ACTION_SPEC = agent.ActionSpec(
-    call_to_action=_MALICIOUS_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
 )
 
 
@@ -124,9 +117,6 @@ def build(
     phone_component = _PhoneComponent(model, player, phone)
     # reflectionx =
     phone_spec = _PHONE_ACTION_SPEC
-    if player.name.split(" ")[0] == "Glenn":
-        phone_spec = _MALICIOUS_PHONE_ACTION_SPEC
-        print(_MALICIOUS_PHONE_CALL_TO_ACTION)
     return game_master_lib.GameMaster(
         model=model,
         memory=memory,
@@ -232,9 +222,10 @@ class _PhoneComponent(component.Component):
                         + toot_headline
                     )
                     media_desc = self._player.act(
-                        action_spec=entity.ActionSpec(
+                        action_spec=agent.ActionSpec(
                             call_to_action=call_to_action,
-                            output_type=entity.OutputType.FREE,
+                            output_type=OutputType.FREE,
+                            tag="media",
                         )
                     )
                     # media_desc = media_lm.sample_text(prompt = call_to_action)
