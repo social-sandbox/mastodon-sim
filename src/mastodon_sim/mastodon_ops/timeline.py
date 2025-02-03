@@ -1,6 +1,7 @@
 """Retrieve posts from a user's timeline on Mastodon."""
 
 import argparse
+import base64
 
 import mastodon
 from dotenv import find_dotenv, load_dotenv
@@ -10,11 +11,21 @@ from mastodon_sim.mastodon_ops.get_client import get_client
 from mastodon_sim.mastodon_ops.login import login
 
 
+def encode_media_to_base64(media_url, session):
+    """Encode media from a URL into base64 format."""
+    try:
+        response = session.get(media_url)
+        response.raise_for_status()
+        return base64.b64encode(response.content).decode("utf-8")
+    except Exception as e:
+        logger.error(f"Failed to encode media to base64: {e}")
+        return None
+
+
 def get_public_timeline(limit: None | int = 10) -> mastodon.utility.AttribAccessList | list:
     """Retrieve the public timeline on Mastodon.
 
     Args:
-        login_user (str): The user to log in with.
         limit (int): The number of posts to retrieve. Default is 10.
 
     Returns
@@ -25,9 +36,17 @@ def get_public_timeline(limit: None | int = 10) -> mastodon.utility.AttribAccess
 
     try:
         mastodon = get_client()
+        session = mastodon.session
 
         # Retrieve the public timeline
         timeline = mastodon.timeline_public(limit=limit)
+
+        # Convert media URLs to base64
+        for post in timeline:
+            if post.get("media_attachments"):
+                for media in post["media_attachments"]:
+                    media["base64"] = encode_media_to_base64(media["url"], session)
+                    print(media["url"])
         logger.info(f"Retrieved {len(timeline)} posts from the public timeline.")
         return timeline
     except ValueError as e:
@@ -70,6 +89,7 @@ def get_own_timeline(
         logger.debug(f"{login_user} attempting to retrieve their own timeline...")
         mastodon = get_client()
         mastodon.access_token = access_token
+        session = mastodon.session
 
         # Retrieve the authenticated user's timeline
         timeline = mastodon.timeline_home(limit=limit)
@@ -79,6 +99,12 @@ def get_own_timeline(
             timeline = [post for post in timeline if post["account"]["acct"] == login_user]
         elif filter_type == "others":
             timeline = [post for post in timeline if post["account"]["acct"] != login_user]
+
+        # Convert media URLs to base64
+        for post in timeline:
+            if post.get("media_attachments"):
+                for media in post["media_attachments"]:
+                    media["base64"] = encode_media_to_base64(media["url"], session)
 
         logger.info(
             f"{login_user} retrieved {len(timeline)} posts from their timeline (filter: {filter_type})."
@@ -114,12 +140,20 @@ def get_user_timeline(
         logger.debug(f"{login_user} attempting to retrieve posts from {target_user}...")
         mastodon = get_client()
         mastodon.access_token = access_token
+        session = mastodon.session
 
         # Search for the user and get their ID
         account = mastodon.account_search(target_user, limit=1)
         if account:
             target_user_id = account[0]["id"]
             timeline = mastodon.account_statuses(target_user_id, limit=limit)
+
+            # Convert media URLs to base64
+            for post in timeline:
+                if post.get("media_attachments"):
+                    for media in post["media_attachments"]:
+                        media["base64"] = encode_media_to_base64(media["url"], session)
+
             logger.info(
                 f"{login_user} retrieved {len(timeline)} posts from {target_user}'s timeline."
             )

@@ -36,7 +36,7 @@ from concordia.document import interactive_document
 from concordia.environment import game_master as game_master_lib
 from concordia.language_model import language_model
 from concordia.thought_chains import thought_chains
-from concordia.typing import agent, component
+from concordia.typing import agent, component, entity
 from concordia.typing.entity import OutputType
 
 from mastodon_sim import mastodon_ops
@@ -45,6 +45,13 @@ from mastodon_sim.concordia.components.apps import COLOR_TYPE
 
 file_lock = threading.Lock()
 
+DEFAULT_CALL_TO_SPEECH = (
+    "Given the above, what is {name} likely to say next? Respond in"
+    ' the format `{name} -- "..."` For example, '
+    'Cristina -- "Hello! Mighty fine weather today, right?", '
+    'Ichabod -- "I wonder if the alfalfa is ready to harvest", or '
+    'Townsfolk -- "Good morning".\n'
+)
 
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     Based on {name}'s current goal, plans and observations, what SINGLE specific action would they likely perform on their phone right now, and what information would they need to perform it?
@@ -198,6 +205,7 @@ class _PhoneComponent(component.Component):
         print(f"Self state: {self._state}")
         assert isinstance(self._phone.apps[0], apps.MastodonSocialNetworkApp)
         app = self._phone.apps[0]
+
         if self._state == "":
             self._state += "You retrieved your timeline\n"
             p_username = app.public_get_username(self._player.name.split()[0])
@@ -209,9 +217,43 @@ class _PhoneComponent(component.Component):
 
             output_now = ""
             for post in timeline:
-                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])}, Toot ID: {post['id']}\n "
+                media_desc = ""
+                if post["media_attachments"]:
+                    # media_lm = gpt_model.GptLanguageModel(model="gpt-4o-mini")
+                    media_contents = []
+                    for attachment in post["media_attachments"]:
+                        media_contents.append(attachment["url"])
+                    toot_headline = _clean_html(post["content"])
+                    call_to_speech = DEFAULT_CALL_TO_SPEECH.format(
+                        name=self._player.name,
+                    )
+                    call_to_action = (
+                        f"{media_contents!s} Context: Sussinctly describe this image in the form of an impression that it made on {self._player.name.split()[0]} when they viewed it alongside the following text of the toot they just read on the Mastodon app:"
+                        + toot_headline
+                    )
+                    media_desc = self._player.act(
+                        action_spec=entity.ActionSpec(
+                            call_to_action=call_to_action,
+                            output_type=entity.OutputType.FREE,
+                        )
+                    )
+                    # media_desc = media_lm.sample_text(prompt = call_to_action)
+                    media_desc = (
+                        media_desc.strip(self._player.name.split()[0])
+                        .strip()
+                        .strip(self._player.name.split()[1])
+                        .strip()
+                        .strip("--")
+                        .strip()
+                        .strip('"')
+                    )
+                    media_desc = "Impression of attached image: \n" + media_desc
+                    print(media_desc)
+                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])} + {media_desc}, Toot ID: {post['id']}\n "
+
             self._player.observe(f"[Action done on phone]: Retrieved timeline: \n{output_now}")
             return [f"[Action done on phone]: Retrieved timeline: \n{output_now}"]
+
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
         check_post = chain_of_thought.yes_no_question(
@@ -230,11 +272,20 @@ class _PhoneComponent(component.Component):
                 return [
                     f"The following phone action was not conducted because it has already been done - {event_statement}"
                 ]
+
         self._state += "\n" + event_statement.strip()
         action_names = [a.name for a in app.actions()]
         chain_of_thought.statement(app.description())
         action_index = chain_of_thought.multiple_choice_question(
-            "In the above transcript, what action did the user perform? If the transcript mentions multiple actions, pick the one that is the most specific and the given information is sufficient to perform it. Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline. Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
+            " ".join(
+                [
+                    "In the above transcript, what actions did the user perform?",
+                    "If the transcript mentions multiple actions, pick ones that contribute content, like making a post or reply.",
+                    "Also the one that is the most specific and the given information is sufficient to perform it.",
+                    "Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline.",
+                    "Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
+                ]
+            ),
             answers=action_names,
         )
         # print(action_index)

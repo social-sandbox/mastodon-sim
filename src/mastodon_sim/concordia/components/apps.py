@@ -355,7 +355,7 @@ class Phone:
     {self.player_name} has a smartphone.
     {self.player_name} uses their phone frequently to achieve their daily goals.
     {self.player_name}'s phone has only the following apps available:
-    {', '.join(self.app_names())}."
+    {", ".join(self.app_names())}."
     """)
 
     def app_names(self):
@@ -417,6 +417,10 @@ class MastodonSocialNetworkApp(PhoneApp):
         """Set the mapping of display names to usernames."""
         self._user_mapping = mapping
         self._print(f"Updated user mapping with {len(mapping)} entries", emoji="🔄")
+
+    def get_user_mapping(self) -> dict[str, str]:
+        """Get the mapping of display names to usernames."""
+        return self._user_mapping
 
     def _get_username(self, display_name: str) -> str:
         """Get the username for a given display name."""
@@ -643,6 +647,7 @@ class MastodonSocialNetworkApp(PhoneApp):
         self,
         current_user: str,
         status: str,
+        media_links: list[str] | None = None,
     ) -> str:
         """Post a new toot to the Mastodon-like social network.
 
@@ -664,6 +669,7 @@ class MastodonSocialNetworkApp(PhoneApp):
                 return_val = self._mastodon_ops.post_status(
                     login_user=username,
                     status=status,
+                    media_files=media_links,
                 )
             else:
                 self._print(
@@ -700,6 +706,70 @@ class MastodonSocialNetworkApp(PhoneApp):
             }
         )
         return return_msg
+
+    # @app_action
+    # def post_media_toot(
+    #     self,
+    #     current_user: str,
+    #     status: str,
+    #     media_link: str,
+    # ) -> str:
+    #     """Post a new toot to the Mastodon-like social network.
+
+    #     Args:
+    #         current_user (str): The username of the user posting the status.
+    #         status (str): The text content of the status update.
+
+    #     Raises
+    #     ------
+    #         ValueError: If the input parameters are invalid.
+    #         Exception: For any other unexpected errors during posting.
+    #     """
+    #     return_val = None
+    #     current_user_full = str(current_user)
+    #     try:
+    #         current_user = current_user.split()[0]
+    #         username = self._get_username(current_user)
+    #         if self.perform_operations:
+    #             return_val = self._mastodon_ops.post_status(
+    #                 login_user=username,
+    #                 status=status,
+    #             )
+    #         else:
+    #             self._print(
+    #                 "Skipping real Mastodon API call since perform_operations is set to False",
+    #                 color="light_grey",
+    #             )
+
+    #         self._print(
+    #             f'Status posted for user: {current_user} ({username}): "{status}"',
+    #             emoji="📝",
+    #         )
+    #         # self._print(return_val)
+
+    #     except ValueError as e:
+    #         self._print(f"Invalid input: {e!s}", emoji="❌")
+    #         raise
+
+    #     except Exception as e:
+    #         self._print(f"An unexpected error occurred: {e!s}", emoji="❌")
+    #         raise
+    #     toot_id = None
+    #     if return_val:
+    #         return_msg = (
+    #             f"{current_user} posted a toot with Toot ID: {return_val['id']} --- {status}\n"
+    #         )
+    #         toot_id = return_val["id"]
+    #     else:
+    #         return_msg = f'{current_user} posted a toot!: "{status}"\n'
+    #     self.action_logger.log(
+    #         {
+    #             "source_user": current_user_full,
+    #             "label": "post",
+    #             "data": {"toot_id": toot_id, "post_text": status},
+    #         }
+    #     )
+    #     return return_msg
 
     @app_action
     def reply_to_toot(

@@ -9,6 +9,8 @@ import time
 import warnings
 from functools import partial
 
+from dotenv import load_dotenv
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
@@ -18,8 +20,8 @@ from concordia import __file__ as concordia_location
 
 print(f"importing Concordia from: {concordia_location}")
 from concordia.clocks import game_clock
-from concordia.language_model import amazon_bedrock_model, gpt_model
 from concordia.typing.entity import ActionSpec, OutputType
+from sim_utils import media_utils
 
 from mastodon_sim import mastodon_ops
 from mastodon_sim.concordia import apps
@@ -30,7 +32,7 @@ from mastodon_sim.mastodon_utils import get_users_from_env
 parser = argparse.ArgumentParser(description="Experiment parameters")
 
 parser.add_argument("--seed", type=int, default=1, help="seed used for python's random module")
-parser.add_argument("--T", type=int, default=48, help="number of episodes")
+parser.add_argument("--T", type=int, default=1, help="number of episodes")  # 48
 parser.add_argument("--exp", type=str, default="independent", help="experiment name")
 parser.add_argument(
     "--outdir", type=str, default="output/", help="name of directory where output will be written"
@@ -53,6 +55,20 @@ parser.add_argument(
     default="None",  # www.social-sandbox.com, www.socialsandbox2.com
     help="config from which to optionally load experiment settings",
 )
+
+parser.add_argument(
+    "--use_news_agent",
+    type=str,
+    default="with_images",
+    help="use news agent in the simulation 'with_images', else without",
+)  # NA
+parser.add_argument(
+    "--news_file",
+    type=str,
+    default="v1_news_no_bias",
+    help="news headlines and image locations for the news agent.",
+)  # NA
+
 args = parser.parse_args()
 
 
@@ -72,6 +88,14 @@ if USE_MASTODON_SERVER:
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
+# Add the src directory to the Python path
+load_dotenv()
+ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
+if ROOT_PROJ_PATH is not None:
+    ROOT_PATH = ROOT_PROJ_PATH + "socialsandbox/mastodon-sim/"
+else:
+    sys.exit("No add absolute path found as environment variable.")
+
 MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
 random.seed(SEED)
@@ -84,7 +108,7 @@ from sim_utils.agent_speech_utils import (
 from sim_utils.concordia_utils import (
     SimpleGameRunner,
     build_agent_with_memories,
-    init_objects,
+    init_concordia_objects,
     save_to_json,
     sort_agents,
 )
@@ -94,7 +118,7 @@ os.chdir("examples/election/")
 
 
 def clear_mastodon_server(max_num_players):
-    users = get_users_from_env()[:max_num_players]
+    users = get_users_from_env()[: max_num_players + 1]
     reset_users(users, skip_confirm=True, parallel=True)
     assert not len(get_public_timeline(limit=None)), "All posts not cleared"
 
@@ -108,7 +132,7 @@ def select_large_language_model():
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
-        model = gpt_model.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)
+        model = media_utils.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)
     else:
         raise ValueError("Unknown model name.")
     return model
@@ -119,6 +143,50 @@ def get_sentance_encoder():
     st_model = sentence_transformers.SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
     embedder = lambda x: st_model.encode(x, show_progress_bar=False)
     return embedder
+
+
+# NA - add news agent while setting up the mastodon app
+def add_news_agent_to_mastodon_app(news_agent, action_logger, players, mastodon_apps):
+    user_mapping = mastodon_apps[players[0].name].get_user_mapping()
+    for i, n_agent in enumerate(news_agent):
+        mastodon_apps[n_agent["name"]] = apps.MastodonSocialNetworkApp(
+            action_logger=action_logger, perform_operations=USE_MASTODON_SERVER
+        )
+        # We still need to give the news agent a phone to be able to post toots #TODO we are not sure if we need to do this
+        # phones[n_agent["name"]] = apps.Phone(n_agent["name"], apps=[mastodon_apps[n_agent["name"].split()[0]]])
+        user_mapping[n_agent["mastodon_username"]] = f"user{len(players) + 1 + i:04d}"
+        # set a mapping of display name to user name for news agent
+        mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
+        mastodon_ops.update_bio(
+            user_mapping[n_agent["mastodon_username"]],
+            display_name=n_agent["mastodon_username"],
+            bio="Providing news reports from across Storhampton",
+        )
+        for p in players:
+            mastodon_apps[p.name].set_user_mapping(user_mapping)
+        # set followership network for the news agent
+        agent_names = [player.name for player in players]
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for follower in agent_names:
+                print(follower)
+                # Ensure every user, including candidates, follows the news agent
+                if (
+                    follower != n_agent["name"]
+                ):  # this actually never possible because news agent is not in players but I added as just in case argument
+                    futures.append(
+                        executor.submit(
+                            mastodon_apps[follower].follow_user,
+                            follower,
+                            n_agent["mastodon_username"],
+                        )
+                    )
+            # Optionally, wait for all tasks to complete
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    future.result()  # This will raise any exceptions that occurred during execution, if any
+                except Exception as e:
+                    print(f"Ignoring already-following error: {e}")
 
 
 def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname):
@@ -135,7 +203,7 @@ def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname)
         for player in players
     }
     agent_names = [player.name for player in players]
-    user_mapping = {player.name.split()[0]: f"user{i+1:04d}" for i, player in enumerate(players)}
+    user_mapping = {player.name.split()[0]: f"user{i + 1:04d}" for i, player in enumerate(players)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
@@ -220,8 +288,32 @@ def post_seed_toots(agent_data, players, mastodon_apps):
             future.result()  # This will raise any exceptions that occurred in the thread, if any
 
 
+# NA write post seed toots function for the news agent
+def post_seed_toots_news_agents(news_agent, mastodon_apps):
+    # Parallelize the loop using ThreadPoolExecutor
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Submit tasks for each news agent
+        futures = [
+            executor.submit(
+                lambda agent=n_agent: (
+                    mastodon_apps[n_agent["name"]].post_toot(
+                        n_agent["mastodon_username"], status=n_agent["seed_toot"]
+                    )
+                    if n_agent["seed_toot"] and n_agent["seed_toot"] != "-"
+                    else None
+                )
+            )
+            for n_agent in news_agent
+        ]
+
+        # Optionally, wait for all tasks to complete
+        for future in concurrent.futures.as_completed(futures):
+            future.result()  # This will raise any exceptions that occurred in the thread, if any
+
+
 def get_post_times(players, ag_names):
     num_posts_malicious = 30
+    num_posts_candidates = 30
     num_posts_nonmalicious = 5
     players_datetimes = {
         player: [
@@ -233,13 +325,38 @@ def get_post_times(players, ag_names):
             )  # Zeroing out seconds and microseconds for cleaner output
             for _ in range(
                 num_posts_malicious
-                if player.name in list(ag_names["malicious"].keys())
+                if player.name in list(ag_names["malicious"].keys()) + ag_names["candidate"]
                 else num_posts_nonmalicious
             )
         ]
         for player in players
     }
     return players_datetimes
+
+
+# NA getting post times for the news agent
+def get_post_times_news_agent(news_agent):
+    news_agent_datetimes = {}
+    for agent in news_agent:
+        # Ensure the agent has the required keys
+        name = agent.get("name", "Unnamed Agent")
+        post_schedule = agent.get("toot_posting_schedule", [])
+
+        try:
+            # Generate datetime objects for each time in the schedule
+            news_agent_datetimes[name] = [
+                datetime.datetime.now().replace(
+                    hour=int(post_time.split(":")[0]),
+                    minute=int(post_time.split(":")[1].split()[0]),
+                    second=0,
+                    microsecond=0,
+                )
+                for post_time in post_schedule
+            ]
+        except ValueError as e:
+            raise ValueError(f"Error processing agent '{name}': {e}")
+
+    return news_agent_datetimes
 
 
 def get_matching_players(players_datetimes, clock, post_rate_of_per_step_topup):
@@ -263,11 +380,57 @@ def get_matching_players(players_datetimes, clock, post_rate_of_per_step_topup):
     return matching_players
 
 
+# NA - object to represent a scheduled news agents that can post toots on a schedule
+class ScheduledPostAgent:
+    def __init__(self, name, mastodon_username, mastodon_app, post_schedule, posts):
+        self.name = name
+        self.mastodon_username = mastodon_username
+        self.mastodon_app = mastodon_app
+        self.post_schedule = post_schedule
+        self.posts = posts
+        self.used_posts = set()
+        self.current_post_index = 0
+
+    def check_and_post(self, current_time):
+        """Check if should post based on current time and post if needed"""
+        for scheduled_time in self.post_schedule:
+            if (
+                scheduled_time.hour == current_time.hour
+                and scheduled_time.minute == current_time.minute
+            ):
+                post = self.generate_post()
+                media = [ROOT_PATH + img_filepath for img_filepath in self.posts[post]]
+                print(media)
+                if len(media) > 0:
+                    self.mastodon_app.post_toot(
+                        self.mastodon_username, status=post, media_links=media
+                    )
+                else:
+                    self.mastodon_app.post_toot(self.mastodon_username, status=post)
+                return True
+        return False
+
+    def generate_post(self):
+        # Get next unused post
+        while self.current_post_index < len(self.posts):
+            post = list(self.posts.keys())[self.current_post_index]
+            self.current_post_index += 1
+            if post not in self.used_posts:
+                self.used_posts.add(post)
+                return post
+
+        # Reset if we've gone through all posts
+        self.current_index = 0
+        self.used_posts.clear()
+        return self.posts[0]  # Start over with first post
+
+
 def run_sim(
     model,
     embedder,
     agent_data,
     shared_memories,
+    news_agent,  # NA news agent is None when it's not used in the simulation
     custom_call_to_action,
     candidate_info,
     eval_config,
@@ -275,8 +438,9 @@ def run_sim(
     output_rootname,
 ):
     time_step = datetime.timedelta(minutes=30)
-    SETUP_TIME = datetime.datetime(year=2024, month=10, day=1, hour=8)  # noqa: DTZ001
-    START_TIME = datetime.datetime(year=2024, month=10, day=1, hour=8)  # noqa: DTZ001
+    today = datetime.date.today()
+    SETUP_TIME = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=8)  # noqa: DTZ001
+    START_TIME = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=8)  # noqa: DTZ001
     clock = game_clock.MultiIntervalClock(
         start=SETUP_TIME, step_sizes=[time_step, datetime.timedelta(seconds=10)]
     )
@@ -287,7 +451,7 @@ def run_sim(
         blank_memory_factory,
         formative_memory_factory,
         game_master_memory,
-    ) = init_objects(model, embedder, shared_memories, clock)
+    ) = init_concordia_objects(model, embedder, shared_memories, clock)
 
     NUM_PLAYERS = len(agent_data)
     ag_names, player_configs = sort_agents(agent_data)
@@ -352,6 +516,23 @@ def run_sim(
     eval_event_logger = event_logger("eval", output_rootname)
     eval_event_logger.episode_idx = -1
 
+    # NA - add news agent to the simulation
+    if news_agent is not None:
+        add_news_agent_to_mastodon_app(news_agent, action_event_logger, players, mastodon_apps)
+        post_seed_toots_news_agents(news_agent, mastodon_apps)
+        scheduled_news_agents = []
+        news_agent_datetimes = get_post_times_news_agent(news_agent)
+        for n_agent in news_agent:
+            scheduled_news_agents.append(
+                ScheduledPostAgent(
+                    name=n_agent["name"],
+                    mastodon_username=n_agent["mastodon_username"],
+                    mastodon_app=mastodon_apps[n_agent["name"]],
+                    post_schedule=news_agent_datetimes[n_agent["name"]],
+                    posts=n_agent["posts"],
+                )
+            )
+
     # main loop
     time_intervals = []
     prompt_token_intervals = []
@@ -383,6 +564,11 @@ def run_sim(
         if len(matching_players) == 0:
             clock.advance()
         else:
+            # NA - check and post news before each step
+            if news_agent is not None:
+                for n_agent in scheduled_news_agents:
+                    n_agent.check_and_post(clock.now())
+
             env.step(active_players=matching_players)
             end_timex = time.time()
             with open(
@@ -416,13 +602,29 @@ if __name__ == "__main__":
         experiment_name = args.exp
         # N = 100
         N = 20
-        survey = "None.Big5"
+        # survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-        config_name = f"N{N}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
-
-        os.system(
-            f"python src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+        survey = "Reddit.Big5"
+        config_name = (
+            args.news_file
+            + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
         )
+
+        if survey == "Reddit.Big5":
+            os.system(
+                f"python src/election_sim/config_utils/gen_config.py "
+                f"--exp_name {experiment_name} "
+                f"--survey {survey} "
+                f"--cfg_name {config_name} "
+                f"--num_agents {N} "
+                f"--reddit_json_path examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+                f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+            )
+        else:
+            os.system(
+                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+                + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+            )
 
     with open(config_name) as file:
         config_data = json.load(file)
@@ -455,7 +657,7 @@ if __name__ == "__main__":
         json.dump(eval_config_data, outfile, indent=4)
 
     if USE_MASTODON_SERVER:
-        clear_mastodon_server(len(config_data["agents"]))
+        clear_mastodon_server(len(config_data["agents"]) + int(len(args.use_news_agent) > 0))
 
     # simulation parameter inputs
     episode_length = args.T
@@ -473,6 +675,8 @@ if __name__ == "__main__":
         embedder,
         config_data["agents"],
         shared_memories,
+        # NA add the news agent, if not used in the simulation, it will be None
+        config_data["news_agents"],
         config_data["custom_call_to_action"],
         config_data["candidate_info"],
         eval_config_data,

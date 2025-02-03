@@ -103,8 +103,7 @@ class MastodonActionSuggester(action_spec_ignored.ActionSpecIgnored):
         invalid_actions = set(probs.keys()) - valid_actions
         if invalid_actions:
             raise ValueError(
-                f"Invalid actions provided: {invalid_actions}. "
-                f"Valid actions are: {valid_actions}"
+                f"Invalid actions provided: {invalid_actions}. Valid actions are: {valid_actions}"
             )
 
         # Check for negative probabilities

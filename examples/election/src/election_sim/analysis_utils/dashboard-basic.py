@@ -24,12 +24,12 @@ def compute_positions(graph):
 
 
 # Serialization function to convert complex data structures into JSON-serializable format
-def serialize_data(follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes):
+def serialize_data(follow_graph, interactions_by_episode, active_users_by_episode, toots, votes):
     return {
         "nodes": list(follow_graph.nodes),
         "edges": list(follow_graph.edges),
         "interactions_by_episode": interactions_by_episode,
-        "posted_users_by_episode": {k: list(v) for k, v in posted_users_by_episode.items()},
+        "active_users_by_episode": {k: list(v) for k, v in active_users_by_episode.items()},
         "toots": toots,
         "votes": votes,
     }
@@ -43,12 +43,12 @@ def deserialize_data(serialized):
 
     # Convert episode keys back to integers
     interactions_by_episode = {int(k): v for k, v in serialized["interactions_by_episode"].items()}
-    posted_users_by_episode = {
-        int(k): set(v) for k, v in serialized["posted_users_by_episode"].items()
+    active_users_by_episode = {
+        int(k): set(v) for k, v in serialized["active_users_by_episode"].items()
     }
     toots = serialized["toots"]
     votes = {int(k): v for k, v in serialized["votes"].items()}
-    return follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes
+    return follow_graph, interactions_by_episode, active_users_by_episode, toots, votes
 
 
 def get_target_user(row):
@@ -167,7 +167,7 @@ def load_data(input_var):
     )  # invalid in presence of unfollows (in which case use episodewise_graphbuild)
 
     # active users with episode keys
-    posted_users_by_episode = int_df.groupby("episode")["source_user"].apply(set).to_dict()
+    active_users_by_episode = int_df.groupby("episode")["source_user"].apply(set).to_dict()
 
     # interaction data
     int_dict = get_int_dict(int_df.copy())
@@ -175,7 +175,7 @@ def load_data(input_var):
     # toot_data
     toot_dict = get_toot_dict(int_df.copy())
 
-    return follow_graph, int_dict, posted_users_by_episode, toot_dict, votes
+    return follow_graph, int_dict, active_users_by_episode, toot_dict, votes
 
 
 # Main entry point
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     # Initialize variables
     if args.output_file:
         # Load the data using the files passed as arguments
-        (follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes) = load_data(
+        (follow_graph, interactions_by_episode, active_users_by_episode, toots, votes) = load_data(
             args.output_file
         )
 
@@ -206,7 +206,7 @@ if __name__ == "__main__":
 
         # Serialize the initial data
         serialized_initial_data = serialize_data(
-            follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes
+            follow_graph, interactions_by_episode, active_users_by_episode, toots, votes
         )
     else:
         # No initial data provided
@@ -689,7 +689,7 @@ if __name__ == "__main__":
                     (
                         follow_graph_new,
                         interactions_by_episode_new,
-                        posted_users_by_episode_new,
+                        active_users_by_episode_new,
                         toots_new,
                         votes_new,
                     ) = load_data(app_logger_string)
@@ -698,7 +698,7 @@ if __name__ == "__main__":
                     serialized_new_data = serialize_data(
                         follow_graph_new,
                         interactions_by_episode_new,
-                        posted_users_by_episode_new,
+                        active_users_by_episode_new,
                         toots_new,
                         votes_new,
                     )
@@ -716,7 +716,7 @@ if __name__ == "__main__":
                     (
                         follow_graph_new,
                         interactions_by_episode_new,
-                        posted_users_by_episode_new,
+                        active_users_by_episode_new,
                         toots_new,
                         votes_new,
                     ) = load_data(app_logger_string)
@@ -725,7 +725,7 @@ if __name__ == "__main__":
                     serialized_new_data = serialize_data(
                         follow_graph_new,
                         interactions_by_episode_new,
-                        posted_users_by_episode_new,
+                        active_users_by_episode_new,
                         toots_new,
                         votes_new,
                     )
@@ -803,7 +803,7 @@ if __name__ == "__main__":
             )
 
         # Deserialize the data_store.
-        (follow_graph, interactions_by_episode, posted_users_by_episode, toots, votes) = (
+        (follow_graph, interactions_by_episode, active_users_by_episode, toots, votes) = (
             deserialize_data(data_store)
         )
 
@@ -1131,11 +1131,11 @@ if __name__ == "__main__":
         )
 
         # Create the line graph showing vote distribution over time
-        episodes = sorted(interactions_by_episode.keys())
+        vote_episodes = sorted(votes.keys())
         Bill_votes_over_time = []
         Bradley_votes_over_time = []
 
-        for ep in episodes:
+        for ep in vote_episodes:
             ep_votes = votes[ep]
             total_ep_votes = len(ep_votes)
             Bill_votes = sum(1 for vote in ep_votes.values() if vote == "Bill")
@@ -1151,7 +1151,7 @@ if __name__ == "__main__":
         vote_line_fig = go.Figure()
         vote_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=vote_episodes,
                 y=Bill_votes_over_time,
                 mode="lines+markers",
                 name="Bill",
@@ -1160,7 +1160,7 @@ if __name__ == "__main__":
         )
         vote_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=vote_episodes,
                 y=Bradley_votes_over_time,
                 mode="lines+markers",
                 name="Bradley",
@@ -1182,20 +1182,22 @@ if __name__ == "__main__":
         interaction_types = ["liked", "boosted", "replied", "posted"]
         interactions_over_time = {interaction: [] for interaction in interaction_types}
 
-        total_users = len(follow_graph.nodes)
+        total_users = len(follow_graph.nodes) - 1
 
         active_user_fractions = []
-
-        for ep in episodes:
+        # int_episodes = list(active_users_by_episode.keys())
+        int_episodes = sorted(interactions_by_episode.keys())
+        for ep in int_episodes:
             # Initialize counts
-            active_nodes_in_ep = set()
-            active_nodes_in_ep = {
-                interaction["source"] for interaction in interactions_by_episode.get(ep, [])
-            }.union(
-                {interaction["target"] for interaction in interactions_by_episode.get(ep, [])}
-            ).union(set(posted_users_by_episode.get(ep, [])))
+            # active_nodes_in_ep = set()
+            # active_nodes_in_ep = {
+            #     interaction["source"] for interaction in interactions_by_episode.get(ep, [])
+            # }.union(
+            #     {interaction["target"] for interaction in interactions_by_episode.get(ep, [])}
+            # ).union(set(active_users_by_episode.get(ep, [])))
 
-            num_active_users = len(active_nodes_in_ep)
+            # num_active_users = len(active_nodes_in_ep)
+            num_active_users = len(active_users_by_episode[ep]) - 1
 
             counts = {interaction: 0 for interaction in interaction_types}
 
@@ -1206,13 +1208,18 @@ if __name__ == "__main__":
                     counts[action] += 1
 
             # Count posts
-            counts["posted"] = len(posted_users_by_episode.get(ep, []))
+            # counts["posted"] = len(active_users_by_episode.get(ep, []))
 
             # Append counts to the respective lists
             for interaction in interaction_types:
-                interactions_over_time[interaction].append(
-                    counts[interaction] / num_active_users if num_active_users > 0 else 0
-                )
+                if interaction == "posted":
+                    interactions_over_time[interaction].append(
+                        (counts[interaction] - 1) / num_active_users if num_active_users > 0 else 0
+                    )
+                else:
+                    interactions_over_time[interaction].append(
+                        (counts[interaction]) / num_active_users if num_active_users > 0 else 0
+                    )
 
             # Calculate active user fraction
             active_user_fraction = num_active_users / total_users if total_users > 0 else 0
@@ -1223,7 +1230,7 @@ if __name__ == "__main__":
         # Add normalized interaction traces to the primary y-axis
         interactions_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=int_episodes,
                 y=interactions_over_time["liked"],
                 mode="lines+markers",
                 name="Likes",
@@ -1234,7 +1241,7 @@ if __name__ == "__main__":
         )
         interactions_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=int_episodes,
                 y=interactions_over_time["boosted"],
                 mode="lines+markers",
                 name="Boosts",
@@ -1245,7 +1252,7 @@ if __name__ == "__main__":
         )
         interactions_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=int_episodes,
                 y=interactions_over_time["replied"],
                 mode="lines+markers",
                 name="Replies",
@@ -1256,7 +1263,7 @@ if __name__ == "__main__":
         )
         interactions_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=int_episodes,
                 y=interactions_over_time["posted"],
                 mode="lines+markers",
                 name="Posts",
@@ -1269,7 +1276,7 @@ if __name__ == "__main__":
         # Add active users fraction trace to the secondary y-axis
         interactions_line_fig.add_trace(
             go.Scatter(
-                x=episodes,
+                x=int_episodes,
                 y=active_user_fractions,
                 mode="lines",
                 name="Active User Fraction",
@@ -1279,7 +1286,7 @@ if __name__ == "__main__":
         )
 
         # Define the y-axis range
-        y_axis_range = [0, 2]
+        y_axis_range = [0, 1.5]
 
         # Update both y-axes
         interactions_line_fig.update_yaxes(
@@ -1310,8 +1317,8 @@ if __name__ == "__main__":
                 },
                 "tickfont": {"size": 8},  # Reduced x-axis tick font size
                 "range": [
-                    min(episodes),
-                    max(episodes) + 1,
+                    min(int_episodes),
+                    max(int_episodes) + 1,
                 ],  # Setting the range from min to max episode
                 "dtick": 1,  # Show a tick marker every episode
             },
@@ -1327,18 +1334,17 @@ if __name__ == "__main__":
             showlegend=True,
         )
         # Adjust the x-axis range to include all episodes
-        interactions_line_fig.update_xaxes(range=[min(episodes), max(episodes) + 1])
+        interactions_line_fig.update_xaxes(range=[min(int_episodes), max(int_episodes) + 1])
 
         # Update the name-selector dropdown options
         unique_names = sorted(follow_graph.nodes)
         name_options = [{"label": name, "value": name} for name in unique_names]
 
         # Set episode slider properties
-        episodes = sorted(interactions_by_episode.keys())
-        slider_min = min(episodes)
-        slider_max = max(episodes)
-        slider_value = selected_episode if selected_episode in episodes else slider_min
-        slider_marks = {str(ep): f"{ep}" for ep in sorted(episodes)}
+        slider_min = min(int_episodes)
+        slider_max = max(int_episodes)
+        slider_value = selected_episode if selected_episode in int_episodes else slider_min
+        slider_marks = {str(ep): f"{ep}" for ep in sorted(int_episodes)}
 
         # Return all outputs, including the interactions window content and styles
         return (
