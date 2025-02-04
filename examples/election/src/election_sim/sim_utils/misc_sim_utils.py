@@ -18,6 +18,7 @@ class event_logger:
         self.episode_idx = None
         self.output_filename = output_filename
         self.type = event_type
+        self.dummy = None
 
     def log(self, log_data):
         if isinstance(log_data, list):
@@ -28,6 +29,8 @@ class event_logger:
         else:
             log_data["episode"] = self.episode_idx
             log_data["event_type"] = self.type
+            if self.type == "action":
+                log_data["data"]["suggested_action"] = self.dummy
             write_item(log_data, self.output_filename)
 
 

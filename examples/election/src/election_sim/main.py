@@ -23,9 +23,8 @@ from concordia.clocks import game_clock
 from concordia.typing.entity import ActionSpec, OutputType
 from sim_utils import media_utils
 
-from mastodon_sim import mastodon_ops
 from mastodon_sim.concordia import apps
-from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users
+from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
 from mastodon_sim.mastodon_utils import get_users_from_env
 
 # parse input arguments
@@ -88,13 +87,9 @@ if USE_MASTODON_SERVER:
 else:
     input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
-# Add the src directory to the Python path
-load_dotenv()
-ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
-if ROOT_PROJ_PATH is not None:
-    ROOT_PATH = ROOT_PROJ_PATH + "mastodon-sim/"
-else:
-    sys.exit("No add absolute path found as environment variable.")
+# get absolute path to project (run this file from project directory)
+load_dotenv(dotenv_path=os.getcwd())
+ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
 
 MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
@@ -157,7 +152,7 @@ def add_news_agent_to_mastodon_app(news_agent, action_logger, players, mastodon_
         user_mapping[n_agent["mastodon_username"]] = f"user{len(players) + 1 + i:04d}"
         # set a mapping of display name to user name for news agent
         mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
-        mastodon_ops.update_bio(
+        update_bio(
             user_mapping[n_agent["mastodon_username"]],
             display_name=n_agent["mastodon_username"],
             bio="Providing news reports from across Storhampton",
@@ -250,7 +245,7 @@ def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(mastodon_ops.update_bio, user_mapping[name], display_name=name, bio="")
+            executor.submit(update_bio, user_mapping[name], display_name=name, bio="")
             for name in user_mapping
         ]
     # Optionally, wait for all tasks to complete
@@ -399,7 +394,7 @@ class ScheduledPostAgent:
                 and scheduled_time.minute == current_time.minute
             ):
                 post = self.generate_post()
-                media = [ROOT_PATH + img_filepath for img_filepath in self.posts[post]]
+                media = [ROOT_PROJ_PATH + img_filepath for img_filepath in self.posts[post]]
                 print(media)
                 if len(media) > 0:
                     self.mastodon_app.post_toot(
@@ -606,7 +601,8 @@ if __name__ == "__main__":
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
         survey = "Reddit.Big5"
         config_name = (
-            args.news_file
+            "testnewcodepost07sugact_"
+            + args.news_file
             + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
         )
 
@@ -617,7 +613,7 @@ if __name__ == "__main__":
                 f"--survey {survey} "
                 f"--cfg_name {config_name} "
                 f"--num_agents {N} "
-                f"--reddit_json_path examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
+                f"--reddit_json_path {ROOT_PROJ_PATH}examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
                 f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
             )
         else:

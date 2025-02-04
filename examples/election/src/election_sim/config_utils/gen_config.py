@@ -9,18 +9,16 @@ import sys
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
-# Add the src directory to the Python path
-
-ROOT_PROJ_PATH = os.getenv("ROOT_PROJ_PATH")
-if ROOT_PROJ_PATH is not None:
-    ROOT_PATH = ROOT_PROJ_PATH + "mastodon-sim/"
-else:
+load_dotenv(dotenv_path=os.getcwd())
+ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
+if ROOT_PROJ_PATH is None:
     sys.exit("No add absolute path found as environment variable.")
 
+# add path to election_sim source module
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from agent_pop_utils import get_agent_configs
 from sim_utils.news_agent_utils import transform_news_headline_for_sim  # NA
+
+from config_utils.agent_pop_utils import get_agent_configs
 
 parser = argparse.ArgumentParser(description="config")
 parser.add_argument(
@@ -440,6 +438,7 @@ if __name__ == "__main__":
         "trait_type": trait_type,
         "survey_config_name": survey_cfg if survey_cfg != "None" else None,
     }
+
     # generate all agent config object
     agent_configs = get_agent_configs(
         agent_pop_settings={
@@ -453,7 +452,7 @@ if __name__ == "__main__":
             "num_agents": args.num_agents - len(candidate_configs),
         },
         malicious_actor_config=malicious_actor_config,
-        reddit_json_path=ROOT_PATH + args.reddit_json_path,
+        reddit_json_path=args.reddit_json_path,
     )
 
     # add meta data
@@ -476,7 +475,7 @@ if __name__ == "__main__":
         #     news = fetch_and_transform_headlines(upload_file=True, file_dir=args.news_file)
         # else:
         #     news = fetch_and_transform_headlines(upload_file=False)
-        root_name = ROOT_PATH + "examples/election/news_data/"
+        root_name = ROOT_PROJ_PATH + "examples/election/news_data/"
         with open(root_name + args.news_file + ".json") as f:
             news = json.load(f)
         include_images = args.use_news_agent == "with_images"

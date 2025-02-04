@@ -273,7 +273,7 @@ class _PhoneComponent(component.Component):
                     "In the above transcript, what actions did the user perform?",
                     "If the transcript mentions multiple actions, pick ones that contribute content, like making a post or reply.",
                     "Also the one that is the most specific and the given information is sufficient to perform it.",
-                    "Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions vieweing their timeline.",
+                    "Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions viewing their timeline.",
                     "Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
                 ]
             ),
@@ -314,6 +314,9 @@ class _PhoneComponent(component.Component):
         print("Continuing action!")
         action = app.actions()[action_index]
 
+        # # pull out suggested action from action_suggester logging channge to store in output
+        # app.action_logger.dummy = self._player._component_logging.get_channel("ActionSuggester").queue[-1]["Selected action"]
+
         try:
             argument_text = chain_of_thought.open_question(
                 action.instructions(),
@@ -327,6 +330,7 @@ class _PhoneComponent(component.Component):
                 f" with the argument_text:\n{argument_text}",
                 color="yellow",
             )
+
             result = app.invoke_action(action, argument_text)
 
             # TODO: verify if this makes sense

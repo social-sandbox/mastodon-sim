@@ -96,7 +96,7 @@ class AllActComponent(entity_component.ActingComponent):
                     )
                     output = self.get_entity().name + " "
                     output += prompt.open_question(
-                        call_to_action,
+                        cot_call,  # call_to_action,
                         max_tokens=400,
                         answer_prefix=output,
                         # This terminator protects against the model providing extra context
@@ -492,7 +492,9 @@ def build_agent(
                 ).on_next,
             )
         )
-    action_suggester = MastodonActionSuggester(model=model)
+    action_suggester = MastodonActionSuggester(
+        model=model, logging_channel=measurements.get_channel("ActionSuggestor").on_next
+    )
     entity_components = [
         # Components that provide pre_act context.
         instructions,
