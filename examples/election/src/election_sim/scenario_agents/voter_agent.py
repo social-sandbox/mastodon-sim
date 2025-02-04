@@ -107,17 +107,18 @@ class AllActComponent(entity_component.ActingComponent):
                     )
                     thoughts = "Current thought on action to take: " + output + "\n"
                     prompt.statement(thoughts)
-                output = self.get_entity().name + " "
-                output += prompt.open_question(
-                    call_to_action,
-                    max_tokens=2200,
-                    answer_prefix=output,
-                    # This terminator protects against the model providing extra context
-                    # after the end of a directly spoken response, since it normally
-                    # puts a space after a quotation mark only in these cases.
-                    terminators=('" ', "\n"),
-                    question_label="Exercise",
-                )
+                else:
+                    output = self.get_entity().name + " "
+                    output += prompt.open_question(
+                        call_to_action,
+                        max_tokens=2200,
+                        answer_prefix=output,
+                        # This terminator protects against the model providing extra context
+                        # after the end of a directly spoken response, since it normally
+                        # puts a space after a quotation mark only in these cases.
+                        terminators=('" ', "\n"),
+                        question_label="Exercise",
+                    )
             else:
                 media_str, call_to_action = call_to_action.split("Context", 1)
                 call_to_action = "Context" + call_to_action
@@ -191,7 +192,7 @@ class MastodonActionSuggester(action_spec_ignored.ActionSpecIgnored):
         self,
         model: language_model.LanguageModel,
         action_probabilities: dict[str, float] | None = None,
-        pre_act_key: str = DEFAULT_PRE_ACT_KEY,
+        pre_act_key: str = "[Suggested Action]",
         logging_channel: logging.LoggingChannel = logging.NoOpLoggingChannel,
     ):
         """Initialize the action suggester component.
