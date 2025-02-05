@@ -167,11 +167,26 @@ class AllActComponent(entity_component.ActingComponent):
 
 # Default probabilities for different Mastodon operations
 DEFAULT_ACTION_PROBABILITIES = {
+    # # High frequency actions
+    # "like_toot": 0.20,  # Most common action
+    # "boost_toot": 0.15,  # Common but less than likes
+    # "toot": 0.35,  # Regular posting
+    # "reply": 0.20,
+    # # Medium frequency actions
+    # "follow": 0.05,  # Following new accounts
+    # "unfollow": 0.00,  # Unfollowing accounts
+    # "print_timeline": 0.04,  # Reading timeline
+    # # Low frequency actions
+    # "block_user": 0.0,  # Blocking problematic users
+    # "unblock_user": 0.0,  # Unblocking users
+    # "delete_posts": 0.0,  # Deleting own posts
+    # "update_bio": 0.0,  # Updating profile
+    # "print_notifications": 0.01,  # Checking notifications
     # High frequency actions
-    "like_toot": 0.20,  # Most common action
-    "boost_toot": 0.15,  # Common but less than likes
-    "toot": 0.35,  # Regular posting
-    "reply": 0.20,
+    "like_toot": 0.05,  # 20,  # Most common action
+    "boost_toot": 0.05,  # 0.15,  # Common but less than likes
+    "toot": 0.7,  # 0.35,  # Regular posting
+    "reply": 0.1,  # 0.20,
     # Medium frequency actions
     "follow": 0.05,  # Following new accounts
     "unfollow": 0.00,  # Unfollowing accounts
@@ -518,7 +533,7 @@ def build_agent(
     )
 
     action_suggester = MastodonActionSuggester(
-        model=model, logging_channel=measurements.get_channel("ActionSuggestor").on_next
+        model=model, logging_channel=measurements.get_channel("ActionSuggester").on_next
     )
     entity_components = [
         # Components that provide pre_act context.

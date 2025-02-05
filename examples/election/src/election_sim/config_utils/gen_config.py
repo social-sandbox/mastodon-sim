@@ -347,6 +347,36 @@ if __name__ == "__main__":
     Curious what others think. 🤔
     #StorhamptonElection #STEM'".
     """
+    custom_call_to_action = """
+    {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
+
+    Describe the kinds of social media engagement {name} receives and how they engage with the content of other users within this time period, in particular what social media actions they take.
+    Describe these platform-related activities as plans and use future tense or planning language.
+    Be specific, creative, and detailed in your description.
+    Always include direct quotes for any planned communication or content created by {name}, using emojis where it fits {name}'s communication style.
+    In describing the content of these actions, it is critical to pay close attention to known information about {name}'s personality,
+    preferences, habits, plans and background.
+    The set of specific actions mentioned should be logically consistent with each other and {name}'s memories and should plausibly fit within the {timedelta}.
+    Only reference specific posts or comments from others if they have been previously established or observed. Do not invent content of other users.
+    The description should include {name} posting at least one toot during this time, even if {name} is mostly reacting to other users' posts.
+
+    Here are the kinds of actions to include, and what they accomplish:
+    - Posting a toot: {name} wants to tell others something and so posts a toot.
+    - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
+    - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
+    - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
+
+    Here's an example description for a hypothetical Storhampton resident, specifically a programmer named Sarah:
+
+    "Sarah will check her home timeline on Storhampton.social and plans to engage posts by other users about the upcoming election.
+    In particular, she will post the following toot reflecting what she has observed in light of her interests:
+    'Has anyone heard anything from the candidates about teaching technology to kids in our community?
+    I just think this is such an important issue for us. The next generation of Storhamptons needs employable skills!
+    Curious what others think. 🤔
+    #StorhamptonElection #STEM'".
+
+    """
+    #     Importantly, the described plan must include at least one post in quoted text as in the above example."
 
     town_history = [
         "Storhampton is a small town with a population of approximately 2,500 people.",

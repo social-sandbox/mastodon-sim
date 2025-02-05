@@ -575,7 +575,8 @@ if __name__ == "__main__":
                                             "textAlign": "center",
                                             "background-color": "#f0f0f0",
                                             "cursor": "pointer",
-                                            "margin-bottom": "20px",
+                                            # "margin-bottom": "20px",
+                                            "margin-right": "100px",
                                             "padding": "30px",
                                         },
                                         multiple=False,
@@ -590,10 +591,11 @@ if __name__ == "__main__":
                                         id="upload-button-dashboard",
                                         n_clicks=0,
                                         style={
-                                            "width": "100px",
-                                            "height": "50px",
-                                            "font-size": "12px",
+                                            "width": "125px",
+                                            "height": "100px",
+                                            # "font-size": "12px",
                                             "padding": "30px",
+                                            "margin-top": "20px",
                                         },
                                     ),
                                 ],
@@ -814,7 +816,7 @@ if __name__ == "__main__":
         # Build Cytoscape elements
         elements = [
             {
-                "data": {"id": node, "label": node},
+                "data": {"id": node, "label": node.split(" ")[0]},
                 "classes": "default_node",
             }
             for node in follow_graph.nodes
@@ -870,9 +872,22 @@ if __name__ == "__main__":
                 "style": {
                     "curve-style": "bezier",
                     "target-arrow-shape": "triangle",
+                    "target-arrow-color": "#FFFFFF",
                     "opacity": 0.8,
                     "width": 2,
                     "line-color": "#FFFFFF",
+                },
+            },
+            {
+                "selector": ".interaction_edge",
+                "style": {
+                    "curve-style": "bezier",
+                    "target-arrow-shape": "triangle",
+                    "target-arrow-color": "#000000",
+                    "opacity": 0.8,
+                    "width": 4,
+                    "line-color": "#000000",
+                    "visibility": "hidden",
                 },
             },
             {
@@ -1134,7 +1149,7 @@ if __name__ == "__main__":
         vote_episodes = sorted(votes.keys())
         Bill_votes_over_time = []
         Bradley_votes_over_time = []
-
+        non_votes_over_time = []
         for ep in vote_episodes:
             ep_votes = votes[ep]
             total_ep_votes = len(ep_votes)
@@ -1147,6 +1162,11 @@ if __name__ == "__main__":
             Bradley_votes_over_time.append(
                 (Bradley_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
             )
+            non_votes_over_time.append(
+                ((total_ep_votes - Bradley_votes - Bill_votes) / total_ep_votes) * 100
+                if total_ep_votes > 0
+                else 0
+            )
 
         vote_line_fig = go.Figure()
         vote_line_fig.add_trace(
@@ -1154,7 +1174,7 @@ if __name__ == "__main__":
                 x=vote_episodes,
                 y=Bill_votes_over_time,
                 mode="lines+markers",
-                name="Bill",
+                name="for Bill",
                 line=dict(color="#1f77b4"),
             )
         )
@@ -1163,8 +1183,17 @@ if __name__ == "__main__":
                 x=vote_episodes,
                 y=Bradley_votes_over_time,
                 mode="lines+markers",
-                name="Bradley",
+                name="for Bradley",
                 line=dict(color="#ff7f0e"),
+            )
+        )
+        vote_line_fig.add_trace(
+            go.Scatter(
+                x=vote_episodes,
+                y=non_votes_over_time,
+                mode="lines+markers",
+                name="did not vote",
+                line=dict(color="#808080"),
             )
         )
         vote_line_fig.update_layout(
@@ -1173,10 +1202,18 @@ if __name__ == "__main__":
             yaxis={
                 "title": {"text": "Vote Percentage", "font": {"size": 10}},
                 "tickfont": {"size": 8},
+                "range": [0, 100],
             },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
         )
+        # # Update both y-axes
+        # interactions_line_fig.update_yaxes(
+        #     title_text="Action Rate of Active Users",
+        #     range=y_axis_range,
+        #     showgrid=True,
+        #     gridcolor="lightgray",
+        # )
 
         # Create the line graph showing interactions over time
         interaction_types = ["liked", "boosted", "replied", "posted"]

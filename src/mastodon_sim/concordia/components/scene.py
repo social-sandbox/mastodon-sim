@@ -53,40 +53,66 @@ DEFAULT_CALL_TO_SPEECH = (
     'Townsfolk -- "Good morning".\n'
 )
 
+# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
+#     Based on {name}'s current goal, plans and observations, what SINGLE specific action would they likely perform on their phone right now, and what information would they need to perform it?
+#     Use your plan for current phone usage, tagged as [Planned Actions for upcoming Phone Usage] in your observations, alongside your previous actiosn to actualize the plan conducted in the current usage, tagged as [Action done on phone] to decide your next single action.
+#     Mention a concrete action that can easily be converted into an API call, and don't answer with vague and general responses.
+
+#     Guidelines:
+#     1. Choose a single, specific action that can be performed using one app.
+#     2. Ensure the action is contextually appropriate, considering recent observations.
+#     3. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
+#     4. The action should adhere to {name}'s plans, but deviate if a more suitable option is presented.
+
+#     Examples of contextually appropriate actions:
+#     - Using the Mastodon app to read own timeline: {name} opens the Mastodon app and reads their feed.
+#     - Posting a toot: {name} opens the Mastodon app and posts a toot.
+#     - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
+#     - Liking a Mastodon post: {name} likes a post they have recently read with a given Toot ID. (Return toot ID of the post you want to like)
+#     - Replying to a Mastodon post: {name} replies to a post they have recently read with a given Toot ID.
+#     - Boosting a Mastodon post: {name} opens the Mastodon app to boost (Retweet) a toot - that shares it with their own followers. (Return Toot ID and the exact contents of the toot to be boosted.)
+#     - Read another user's timeline: If you find a user interesting you can view their past activity and timeline (include their first name)
+
+#     Remember:
+#     - Consider current observations so as not to repeat actions that have already been performed.
+#     - Certain actions require prior knowledge (e.g., liking or replying to a specific post) which would require reading that information recently
+#     - Don't suggest reading notifications or feeds if they've already been checked recently.
+#     - Consider the time of day and the agent's current situation when suggesting actions.
+#     - Ensure responses to other toots are done using the Toot Response feature and not in a new toot
+#     - If the action is a post or message, a direct quote of that post or message should be included.
+#     - If reading from a timeline or notifications, just state that — don't fabricate what has been read.
+
+#     Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
+#     {name} should like a toot if they agree with it.
+#     {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
+#   """)
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s current goal, plans and observations, what SINGLE specific action would they likely perform on their phone right now, and what information would they need to perform it?
-    Use your plan for current phone usage, tagged as tagged as [Planned Actions for upcoming Phone Usage] in your observations, alongside your previous actiosn to actualize the plan conducted in the current usage, tagged as [Action done on phone] to decide your next single action.
-    Mention a concrete action that can easily be converted into an API call, and don't answer with vague and general responses.
+    Based on {name}'s current goal, plans and observations, what SINGLE specific action on their phone would they likely perform now while on the storhampton.social Mastodon app, and what information would they need to perform it?
+    Base your response on the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage] in {name}'s recent observations above. Take into account the recent preceding actions {name} has taken to actualize this plan, each tagged as [Action done on phone] above, to decide your next single action.
+    In particular, know that {name} would likely post a toot if it hasn't yet in this period.
+    Describe this single concrete action in a way that can easily be converted into an Mastodon API call, and don't answer with vague and general responses.
 
     Guidelines:
-    1. Choose a single, specific action that can be performed using one app.
-    2. Ensure the action is contextually appropriate, considering recent observations.
+    1. Choose a single, specific action that can be performed on the app (there should be a bias towards posting toots).
+    2. Ensure the action's content is contextually appropriate, considering recent observations. Make sure the action (in particular the text) is not a repeat of a previously taken action.
     3. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs.
     4. The action should adhere to {name}'s plans, but deviate if a more suitable option is presented.
 
-    Examples of contextually appropriate actions:
-    - Using the Mastodon app to read own timeline: {name} opens the Mastodon app and reads their feed.
-    - Posting a toot: {name} opens the Mastodon app and posts a toot.
-    - Checking Mastodon notifications: "{name} reads their Mastodon notifications"
-    - Liking a Mastodon post: {name} likes a post they have recently read with a given Toot ID. (Return toot ID of the post you want to like)
-    - Replying to a Mastodon post: {name} replies to a post they have recently read with a given Toot ID.
-    - Boosting a Mastodon post: {name} opens the Mastodon app to boost (Retweet) a toot - that shares it with their own followers. (Return Toot ID and the exact contents of the toot to be boosted.)
-    - Read another user's timeline: If you find a user interesting you can view their past activity and timeline (include their first name)
+    Here are the kinds of actions to select from, and what they accomplish:
+    - Posting a toot: {name} wants to tell others something and so posts a toot.
+    - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
+    - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
+    - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
 
     Remember:
-    - Consider current observations so as not to repeat actions that have already been performed.
+    - Choose post or reply actions and follow up reply actions with post actions. {name} should post at least as often as reply.
+    - Consider current observations of past actions made in this period of usage so as not to repeat the exact same action (e.g. do not repeat making the exact same post or reply), and to balance the actions made (e.g. every period should have either a reply or a post and some boosts).
     - Certain actions require prior knowledge (e.g., liking or replying to a specific post) which would require reading that information recently
-    - Don't suggest reading notifications or feeds if they've already been checked recently.
     - Consider the time of day and the agent's current situation when suggesting actions.
-    - Ensure responses to other toots are done using the Toot Response feature and not in a new toot
-    - If the action is a post or message, a direct quote of that post or message should be included.
+    - Ensure direct responses to other toots are done using the Toot Reply action and not in a new post.
+    - If the action is a post or reply, a direct quote of that post or reply should be included.
     - If reading from a timeline or notifications, just state that — don't fabricate what has been read.
-
-    Note: Carefully look at most recent observations so as to not repeat any actions. Ensure you never repeat what you have already posted.
-    {name} should like a toot if they agree with it.
-    {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
-  """)
-
+""")
 _PHONE_ACTION_SPEC = agent.ActionSpec(
     call_to_action=_PHONE_CALL_TO_ACTION, output_type=OutputType.FREE, tag="phone"
 )
@@ -315,7 +341,7 @@ class _PhoneComponent(component.Component):
         action = app.actions()[action_index]
 
         # # pull out suggested action from action_suggester logging channge to store in output
-        # app.action_logger.dummy = self._player._component_logging.get_channel("ActionSuggester").queue[-1]["Selected action"]
+        app.action_logger.dummy = self._player._log["ActionSuggester"]["Selected action"]
 
         try:
             argument_text = chain_of_thought.open_question(

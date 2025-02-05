@@ -107,6 +107,8 @@ class GptLanguageModel(language_model.LanguageModel):
                 print(f"OpenAI API request exceeded rate limit: {e}")
 
         if self._measurements is not None:
+            if "suggest" in prompt:
+                print(prompt)
             answer = response.choices[0].message.content
             raw_text_length = len(answer) if answer else 0
             self._measurements.publish_datum(self._channel, {"raw_text_length": raw_text_length})
