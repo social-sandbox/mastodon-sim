@@ -1,3 +1,4 @@
+import json
 import os
 from collections.abc import Collection, Sequence
 
@@ -19,6 +20,8 @@ class GptLanguageModel(language_model.LanguageModel):
         api_key: str | None = None,
         measurements: measurements_lib.Measurements | None = None,
         channel: str = language_model.DEFAULT_STATS_CHANNEL,
+        log_file: str = "prompts_and_outputs.json",
+        debug: bool | None = True,
     ):
         """Initializes the instance.
 
@@ -37,6 +40,14 @@ class GptLanguageModel(language_model.LanguageModel):
         self._measurements = measurements
         self._channel = channel
         self._client = openai.OpenAI(api_key=self._api_key)
+        self._log_file = log_file
+        self.debug = debug
+
+    def _log(self, prompt: str, output: str):  ## Function for logging
+        log_entry = {"prompt": prompt, "output": output}
+        with open(self._log_file, "a") as f:  # Use "a" mode (append)
+            f.write(json.dumps(log_entry) + "\n")  # Write one JSON object per line
+            f.flush()  # Ensure immediate write
 
     def sample_text(
         self,
@@ -116,6 +127,8 @@ class GptLanguageModel(language_model.LanguageModel):
         answer = response.choices[0].message.content
         if answer is None:
             raise ValueError("Response content is None.")
+        if self.debug:
+            self._log(prompt, answer)
         return answer
 
     def sample_choice(
