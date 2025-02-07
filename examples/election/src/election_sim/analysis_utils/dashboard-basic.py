@@ -217,6 +217,9 @@ if __name__ == "__main__":
     # Create the layout with conditional sections
     app.layout = html.Div(
         [
+            html.H1(
+                id="dashboard-title", children="Social Sandbox Dashboard"
+            ),  # Add this line before the dashboard div
             # Store component to hold serialized data
             dcc.Store(id="data-store", data=serialized_initial_data),
             # Upload Screen
@@ -644,6 +647,7 @@ if __name__ == "__main__":
     # Combined Callback for Initial and Dashboard Uploads
     @app.callback(
         [
+            Output("dashboard-title", "children"),
             Output("data-store", "data"),
             Output("upload-error-message", "children"),
             Output("error-message", "children"),
@@ -680,6 +684,7 @@ if __name__ == "__main__":
 
         triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
+        dashboard_title_with_filename = "Social Sandbox Dashboard: " + app_logger_filename_initial
         try:
             if triggered_id == "submit-button":
                 # Handle initial upload
@@ -705,7 +710,7 @@ if __name__ == "__main__":
                         votes_new,
                     )
 
-                    return serialized_new_data, "", ""
+                    return dashboard_title_with_filename, serialized_new_data, "", ""
                 raise ValueError("Output Log file required.")
 
             if triggered_id == "upload-button-dashboard":
@@ -731,8 +736,11 @@ if __name__ == "__main__":
                         toots_new,
                         votes_new,
                     )
+                    dashboard_title_with_filename = (
+                        "Social Sandbox Dashboard: " + app_logger_filename_dashboard
+                    )  # app_logger_filename_initial
 
-                    return serialized_new_data, "", ""
+                    return dashboard_title_with_filename, serialized_new_data, "", ""
                 raise ValueError("Output Log files required for dashboard upload.")
 
             raise dash.exceptions.PreventUpdate

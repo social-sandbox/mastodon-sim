@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(description="Experiment parameters")
 
 parser.add_argument("--seed", type=int, default=1, help="seed used for python's random module")
 parser.add_argument("--T", type=int, default=1, help="number of episodes")  # 48
-parser.add_argument("--exp", type=str, default="independent", help="experiment name")
+parser.add_argument("--voters", type=str, default="independent", help="voter setting")
 parser.add_argument(
     "--outdir", type=str, default="output/", help="name of directory where output will be written"
 )
@@ -118,7 +118,7 @@ def clear_mastodon_server(max_num_players):
     assert not len(get_public_timeline(limit=None)), "All posts not cleared"
 
 
-def select_large_language_model():
+def select_large_language_model(log_file, debug_mode):
     if "sonnet" in MODEL_NAME:
         model = amazon_bedrock_model.AmazonBedrockLanguageModel(
             model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"
@@ -127,7 +127,9 @@ def select_large_language_model():
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
-        model = media_utils.GptLanguageModel(api_key=GPT_API_KEY, model_name=MODEL_NAME)
+        model = media_utils.GptLanguageModel(
+            api_key=GPT_API_KEY, model_name=MODEL_NAME, log_file=log_file, debug=debug_mode
+        )
     else:
         raise ValueError("Unknown model name.")
     return model
@@ -141,11 +143,15 @@ def get_sentance_encoder():
 
 
 # NA - add news agent while setting up the mastodon app
-def add_news_agent_to_mastodon_app(news_agent, action_logger, players, mastodon_apps):
+def add_news_agent_to_mastodon_app(
+    news_agent, action_logger, players, mastodon_apps, app_description
+):
     user_mapping = mastodon_apps[players[0].name].get_user_mapping()
     for i, n_agent in enumerate(news_agent):
         mastodon_apps[n_agent["name"]] = apps.MastodonSocialNetworkApp(
-            action_logger=action_logger, perform_operations=USE_MASTODON_SERVER
+            action_logger=action_logger,
+            perform_operations=USE_MASTODON_SERVER,
+            app_description=app_description,
         )
         # We still need to give the news agent a phone to be able to post toots #TODO we are not sure if we need to do this
         # phones[n_agent["name"]] = apps.Phone(n_agent["name"], apps=[mastodon_apps[n_agent["name"].split()[0]]])
@@ -184,12 +190,14 @@ def add_news_agent_to_mastodon_app(news_agent, action_logger, players, mastodon_
                     print(f"Ignoring already-following error: {e}")
 
 
-def set_up_mastodon_app(players, ag_names, action_logger):  # , output_rootname):
+def set_up_mastodon_app(players, ag_names, action_logger, app_description):  # , output_rootname):
     # apps.set_app_output_write_path(output_rootname)
 
     mastodon_apps = {
         player.name: apps.MastodonSocialNetworkApp(
-            action_logger=action_logger, perform_operations=USE_MASTODON_SERVER
+            action_logger=action_logger,
+            perform_operations=USE_MASTODON_SERVER,
+            app_description=app_description,
         )
         for player in players
     }
@@ -425,6 +433,7 @@ def run_sim(
     embedder,
     agent_data,
     shared_memories,
+    app_description,
     news_agent,  # NA news agent is None when it's not used in the simulation
     custom_call_to_action,
     candidate_info,
@@ -469,7 +478,9 @@ def run_sim(
     action_event_logger = event_logger("action", output_rootname)
     action_event_logger.episode_idx = -1
 
-    mastodon_apps, phones = set_up_mastodon_app(players, ag_names, action_event_logger)
+    mastodon_apps, phones = set_up_mastodon_app(
+        players, ag_names, action_event_logger, app_description
+    )
 
     action_spec = ActionSpec(
         call_to_action=custom_call_to_action,
@@ -513,7 +524,9 @@ def run_sim(
 
     # NA - add news agent to the simulation
     if news_agent is not None:
-        add_news_agent_to_mastodon_app(news_agent, action_event_logger, players, mastodon_apps)
+        add_news_agent_to_mastodon_app(
+            news_agent, action_event_logger, players, mastodon_apps, app_description
+        )
         post_seed_toots_news_agents(news_agent, mastodon_apps)
         scheduled_news_agents = []
         news_agent_datetimes = get_post_times_news_agent(news_agent)
@@ -538,6 +551,7 @@ def run_sim(
         print(f"Episode: {i}")
         eval_event_logger.episode_idx = i
         action_event_logger.episode_idx = i
+        model.meta_data["episode_idx"] = i
         for player in players:
             player_dir = os.path.join("output/player_checkpoints", player.name)
             os.makedirs(player_dir, exist_ok=True)
@@ -580,10 +594,6 @@ def run_sim(
 
 
 if __name__ == "__main__":
-    # external objects
-    model = select_large_language_model()
-    embedder = get_sentance_encoder()
-
     if args.config is not None:
         print(f"using config:{args.config}")
         config_name = args.config
@@ -591,25 +601,22 @@ if __name__ == "__main__":
         # generate config using automation script
 
         # there are 3 experiments:
-        # experiment_name = "independent"
-        # experiment_name = "bias"
-        # experiment_name = "malicious"
-        experiment_name = args.exp
+        # voters = "independent"
+        # voters = "bias"
+        # voters = "malicious"
         # N = 100
         N = 20
         # survey = "None.Big5"
         # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
         survey = "Reddit.Big5"
-        config_name = (
-            "testnewcodepost07sugact_"
-            + args.news_file
-            + f"_N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{experiment_name}.json"
-        )
+        expname = "v2maincall2act"
+        expname = "v4maincall2act"
+        config_name = f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}.json"
 
         if survey == "Reddit.Big5":
             os.system(
                 f"python src/election_sim/config_utils/gen_config.py "
-                f"--exp_name {experiment_name} "
+                f"--exp_name {args.voters} "
                 f"--survey {survey} "
                 f"--cfg_name {config_name} "
                 f"--num_agents {N} "
@@ -618,10 +625,15 @@ if __name__ == "__main__":
             )
         else:
             os.system(
-                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {experiment_name} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
+                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {args.voters} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
                 + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
             )
 
+    # external objects
+    model = select_large_language_model(
+        args.outdir + config_name + "prompts_and_responses.jsonl", True
+    )
+    embedder = get_sentance_encoder()
     with open(config_name) as file:
         config_data = json.load(file)
 
@@ -663,7 +675,7 @@ if __name__ == "__main__":
             config_data["candidate_info"][p]["policy_proposals"]
             for p in list(config_data["candidate_info"].keys())
         ]
-        + config_data["mastodon_usage_instructions"]
+        + [config_data["mastodon_usage_instructions"]]
     )
 
     run_sim(
@@ -671,6 +683,7 @@ if __name__ == "__main__":
         embedder,
         config_data["agents"],
         shared_memories,
+        config_data["mastodon_usage_instructions"],
         # NA add the news agent, if not used in the simulation, it will be None
         config_data["news_agents"],
         config_data["custom_call_to_action"],

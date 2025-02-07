@@ -20,7 +20,7 @@ class GptLanguageModel(language_model.LanguageModel):
         api_key: str | None = None,
         measurements: measurements_lib.Measurements | None = None,
         channel: str = language_model.DEFAULT_STATS_CHANNEL,
-        log_file: str = "prompts_and_outputs.json",
+        log_file: str = "prompts_and_outputs.jsonl",
         debug: bool | None = True,
     ):
         """Initializes the instance.
@@ -42,9 +42,10 @@ class GptLanguageModel(language_model.LanguageModel):
         self._client = openai.OpenAI(api_key=self._api_key)
         self._log_file = log_file
         self.debug = debug
+        self.meta_data = {"episode_idx": -1, "player_name": ""}
 
     def _log(self, prompt: str, output: str):  ## Function for logging
-        log_entry = {"prompt": prompt, "output": output}
+        log_entry = {"prompt": prompt, "output": output} | self.meta_data
         with open(self._log_file, "a") as f:  # Use "a" mode (append)
             f.write(json.dumps(log_entry) + "\n")  # Write one JSON object per line
             f.flush()  # Ensure immediate write
@@ -118,8 +119,6 @@ class GptLanguageModel(language_model.LanguageModel):
                 print(f"OpenAI API request exceeded rate limit: {e}")
 
         if self._measurements is not None:
-            if "suggest" in prompt:
-                print(prompt)
             answer = response.choices[0].message.content
             raw_text_length = len(answer) if answer else 0
             self._measurements.publish_datum(self._channel, {"raw_text_length": raw_text_length})

@@ -371,18 +371,30 @@ def _parse_argument_text(args_text: str) -> dict[str, str]:
     return {m.group("param"): m.group("value").strip() for m in matches if m.group("value").strip()}
 
 
+()
 # region[Mastodon Social Network App]
 
 
 @dataclasses.dataclass
 class MastodonSocialNetworkApp(PhoneApp):
     """Mastodon social network app.
-
+        description = (
+            "MastodonSocialNetworkApp is a social media application similar to"
+            " Twitter that allows users to interact on social media.\n\n    This"
+            " app provides functionality for users to post status updates (toots), follow"
+            " other users, like, boost, and respond to posts, and manage their"
+            " notifications.\n\n    Critically important: Operations such as"
+            " liking, boosting, replying, etc. require a `toot_id`. To obtain a"
+            " `toot_id`, you must have memory/knowledge of a real `toot_id`. If you"
+            " don't know a `toot_id`, you can't perform actions that require it."
+            " `toot_id`'s can be retrieved using the `get_timeline` action."
+        )
     A social media application similar to Twitter that allows users to interact on social media.
     """
 
     action_logger: Any = None
     perform_operations: bool = True
+    app_description: str = "MastodonSocialNetworkApp"
     _log_color: COLOR_TYPE = dataclasses.field(default="blue", init=False)
     _mastodon_ops: Any = dataclasses.field(default=None, init=False)
     _user_mapping: dict[str, str] = dataclasses.field(default_factory=dict, init=False)
@@ -400,18 +412,7 @@ class MastodonSocialNetworkApp(PhoneApp):
 
     def description(self) -> str:
         """Define the description of the app."""
-        description = (
-            "MastodonSocialNetworkApp is a social media application similar to"
-            " Twitter that allows users to interact on social media.\n\n    This"
-            " app provides functionality for users to post status updates (toots), follow"
-            " other users, like, boost, and respond to posts, and manage their"
-            " notifications.\n\n    Critically important: Operations such as"
-            " liking, boosting, replying, etc. require a `toot_id`. To obtain a"
-            " `toot_id`, you must have memory/knowledge of a real `toot_id`. If you"
-            " don't know a `toot_id`, you can't perform actions that require it."
-            " `toot_id`'s can be retrieved using the `get_timeline` action."
-        )
-        return description
+        return self.app_description
 
     def set_user_mapping(self, mapping: dict[str, str]) -> None:
         """Set the mapping of display names to usernames."""

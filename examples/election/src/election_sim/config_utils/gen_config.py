@@ -319,6 +319,65 @@ def generate_news_agent_toot_post_times(agent):
 
 if __name__ == "__main__":
     candidate_configs, candidate_info = get_candidate_configs(args)
+    # custom_call_to_action = """
+    # {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
+
+    # Describe the social media engagement {name} receives and how {name} plans to engage with the content of other users within this time period, with a diverse mix of social media actions.
+
+    # Possible Actions:
+    # 1. Post - New Content Creation:
+    # - Post an original toot sharing thoughts, observations, or updates
+    # - Include relevant hashtags and emoticons matching {name}'s style
+
+    # 2. Reply - Direct Engagement:
+    # - Reply to at least one existing post (reference Toot ID)
+    # - Ensure the reply reflects {name}'s personality and expertise
+
+    # 3. Boost - Content Sharing:
+    # - Boost at least one meaningful post (provide Toot ID and full content)
+    # - Choose content aligned with {name}'s interests and values
+
+    # 4. Like and follow - Positive Engagement:
+    # - Like multiple posts that resonate with {name} (list Toot IDs)
+    # - If not already followed, follow users that {name} engages with (provide user name)
+
+    # An example of a description looks like this:
+    # "
+    # Sarah opens Storhampton.social to check updates about the upcoming election.
+
+    # Post: She drafts a thoughtful question for the community:
+    # 'Has anyone heard anything from the candidates about teaching technology to kids? Such an important issue for Storhampton's future! 🤔 #StorhamptonElection #STEM'
+
+    # Reply: Seeing TootID#4586 about coding workshops, she replies:
+    # 'Love this initiative! I'd be happy to volunteer as an instructor. Been teaching Python for 5 years! 👩‍💻'
+
+    # Boost: She boosts Toot ID 113953527078596095 from :
+    # 'Announcing free tech workshops at Storhampton Library every Saturday! All ages welcome.'
+
+    # Like and follow: She likes several posts:
+    # - Toot ID 113953514651574820: Library's new computer lab announcement
+    # - Toot ID 113953511071097171: Student showcasing coding project
+    # - Toot ID 113953514651574820: Discussion about digital literacy
+    # "
+
+    # Guidelines:
+    # 1. Use future tense or planning language for all activities
+    # 2. Provide specific, creative details that build a coherent narrative
+    # 3. Be specific when describing the actions in {name}'s plan.
+    # 3. Put quotes around all planned communications, using appropriate emojis
+    # 4. Align content with {name}'s established:
+    # - Personality traits
+    # - Professional background
+    # - Personal interests
+    # - Communication style
+    # - Current plans and goals
+    # 5. Ensure logical consistency:
+    # - Between different actions
+    # - With {name}'s memories and observations
+    # - Within the {timedelta} timeframe
+    # 6. Only reference actual, user-generated content. Do not fabricate users or viewed content.
+    # 7. Balance professional and personal engagement
+    # """
 
     custom_call_to_action = """
     {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
@@ -347,35 +406,63 @@ if __name__ == "__main__":
     Curious what others think. 🤔
     #StorhamptonElection #STEM'".
     """
-    custom_call_to_action = """
-    {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
 
-    Describe the kinds of social media engagement {name} receives and how they engage with the content of other users within this time period, in particular what social media actions they take.
-    Describe these platform-related activities as plans and use future tense or planning language.
-    Be specific, creative, and detailed in your description.
-    Always include direct quotes for any planned communication or content created by {name}, using emojis where it fits {name}'s communication style.
-    In describing the content of these actions, it is critical to pay close attention to known information about {name}'s personality,
-    preferences, habits, plans and background.
-    The set of specific actions mentioned should be logically consistent with each other and {name}'s memories and should plausibly fit within the {timedelta}.
-    Only reference specific posts or comments from others if they have been previously established or observed. Do not invent content of other users.
-    The description should include {name} posting at least one toot during this time, even if {name} is mostly reacting to other users' posts.
+    # custom_call_to_action = """
+    # {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
 
-    Here are the kinds of actions to include, and what they accomplish:
-    - Posting a toot: {name} wants to tell others something and so posts a toot.
-    - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
-    - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
-    - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
+    # Describe the social media engagement {name} receives and how {name} engages with the content of other users within this time period, in particular what social media actions {name} takes.
 
-    Here's an example description for a hypothetical Storhampton resident, specifically a programmer named Sarah:
+    # Here are the kinds of actions to include, and what they accomplish:
+    # - Posting a toot: {name} wants to tell others something and so posts a toot.
+    # - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
+    # - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
+    # - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
 
-    "Sarah will check her home timeline on Storhampton.social and plans to engage posts by other users about the upcoming election.
-    In particular, she will post the following toot reflecting what she has observed in light of her interests:
-    'Has anyone heard anything from the candidates about teaching technology to kids in our community?
-    I just think this is such an important issue for us. The next generation of Storhamptons needs employable skills!
-    Curious what others think. 🤔
-    #StorhamptonElection #STEM'".
+    # Here's an example description for a hypothetical Storhampton resident, specifically a programmer named Sarah:
 
-    """
+    # "Sarah will check her home timeline on Storhampton.social and plans to engage posts about the upcoming election.
+    # Then she will post the following toot reflecting what she has observed in light of her interests:
+    # 'Has anyone heard anything from the candidates about teaching technology to kids in our community?
+    # I just think this is such an important issue for us. The next generation of Storhamptons needs employable skills!
+    # Curious what others think. 🤔
+    # #StorhamptonElection #STEM'".
+
+    # Guidelines:
+    # 1. Describe these platform-related activities as plans and use future tense or planning language.
+    # 2. Be specific, creative, and detailed in your description.
+    # 3. Always include direct quotes around any planned communication or content created by {name}, using emojis where it fits {name}'s communication style.
+    # 4. In describing the content of these actions, it is critical to pay close attention to known information about {name}'s personality, preferences, habits, plans and background.
+    # 5. The set of specific actions mentioned should be logically consistent with each other and with and {name}'s previous observations; they should all be clearly distinct (no repetitions); and should plausibly fit within the {timedelta}.
+    # 6. Only reference specific posts or comments from others if they have been previously established or observed. Do not fabricate content of other users.
+    # """
+    # custom_call_to_action = """
+    # {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
+
+    # Describe the kinds of social media engagement {name} receives and how they engage with the content of other users within this time period, in particular what social media actions they take.
+    # Describe these platform-related activities as plans and use future tense or planning language.
+    # Be specific, creative, and detailed in your description.
+    # Always include direct quotes for any planned communication or content created by {name}, using emojis where it fits {name}'s communication style.
+    # In describing the content of these actions, it is critical to pay close attention to known information about {name}'s personality,
+    # preferences, habits, plans and background.
+    # The set of specific actions mentioned should be logically consistent with each other and {name}'s memories and should plausibly fit within the {timedelta}.
+    # Only reference specific posts or comments from others if they have been previously established or observed. Do not invent content of other users.
+    # The description should include {name} posting at least one toot during this time, even if {name} is mostly reacting to other users' posts.
+
+    # Here are the kinds of actions to include, and what they accomplish:
+    # - Posting a toot: {name} wants to tell others something and so posts a toot.
+    # - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
+    # - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
+    # - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
+
+    # Here's an example description for a hypothetical Storhampton resident, specifically a programmer named Sarah:
+
+    # "Sarah will check her home timeline on Storhampton.social and plans to engage posts by other users about the upcoming election.
+    # In particular, she will post the following toot reflecting what she has observed in light of her interests:
+    # 'Has anyone heard anything from the candidates about teaching technology to kids in our community?
+    # I just think this is such an important issue for us. The next generation of Storhamptons needs employable skills!
+    # Curious what others think. 🤔
+    # #StorhamptonElection #STEM'".
+    # """
     #     Importantly, the described plan must include at least one post in quoted text as in the above example."
 
     town_history = [
@@ -385,39 +472,47 @@ if __name__ == "__main__":
         "Storhampton's population consists of 60%% native-born residents and 40%% immigrants from various countries. ",
         "Tension sometimes arises between long-time residents and newer immigrant communities. ",
         "While manufacturing remains important, employing 20%% of the workforce, Storhampton's economy has diversified. "
-        "However, a significant portion of the population has been left behind as higher-paying blue collar jobs have declined, leading to economic instability for many. ",
-        "The poverty rate stands at 15%.",
+        "A significant portion of the Storhampton population has been left behind as higher-paying blue collar jobs have declined, leading to economic instability for many. ",
+        "The Storhampton poverty rate stands at 15%.",
     ]
 
     shared_memories_template = (
         [
-            "You are a user on Storhampton.social, a Mastodon instance created for the residents of Storhampton."
+            "{name} is a user on Storhampton.social, a Mastodon instance created for the residents of Storhampton."
         ]
         + town_history
         + [
-            "Mayoral Elections: The upcoming mayoral election in Storhampton has become a heated affair.",
-            "Social media has emerged as a key battleground in the race, with both candidates actively promoting themselves and engaging with voters.",
-            "Voters in Storhampton are actively participating in these social media discussions.",
-            "Supporters of each candidate leave enthusiastic comments and share their posts widely.",
-            f"Critics also chime in, for example attacking {candidate_info['conservative']['name']} as out-of-touch and beholden to corporate interests,",
-            f" or labeling {candidate_info['progressive']['name']} as a radical who will undermine law and order.",
-            "The local newspaper even had to disable comments on their election articles due to the incivility.",
+            "\n".join(
+                [
+                    "Mayoral Elections: The upcoming mayoral election in Storhampton has become a heated affair.",
+                    "Social media has emerged as a key battleground in the race, with both candidates actively promoting themselves and engaging with voters.",
+                    "Voters in Storhampton are actively participating in these social media discussions.",
+                    "Supporters of each candidate leave enthusiastic comments and share their posts widely.",
+                    f"Critics also chime in, for example attacking {candidate_info['conservative']['name']} as out-of-touch and beholden to corporate interests,",
+                    f" or labeling {candidate_info['progressive']['name']} as a radical who will undermine law and order.",
+                    "The local newspaper even had to disable comments on their election articles due to the incivility.",
+                ]
+            )
         ]
     )
-    mastodon_usage_instructions = [
-        "To share content on Mastodon, you write a 'toot' (equivalent to a tweet or post).",
-        "Toots can be up to 500 characters long.",
-        "Your home timeline shows toots from people you follow and boosted (reblogged) content.",
-        "You can reply to toots, creating threaded conversations.",
-        "Favorite (like) toots to show appreciation or save them for later.",
-        "Boost (reblog) toots to share them with your followers.",
-        "You can mention other users in your toots using their @username.",
-        "Follow other users to see their public and unlisted toots in your home timeline.",
-        "You can unfollow users if you no longer wish to see their content.",
-        "Your profile can be customized with a display name and bio.",
-        "You can block users to prevent them from seeing your content or interacting with you.",
-        "Unblocking a user reverses the effects of blocking.",
-    ]
+    mastodon_usage_instructions = "\n".join(
+        [
+            "MastodonSocialNetworkApp is a social media application",
+            "To share content on Mastodon, users write a 'toot' (equivalent to a tweet or post).",
+            "Toots can be up to 500 characters long.",
+            "A user's home timeline shows toots from people they follow and boosted (reblogged) content.",
+            "Users can reply to toots, creating threaded conversations.",
+            "Users can like (favorite) toots to show appreciation or save them for later.",
+            "Users can boost (reblog) toots to share them with their followers.",
+            "Users can mention other users in their toots using their @username.",
+            "Follow other users to see their public and unlisted toots in their home timeline.",
+            "Users can unfollow users if they no longer wish to see their content.",
+            "A user's profile can be customized with a display name and bio.",
+            "A user can block other users to prevent them from seeing the user's content or interacting with them.",
+            "Unblocking a user reverses the effects of blocking.",
+            "Critically important: Operations such as liking, boosting, replying, etc. require a `toot_id`. To obtain a `toot_id`, you must have memory/knowledge of a real `toot_id`. If you don't know a `toot_id`, you can't perform actions that require it. `toot_id`'s can be retrieved using the `get_timeline` action.",
+        ]
+    )
 
     # experiment settings
     experiment_name = args.exp_name

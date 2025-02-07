@@ -239,6 +239,7 @@ class SimpleGameRunner:
 
     def _step_player(self, player):
         """Run a single player's action and trigger their phone scene."""
+        self.model.meta_data["player_name"] = player.name
         try:
             # 1. Player takes action
             action = player.act(self.action_spec)
