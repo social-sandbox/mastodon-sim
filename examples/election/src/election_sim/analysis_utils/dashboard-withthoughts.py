@@ -465,22 +465,22 @@ if __name__ == "__main__":
                                             "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
                                         },
                                     ),
-                                    dcc.Dropdown(
-                                        id="mode-dropdown",
-                                        options=[
-                                            {"label": "Universal View", "value": "normal"},
-                                            {"label": "Active View", "value": "focused"},
-                                        ],
-                                        value="normal",
-                                        clearable=False,
-                                        style={
-                                            "padding": "10px",
-                                            "font-size": "16px",
-                                            "font-weight": "bold",
-                                            "width": "200px",
-                                            "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
-                                        },
-                                    ),
+                                    # dcc.Dropdown(
+                                    #     id="mode-dropdown",
+                                    #     options=[
+                                    #         {"label": "Universal View", "value": "normal"},
+                                    #         {"label": "Active View", "value": "focused"},
+                                    #     ],
+                                    #     value="normal",
+                                    #     clearable=False,
+                                    #     style={
+                                    #         "padding": "10px",
+                                    #         "font-size": "16px",
+                                    #         "font-weight": "bold",
+                                    #         "width": "200px",
+                                    #         "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                                    #     },
+                                    # ),
                                 ],
                                 style={
                                     "position": "absolute",
@@ -643,6 +643,7 @@ if __name__ == "__main__":
                             "margin-bottom": "20px",
                         },
                     ),
+                    html.Label("Select Episode:"),
                     # Episode slider
                     dcc.Slider(
                         id="episode-slider",
@@ -681,7 +682,7 @@ if __name__ == "__main__":
                                 style={"margin": "20px 0", "textAlign": "center"},
                             ),
                             html.H2(
-                                "Processing within the selected agent and episode",
+                                "Within-agent processing for selected agent and episode",
                                 style={"textAlign": "center"},
                             ),
                             html.Div(id="jsonl-output"),
@@ -894,12 +895,12 @@ if __name__ == "__main__":
         ],
         [
             Input("episode-slider", "value"),
-            Input("mode-dropdown", "value"),
+            # Input("mode-dropdown", "value"),
             Input("name-selector", "value"),  # Added Input
             Input("data-store", "data"),  # Added Input to trigger update on data change
         ],
     )
-    def update_graph(selected_episode, selected_mode, selected_name, data_store):
+    def update_graph(selected_episode, selected_name, data_store):  # selected_mode,
         if not data_store:
             # If no data is present, return defaults
             return (

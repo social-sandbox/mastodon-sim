@@ -120,7 +120,7 @@ DEFAULT_CALL_TO_SPEECH = (
 #     {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
 # """)
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s current goal, plans and observations, what SINGLE specific action on their phone would they likely perform now while on the storhampton.social Mastodon app, and what information would they need to perform it?
+    Based on {name}'s goal and current plan and observations, and being careful not to repeat a previously taken action, what SINGLE specific action on their phone would they likely perform now while on the storhampton.social Mastodon app, and what information would they need to perform it?
 
     Here is a list of the kinds of actions to select from, and what they accomplish:
     - Posting a toot: {name} wants to tell others something and so posts a toot.
@@ -128,12 +128,12 @@ _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
     - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
     - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
 
-    Guidelines:
-    1. Choose a single, specific action from the above list that can be performed on the app. Be precise and specific.
-    2. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs that can easily be converted into an Mastodon API call.
-    3. For actions that require prior knowledge (e.g., liking or replying to a specific post),include that information as previously observed. Do not fabricate this information. If the action is a post or reply, a direct quote of that post or reply should be included.
-    4. Use the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage] in {name}'s recent observations above.
-    5. NEVER repeat a recently taken action (tagged as [Action done on phone] in the above), the action should have novel motivation and content, distinct from those actions already taken.
+    Guidelines on how to select an action:
+    1. Select a single action from the above list adn be precise and specific when describing its properties.
+    2. NEVER repeat a recently taken action (tagged as [Action done on phone] in the above). The action must have novel and distinct motivation and content from the actions described after [Action done on phone] in the above transcript.
+    3. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs that can easily be converted into an Mastodon API call.
+    4. For actions that require prior knowledge (e.g., liking or replying to a specific post),include that information as previously observed. Do not fabricate this information. If the action is a post or reply, a direct quote of that post or reply should be included.
+    5. Use the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage] in {name}'s recent observations above.
     6. The action should adhere to {name}'s plans and, if not inconsistent with the other guidelines, be the suggested action listed above with [Suggested Action]. The action can, however, deviate if a more suitable option is presented given the engagement {name} receives.
     7. Ensure direct responses to other toots are done using the Toot Reply action and not in a new post.
     """)
@@ -361,13 +361,13 @@ class _PhoneComponent(component.Component):
 
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(event_statement)
-        check_post = chain_of_thought.yes_no_question(
-            "Does the action in the above transcript involve the user posting a toot, replying to a toot, or boosting a toot?"
-        )
+        # check_post = chain_of_thought.yes_no_question(
+        #     "Does the action in the above transcript involve the user posting a toot, replying to a toot, or boosting a toot?"
+        # )
         # print(check_post)
         # if check_post:
         check_dup = chain_of_thought.yes_no_question(
-            "Would {self_player.name} see this action as essentially acheiving the same thing as an action in the following list describing previously taken actions? (Answer No if the list is empty.): \nPrevious actions:\n"
+            f"Would {self._player.name} see this action as essentially acheiving the same thing as an action in the following list describing previously taken actions? (Answer No if the list is empty.): \nPrevious actions:\n"
             + "\n- ".join(self._state)
         )
         # print(check_dup)

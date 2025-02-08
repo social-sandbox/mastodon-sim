@@ -318,27 +318,30 @@ def post_seed_toots_news_agents(news_agent, mastodon_apps):
             future.result()  # This will raise any exceptions that occurred in the thread, if any
 
 
-def get_post_times(players, ag_names):
-    num_posts_malicious = 30
-    num_posts_candidates = 30
-    num_posts_nonmalicious = 5
-    players_datetimes = {
-        player: [
-            datetime.datetime.now().replace(
-                hour=random.randint(0, 23),
-                minute=random.choice([0, 30]),
-                second=0,
-                microsecond=0,
-            )  # Zeroing out seconds and microseconds for cleaner output
-            for _ in range(
-                num_posts_malicious
-                if player.name in list(ag_names["malicious"].keys()) + ag_names["candidate"]
-                else num_posts_nonmalicious
-            )
-        ]
-        for player in players
-    }
-    return players_datetimes
+# def get_post_times(players, ag_names, episode_length):
+#     post_rates_per_episode={
+#         "malicious": 1,
+#         "candidates": 0.5,
+#         "nonmalicious": 0.3
+#     }
+
+#     players_datetimes = {
+#         player: [
+#             datetime.datetime.now().replace(
+#                 hour=random.randint(0, 23),
+#                 minute=random.choice([0, 30]),
+#                 second=0,
+#                 microsecond=0,
+#             )  # Zeroing out seconds and microseconds for cleaner output
+#             for _ in range(
+#                 num_posts_malicious
+#                 if player.name in list(ag_names["malicious"].keys()) + ag_names["candidate"]
+#                 else num_posts_nonmalicious
+#             )
+#         ]
+#         for player in players
+#     }
+#     return players_datetimes
 
 
 # NA getting post times for the news agent
@@ -366,25 +369,46 @@ def get_post_times_news_agent(news_agent):
     return news_agent_datetimes
 
 
-def get_matching_players(players_datetimes, clock, post_rate_of_per_step_topup):
-    matching_players = []
-    # Loop through each player and their associated datetime objects
-    for player_name, datetimes in players_datetimes.items():
-        added = False  # Flag to check if player was already added
-        for datetime_obj in datetimes:
-            # Check if the hour and minute match the current time (ignoring seconds and microseconds)
-            if (
-                datetime_obj.time().hour == clock.now().hour
-                and datetime_obj.time().minute == clock.now().minute
-            ):
-                matching_players.append(player_name)
-                added = True
-                break
+def get_active_players(players, ag_names):
+    active_rates_per_episode = {
+        "malicious": 0.9,
+        "candidate": 0.7,
+        "active_voter": 0.5,  # 0.3
+    }
+    active_players = []
+    for player in players:
+        for agent_type in ag_names.keys():
+            if agent_type == "malicious":
+                if player.name in ag_names[agent_type].keys():
+                    active_rate = active_rates_per_episode[agent_type]
+            elif player.name in ag_names[agent_type]:
+                active_rate = active_rates_per_episode[agent_type]
+        if (
+            random.random() < active_rate
+        ):  # active_rate could be a agent engagement component that could be based on a time-varying rate process updated at each episode according to response about how engaged agent is feeling
+            active_players.append(player.name)
+    return active_players
 
-        # If player is not added by matching time, check for random addition (15% chance)
-        if not added and random.random() < post_rate_of_per_step_topup:
-            matching_players.append(player_name)
-    return matching_players
+
+# def get_matching_players(players_datetimes, clock, post_rate_of_per_step_topup):
+#     matching_players = []
+#     # Loop through each player and their associated datetime objects
+#     for player_name, datetimes in players_datetimes.items():
+#         added = False  # Flag to check if player was already added
+#         for datetime_obj in datetimes:
+#             # Check if the hour and minute match the current time (ignoring seconds and microseconds)
+#             if (
+#                 datetime_obj.time().hour == clock.now().hour
+#                 and datetime_obj.time().minute == clock.now().minute
+#             ):
+#                 matching_players.append(player_name)
+#                 added = True
+#                 break
+
+#         # If player is not added by matching time, check for random addition (15% chance)
+#         if not added and random.random() < post_rate_of_per_step_topup:
+#             matching_players.append(player_name)
+#     return matching_players
 
 
 # NA - object to represent a scheduled news agents that can post toots on a schedule
@@ -464,7 +488,6 @@ def run_sim(
     NUM_PLAYERS = len(agent_data)
     ag_names, player_configs = sort_agents(agent_data)
     player_configs = player_configs[:NUM_PLAYERS]
-    player_goals = {player_config.name: player_config.goal for player_config in player_configs}
 
     players = []
     memories = {}
@@ -517,10 +540,10 @@ def run_sim(
     post_seed_toots(agent_data, players, mastodon_apps)
 
     # Generate random datetime objects for each player
-    players_datetimes = get_post_times(players, ag_names)
-    post_rate_of_per_step_topup = (
-        0.15  # TODO: remove this with reformulation to a single step process
-    )
+    # players_datetimes = get_post_times(players, ag_names, episode_length)
+    # post_rate_of_per_step_topup = (
+    # 0.15  # TODO: remove this with reformulation to a single step process
+    # )
 
     # initialize
     eval_event_logger = event_logger("eval", output_rootname)
@@ -546,10 +569,6 @@ def run_sim(
             )
 
     # main loop
-    time_intervals = []
-    prompt_token_intervals = []
-    completion_token_intervals = []
-    player_copy_list = []
     start_time = time.time()  # Start timing
     model.player_names = [player.name for player in players]
     for i in range(episode_length):
@@ -568,14 +587,14 @@ def run_sim(
         deploy_surveys(players, eval_config, eval_event_logger)
 
         start_timex = time.time()
-        matching_players = get_matching_players(
-            players_datetimes, clock, post_rate_of_per_step_topup
-        )
-        print(
-            f"{time.time() - start_timex} elapsed. Players added to the list:",
-            [player.name for player in matching_players],
-        )
-        if len(matching_players) == 0:
+        active_player_names = get_active_players(players, ag_names)
+        # players_datetimes, clock, post_rate_of_per_step_topup
+        # )
+        # print(
+        #     f"{time.time() - start_timex} elapsed. Players added to the list:",
+        #     [player.name for player in active_players],
+        # )
+        if len(active_player_names) == 0:
             clock.advance()
         else:
             # NA - check and post news before each step
@@ -583,14 +602,14 @@ def run_sim(
                 for n_agent in scheduled_news_agents:
                     n_agent.check_and_post(clock.now())
 
-            env.step(active_players=matching_players)
+            env.step(active_players=active_player_names)
             end_timex = time.time()
             with open(
                 output_rootname + "time_logger.txt",
                 "a",
             ) as f:
                 f.write(
-                    f"Episode with {len(matching_players)} finished - took {end_timex - start_timex}\n"
+                    f"Episode with {len(active_player_names)} finished - took {end_timex - start_timex}\n"
                 )
 
     post_analysis(env, model, players, memories, output_rootname)
@@ -618,7 +637,8 @@ if __name__ == "__main__":
         expname = "v4maincall2act"
         expname = "v5dupprompt"
         expname = "v6termprompt"
-
+        expname = "v7activerates"
+        expname = "v8betterc2a"
         config_name = f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}.json"
 
         if survey == "Reddit.Big5":

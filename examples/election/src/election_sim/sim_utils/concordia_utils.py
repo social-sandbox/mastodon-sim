@@ -275,7 +275,7 @@ class SimpleGameRunner:
 
         with ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(self._step_player, self.players[player_name.name]): player_name.name
+                executor.submit(self._step_player, self.players[player_name]): player_name
                 for player_name in active_players
             }
 
