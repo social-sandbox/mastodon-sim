@@ -115,7 +115,11 @@ os.chdir("examples/election/")
 def clear_mastodon_server(max_num_players):
     users = get_users_from_env()[: max_num_players + 1]
     reset_users(users, skip_confirm=True, parallel=True)
-    assert not len(get_public_timeline(limit=None)), "All posts not cleared"
+    if len(get_public_timeline(limit=None)):
+        print("All posts not cleared. Running reset operation again...")
+        reset_users(users, skip_confirm=True, parallel=True)
+    else:
+        print("All posts cleared")
 
 
 def select_large_language_model(log_file, debug_mode):
@@ -547,6 +551,7 @@ def run_sim(
     completion_token_intervals = []
     player_copy_list = []
     start_time = time.time()  # Start timing
+    model.player_names = [player.name for player in players]
     for i in range(episode_length):
         print(f"Episode: {i}")
         eval_event_logger.episode_idx = i
@@ -611,6 +616,9 @@ if __name__ == "__main__":
         survey = "Reddit.Big5"
         expname = "v2maincall2act"
         expname = "v4maincall2act"
+        expname = "v5dupprompt"
+        expname = "v6termprompt"
+
         config_name = f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}.json"
 
         if survey == "Reddit.Big5":

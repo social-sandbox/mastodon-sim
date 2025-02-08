@@ -43,8 +43,17 @@ class GptLanguageModel(language_model.LanguageModel):
         self._log_file = log_file
         self.debug = debug
         self.meta_data = {"episode_idx": -1, "player_name": ""}
+        self.player_names: list[str] = []
 
     def _log(self, prompt: str, output: str):  ## Function for logging
+        player_name = "not found"
+        for test_player_name in self.player_names:
+            if test_player_name in prompt[:100]:
+                player_name = test_player_name
+        # if player_name is None:
+        # counts=[prompt.count(player_name) for player_name in player_names]
+        # player_name = self.player_names[counts.index(max(counts))]
+        self.meta_data["player_name"] = player_name
         log_entry = {"prompt": prompt, "output": output} | self.meta_data
         with open(self._log_file, "a") as f:  # Use "a" mode (append)
             f.write(json.dumps(log_entry) + "\n")  # Write one JSON object per line

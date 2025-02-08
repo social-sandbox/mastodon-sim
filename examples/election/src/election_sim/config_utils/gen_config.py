@@ -604,8 +604,14 @@ if __name__ == "__main__":
         with open(root_name + args.news_file + ".json") as f:
             news = json.load(f)
         include_images = args.use_news_agent == "with_images"
-        print(news)
-        print("Including images" if include_images else "NOT including images")
+        print("headlines:")
+        for headline in news.keys():
+            print(headline)
+        print(
+            "Including images with the above headlines"
+            if include_images
+            else "NOT including images"
+        )
 
         # NA generate news agent configs
         news_agent_configs, news_info = get_news_agent_configs(
