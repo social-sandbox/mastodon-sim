@@ -214,46 +214,48 @@ def set_up_mastodon_app(players, ag_names, action_logger, app_description):  # ,
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
+    # Pre-generate unique follow relationships
+    follow_pairs = set()
+
+    # First, have all agents follow the candidate accounts, avoiding self-follow.
+    for follower in agent_names:
+        # Ensure we don't try to follow an agent themselves.
+        if follower != ag_names["candidate"][0]:
+            follow_pairs.add((follower, ag_names["candidate"][0]))
+        if follower != ag_names["candidate"][1]:
+            follow_pairs.add((follower, ag_names["candidate"][1]))
+
+    # Now, generate additional follow relationships between agents.
+    for follower in agent_names:
+        for followee in agent_names:
+            if follower != followee:
+                # With a 20% chance, create mutual follow relationships.
+                if random.random() < 0.2:
+                    follow_pairs.add((follower, followee))
+                    follow_pairs.add((followee, follower))
+                # Otherwise, with a 15% chance, create a one-direction follow.
+                elif random.random() < 0.15:
+                    follow_pairs.add((follower, followee))
+
+    # Optionally, print or inspect the pre-generated relationships.
+    # print("Pre-generated follow pairs:")
+    # for pair in follow_pairs:
+    #     print(pair)
+
+    # Execute the follow operations concurrently.
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = []
-        for follower in agent_names:
-            print(follower)
-            if follower != ag_names["candidate"][0]:
-                futures.append(
-                    executor.submit(
-                        mastodon_apps[follower].follow_user,
-                        follower,
-                        ag_names["candidate"][0],
-                    )
-                )
-            if follower != ag_names["candidate"][1]:
-                futures.append(
-                    executor.submit(
-                        mastodon_apps[follower].follow_user,
-                        follower,
-                        ag_names["candidate"][1],
-                    )
-                )
-            for followee in agent_names:
-                if follower != followee:
-                    if random.random() < 0.2:
-                        futures.append(
-                            executor.submit(mastodon_apps[follower].follow_user, follower, followee)
-                        )
-                        futures.append(
-                            executor.submit(mastodon_apps[followee].follow_user, followee, follower)
-                        )
-                    elif random.random() < 0.15:
-                        futures.append(
-                            executor.submit(mastodon_apps[follower].follow_user, follower, followee)
-                        )
+        for follower, followee in follow_pairs:
+            # Submit the follow operation from the appropriate mastodon app instance.
+            futures.append(executor.submit(mastodon_apps[follower].follow_user, follower, followee))
 
-        # Optionally, wait for all tasks to complete
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                future.result()  # This will raise any exceptions that occurred during execution, if any
-            except Exception as e:
-                print(f"Ignoring already-following error: {e}")
+    # Wait for all tasks to complete, handling exceptions as needed.
+    for future in concurrent.futures.as_completed(futures):
+        try:
+            future.result()
+        except Exception as e:
+            # If a follow error occurs (e.g. already following), we simply log and ignore it.
+            print(f"Ignoring error: {e}")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [

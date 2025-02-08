@@ -13,7 +13,7 @@ from concordia.associative_memory import (
 )
 from concordia.clocks import game_clock
 from concordia.components import agent as new_components
-from concordia.components.agent import action_spec_ignored
+from concordia.components.agent import action_spec_ignored, memory_component
 from concordia.document import interactive_document
 from concordia.language_model import language_model
 from concordia.memory_bank import legacy_associative_memory
@@ -90,20 +90,34 @@ class AllActComponent(entity_component.ActingComponent):
         if action_spec.output_type == entity_lib.OutputType.FREE:
             if not action_spec.tag == "media":
                 if action_spec.tag == "phone":
+                    memory = self.get_entity().get_component(
+                        memory_component.DEFAULT_MEMORY_COMPONENT_NAME,
+                        type_=memory_component.MemoryComponent,
+                    )
+                    interval_scorer = legacy_associative_memory.RetrieveTimeInterval(
+                        time_from=self._clock_now() - self._timeframe,
+                        time_until=self._clock_now(),
+                        add_time=True,
+                    )
+                    mems = memory.retrieve(scoring_fn=interval_scorer)
+                    # Remove memories that are not observations.
+                    mems = [mem.text for mem in mems if "[Action done on phone]" in mem.text]
+                    actions_conducted = "Actions Conducted till now:\n" + "\n".join(mems) + "\n"
                     cot_call = (
                         "Think step by step on what singular action to take. You should most likely choose the suggested in [Suggested Action], unless otherwise necessary. The possible actions are as follows:\n"
                         + call_to_action
+                        + actions_conducted
                     )
                     output = self.get_entity().name + " "
                     output += prompt.open_question(
                         cot_call,  # call_to_action,
-                        max_tokens=400,
+                        max_tokens=500,
                         answer_prefix=output,
                         # This terminator protects against the model providing extra context
                         # after the end of a directly spoken response, since it normally
                         # puts a space after a quotation mark only in these cases.
                         terminators=('" ', "\n"),
-                        question_label="Exercise",
+                        question_label="Action",
                     )
                     thoughts = "Current thought on action to take: " + output + "\n"
                     prompt.statement(thoughts)
