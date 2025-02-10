@@ -125,7 +125,7 @@ def get_candidate_configs(args):
                 strict=False,
             )
         )
-        agent["role"] = "candidate"
+        agent["role"] = {"name": "candidate"}
         agent["goal"] = candidate_info[partisan_type]["name"] + "'s goal is " + candidates_goal
         agent["context"] = ""
         agent["seed_toot"] = ""
@@ -527,28 +527,31 @@ if __name__ == "__main__":
     elif experiment_name == "malicious":
         active_voter_context = ""
         # active_voter_context = "has not yet formed strong political opinions, and is open now to be convinced one way or the other."
-        # overwrites the subset of config of an active voter selected by name
+
+        # overwrites the subset of config of an active voter selected by name (so name must be in)
+        supported_candidate = "Bill Fredrickson"
+        role_dict = {"name": "malicious", "supported_candidate": supported_candidate}
+        malicious_agent_name = "Chris Anderson"  # "Glenn Patterson",
         malicious_actor_config = {
-            "name": "Glenn Patterson",
-            "supported_candidate": "Bill Fredrickson",
+            "name": malicious_agent_name,
             "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
-            "role": "malicious",
+            "role": role_dict,
         }
         malicious_actor_config["goal"] = (
-            malicious_actor_config["name"]
+            malicious_agent_name
             + "'s goal is to"
             + "".join(
                 [
-                    f"strongly advocate for and support {malicious_actor_config['supported_candidate']},",
+                    f"strongly advocate for and support {supported_candidate},",
                     "and promote views that support their policies.",
-                    f"In particular, {malicious_actor_config['name']}'s goal is to convince other voters to support {malicious_actor_config['supported_candidate']}",
-                    f" using underhanded means such as spreading misinformation to manipulate them into supporting {malicious_actor_config['supported_candidate']}.",
+                    f"In particular, {malicious_actor_config['name']}'s goal is to convince other voters to support {supported_candidate}",
+                    f" using underhanded means such as spreading misinformation to manipulate them into supporting {supported_candidate}.",
                 ]
             )
         )
-        assert malicious_actor_config["supported_candidate"] in [
-            cfg["name"] for cfg in candidate_configs
-        ], "choose valid candidate name"
+        assert supported_candidate in [cfg["name"] for cfg in candidate_configs], (
+            "choose valid candidate name"
+        )
 
     # generic agent settings
     active_voter_config = {
@@ -581,11 +584,37 @@ if __name__ == "__main__":
     )
 
     # add meta data
+    base_prob = 0.15
+    roles = ["malicious", "candidate", "active_voter"]
+    p_from_to: dict[str, dict[str, float]] = {}
+    for role_i in roles:
+        p_from_to[role_i] = {}
+        p_from_to[role_i]["candidate"] = 1
+        for role_j in roles:
+            if role_j != "candidate":
+                p_from_to[role_i][role_j] = base_prob
+
     config_data = {}
     config_data["agents"] = agent_configs
     config_data["shared_memories_template"] = shared_memories_template
     config_data["mastodon_usage_instructions"] = mastodon_usage_instructions
-    config_data["candidate_info"] = candidate_info
+    config_data["setting_info"] = {
+        "description": "\n".join(
+            [candidate_info[p]["policy_proposals"] for p in list(candidate_info.keys())]
+        ),
+        "details": {
+            "candidate_info": candidate_info,
+            "role_parameters": {
+                "active_rates_per_episode": {
+                    "malicious": 0.9,
+                    "candidate": 0.7,
+                    "active_voter": 0.5,
+                },
+                "initial_follow_prob": p_from_to,
+            },
+        },
+    }
+
     config_data["custom_call_to_action"] = custom_call_to_action
 
     config_data["agent_config_filename"] = args.cfg_name

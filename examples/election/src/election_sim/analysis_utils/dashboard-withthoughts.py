@@ -17,6 +17,8 @@ from io import StringIO
 
 def parse_jsonl(contents):
     content_type, content_string = contents.split(",")
+    # content_string = contents
+
     decoded = base64.b64decode(content_string).decode("utf-8")
     return [json.loads(line) for line in decoded.strip().split("\n")]
 
@@ -1108,7 +1110,7 @@ if __name__ == "__main__":
                         reply_content = toots.get(reply_toot_id, {}).get(
                             "content", "No content available."
                         )
-                        user = toots.get(reply_toot_id, {}).get("user", "No user available.")
+                        user = toots.get(parent_toot_id, {}).get("user", "No user available.")
                         interactions_content.append(
                             html.Div(
                                 [

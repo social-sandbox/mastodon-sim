@@ -18,7 +18,15 @@ import json
 
 from concordia.agents import entity_agent_with_logging
 from concordia.typing import entity_component
-from scenario_agents import basic_malicious_agent, candidate_agent, voter_agent
+from scenario_agents.candidate import CandidateAgent
+from scenario_agents.malicious import MaliciousAgent
+from scenario_agents.voter import VoterAgent
+
+agent_builds = {
+    "active_voter": VoterAgent,
+    "candidate": CandidateAgent,
+    "malicious": MaliciousAgent,
+}
 
 from mastodon_sim.concordia import triggering
 
@@ -101,71 +109,46 @@ def init_concordia_objects(model, embedder, shared_memories, clock):
     )
 
 
-def sort_agents(agent_data):
-    agent_type_names = [
-        "candidate",
-        "extremist",
-        "moderate",
-        "neutral",
-        "active_voter",
-        "malicious",
-    ]
-    ag_names = {name: [] for name in agent_type_names}
-    ag_names["malicious"] = {}
-    player_configs = []
+def make_profiles(agent_data):
     # Create agents from JSON data and classify them
+    agent_profiles = []
+
     for agent_info in agent_data:
-        agent = formative_memories.AgentConfig(
-            name=agent_info["name"],
-            gender=agent_info["gender"],
-            goal=agent_info["goal"],
-            context=agent_info["context"],
-            traits=agent_info["traits"],
+        agent_profiles.append(
+            (
+                formative_memories.AgentConfig(
+                    name=agent_info["name"],
+                    gender=agent_info["gender"],
+                    goal=agent_info["goal"],
+                    context=agent_info["context"],
+                    traits=agent_info["traits"],
+                ),
+                agent_info["role"] | {"player_name": agent_info["name"]},
+            )
         )
-        player_configs.append(agent)
-        # Classify agents based on their role
-        for name in agent_type_names[:-1]:
-            if agent_info["role"] == name:
-                ag_names[name].append(agent_info["name"])
-        if agent_info["role"] == "malicious":
-            ag_names["malicious"][agent_info["name"]] = agent_info["supported_candidate"]
-    return ag_names, player_configs
+    return agent_profiles
 
 
-def build_agent_with_memories(obj_args, player_config):
-    (formative_memory_factory, model, clock, time_step, candidate_info, ag_names) = obj_args
-    mem = formative_memory_factory.make_memories(player_config)
-    print(ag_names["malicious"])
-    if player_config.name in ag_names["candidate"]:
-        agent = candidate_agent.build_agent(
-            model=model,
-            clock=clock,
-            update_time_interval=time_step,
-            config=player_config,
-            memory=mem,
-            candidate_info=candidate_info,
-            ag_names=ag_names,
-        )
-    elif player_config.name in ag_names["malicious"]:
-        agent = basic_malicious_agent.build_agent(
-            model=model,
-            clock=clock,
-            update_time_interval=time_step,
-            config=player_config,
-            memory=mem,
-            candidate_info=candidate_info,
-            ag_names=ag_names,
-        )
-    else:
-        agent = voter_agent.build_agent(
-            model=model,
-            clock=clock,
-            update_time_interval=time_step,
-            config=player_config,
-            memory=mem,
-            candidate_info=candidate_info,
-            ag_names=ag_names,
-        )
+def build_agent_with_memories(obj_args, profile_item):
+    (profile, role) = profile_item
+    (formative_memory_factory, model, clock, time_step, setting_info) = obj_args
+    mem = formative_memory_factory.make_memories(profile)
+
+    role_and_setting_config = {
+        "role_details": role,
+        "agent_name": role["player_name"],
+        "setting_details": setting_info["details"],
+        "setting_description": setting_info["description"],
+    }
+    agent = agent_builds[role["name"]].build(
+        config=profile,
+        model=model,
+        clock=clock,
+        update_time_interval=time_step,
+        memory=mem,
+        role_and_setting_config=role_and_setting_config,
+    )
+
     return agent, mem
 
 
