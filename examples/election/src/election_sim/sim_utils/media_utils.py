@@ -3,6 +3,7 @@ import os
 from collections.abc import Collection, Sequence
 
 import openai
+import portalocker
 from concordia.language_model import language_model
 from concordia.utils import measurements as measurements_lib
 from concordia.utils import sampling
@@ -55,9 +56,15 @@ class GptLanguageModel(language_model.LanguageModel):
         # player_name = self.player_names[counts.index(max(counts))]
         self.meta_data["player_name"] = player_name
         log_entry = {"prompt": prompt, "output": output} | self.meta_data
-        with open(self._log_file, "a") as f:  # Use "a" mode (append)
-            f.write(json.dumps(log_entry) + "\n")  # Write one JSON object per line
-            f.flush()  # Ensure immediate write
+        try:
+            with open(self._log_file, "a") as f:  # Use "a" mode (append)
+                portalocker.lock(f, portalocker.LOCK_EX)  # Acquire an exclusive lock
+                f.write(json.dumps(log_entry) + "\n")
+                f.flush()
+        except Exception as e:
+            print(f"Logging error: {e}")
+        finally:
+            portalocker.unlock(f)  # Ensure the lock is always released
 
     def sample_text(
         self,
