@@ -578,6 +578,7 @@ if __name__ == "__main__":
         expname = "v9prevactcomp"
         expname = "v11nosurveys"
         expname = "v12addconduct"
+        expname = "v13refactor"
         config_name = f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}.json"
 
         if survey == "Reddit.Big5":
