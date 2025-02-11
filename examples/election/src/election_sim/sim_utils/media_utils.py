@@ -64,7 +64,8 @@ class GptLanguageModel(language_model.LanguageModel):
         except Exception as e:
             print(f"Logging error: {e}")
         finally:
-            portalocker.unlock(f)  # Ensure the lock is always released
+            if not f.closed:
+                portalocker.unlock(f)  # Ensure the lock is always released
 
     def sample_text(
         self,

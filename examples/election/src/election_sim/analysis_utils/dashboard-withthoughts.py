@@ -426,7 +426,7 @@ if __name__ == "__main__":
                                 id="vote-distribution-line",
                                 config={"displayModeBar": False},
                                 style={
-                                    "height": "170px",
+                                    "height": "220px",
                                     "width": "32%",
                                     "display": "inline-block",
                                 },
@@ -446,7 +446,7 @@ if __name__ == "__main__":
                                 id="heatmap-graph",
                                 config={"displayModeBar": False},
                                 style={
-                                    "height": "170px",
+                                    "height": "250px",
                                     "width": "32%",
                                     "display": "inline-block",
                                 },
@@ -944,10 +944,11 @@ if __name__ == "__main__":
         )
 
         heatmap_fig.update_layout(
-            title="Suggested Action vs Actual Label",
+            title={"text": "Action alignment distribution", "font": {"size": 14}},
             xaxis_title="Actual Action (label)",
             yaxis_title="Suggested Action",
             margin=dict(l=40, r=40, t=40, b=40),
+            height=270,
         )
 
         return heatmap_fig
@@ -1155,6 +1156,7 @@ if __name__ == "__main__":
                 for interaction in interactions_by_episode.get(selected_episode, [])
                 if interaction["source"] == selected_name
             ]
+
             if interactions:
                 for interaction in interactions:
                     action = interaction["action"]
@@ -1404,9 +1406,15 @@ if __name__ == "__main__":
                 line=dict(color="#808080"),
             )
         )
+        max_episode = max(list(interactions_by_episode.keys()))
         vote_line_fig.update_layout(
             title={"text": "Vote Distribution Over Time", "font": {"size": 14}},
-            xaxis={"title": {"text": "Episode", "font": {"size": 10}}, "tickfont": {"size": 8}},
+            xaxis={
+                "title": {"text": "Episode", "font": {"size": 10}},
+                "tickfont": {"size": 8},
+                "range": [-1, max_episode + 1],
+                "dtick": 1,
+            },
             yaxis={
                 "title": {"text": "Vote Percentage", "font": {"size": 10}},
                 "tickfont": {"size": 8},
@@ -1556,21 +1564,21 @@ if __name__ == "__main__":
             xaxis={
                 "title": {"text": "Episode", "font": {"size": 10}},
                 "tickfont": {"size": 8},
-                "range": [min(int_episodes), max(int_episodes) + 1],
+                "range": [-1, max_episode + 1],
                 "dtick": 1,
             },
             yaxis={
                 "title": {"text": "Interactions/ Num. Agents", "font": {"size": 10}},
                 "tickfont": {"size": 8},
             },
-            height=200,
+            height=250,
             margin=dict(l=40, r=40, t=20, b=10),
             showlegend=True,
             legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
         )
 
         # Adjust the x-axis range to include all episodes
-        interactions_line_fig.update_xaxes(range=[min(int_episodes), max(int_episodes) + 1])
+        interactions_line_fig.update_xaxes(range=[-1, max(int_episodes) + 1])
 
         # Update the name-selector dropdown options
         unique_names = sorted(follow_graph.nodes)

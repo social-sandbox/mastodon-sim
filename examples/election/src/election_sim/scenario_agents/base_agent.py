@@ -433,25 +433,14 @@ class BaseAgent(ABC):
             pre_act_key=relevant_memories_label,
             logging_channel=measurements.get_channel("AllSimilarMemories").on_next,
         )
-        # options_perception_components = {}
-        # if config.goal:
+
         goal_label = "\nOverarching goal"
         overarching_goal = new_components.constant.Constant(
             state=config.goal,
             pre_act_key=goal_label,
             logging_channel=measurements.get_channel(goal_label).on_next,
         )
-        # options_perception_components[goal_label] = goal_label
-        # else:
-        #     goal_label = None
-        #     overarching_goal = None
-        # options_perception_components.update(
-        #     {
-        #         cls._get_class_name(observation): observation_label,
-        #         cls._get_class_name(observation_summary): observation_summary_label,
-        #         cls._get_class_name(relevant_memories): relevant_memories_label,
-        #     }
-        # )
+
         identity_label = "\nIdentity characteristics"
         identity_characteristics = (
             new_components.question_of_query_associated_memories.IdentityWithoutPreAct(
@@ -474,7 +463,8 @@ class BaseAgent(ABC):
             logging_channel=measurements.get_channel("ActionSuggester").on_next,
         )
 
-        base_entity_components = [
+        # now put these components together
+        entity_components = [
             # Components that provide pre_act context.
             instructions,
             overarching_goal,
@@ -483,24 +473,34 @@ class BaseAgent(ABC):
             relevant_memories,
             self_perception,
             time_display,
-            action_suggester,
             # Components that do not provide pre_act context.
             identity_characteristics,
         ]
-        # exit([cls._get_component_name(component) for component in entity_components])
-        # note: final order determined in child class
+
+        # add custom components
+        # Note: final component order determined inside this function (action suggestion and memory are appended below)
         entity_components = cls.add_custom_components(
-            model, measurements, base_entity_components, role_and_setting_config
+            model, measurements, entity_components, role_and_setting_config
         )
 
-        # store components and their order
-        components_of_agent = {
-            cls._get_component_name(component): component for component in entity_components
-        }
-        components_of_agent[new_components.memory_component.DEFAULT_MEMORY_COMPONENT_NAME] = (
-            new_components.memory_component.MemoryComponent(raw_memory)
-        )
-        component_order = list(components_of_agent.keys())
+        # always give maximum order priority (behind memory; see below) to the action suggester
+        entity_components.append(action_suggester)
+
+        # named storage
+        components_of_agent = {}
+        component_order = []
+        for component in entity_components:
+            name = cls._get_component_name(component)
+            components_of_agent[name] = component
+            component_order.append(name)
+
+        # final step is to add the memory
+        memory_model = new_components.memory_component
+        memory_name = memory_model.DEFAULT_MEMORY_COMPONENT_NAME
+        components_of_agent[memory_name] = memory_model.MemoryComponent(raw_memory)
+        component_order.append(memory_name)
+
+        print("\n".join(["component_order:"] + component_order))
 
         act_component = AllActComponent(
             model=model,
