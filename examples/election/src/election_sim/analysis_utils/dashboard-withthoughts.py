@@ -427,7 +427,7 @@ if __name__ == "__main__":
                                 config={"displayModeBar": False},
                                 style={
                                     "height": "170px",
-                                    "width": "48%",
+                                    "width": "32%",
                                     "display": "inline-block",
                                 },
                             ),
@@ -437,7 +437,17 @@ if __name__ == "__main__":
                                 config={"displayModeBar": False},
                                 style={
                                     "height": "170px",
-                                    "width": "48%",
+                                    "width": "32%",
+                                    "display": "inline-block",
+                                },
+                            ),
+                            # Heatmap graph
+                            dcc.Graph(
+                                id="heatmap-graph",
+                                config={"displayModeBar": False},
+                                style={
+                                    "height": "170px",
+                                    "width": "32%",
                                     "display": "inline-block",
                                 },
                             ),
@@ -445,7 +455,8 @@ if __name__ == "__main__":
                         style={
                             "display": "flex",
                             "justify-content": "space-between",
-                            "margin-top": "20px",
+                            "margin-top": "15px",
+                            "margin-bottom": "20px",
                         },
                     ),
                     # Main content: Cytoscape graph and interactions window
@@ -520,7 +531,7 @@ if __name__ == "__main__":
                                         },  # To be updated by callback
                                         style={
                                             "width": "100%",  # Initial width set to 100%
-                                            "height": "600px",
+                                            "height": "500px",
                                             "background-color": "#e1e1e1",
                                             "transition": "width 0.5s",  # Smooth width transition
                                         },
@@ -811,7 +822,6 @@ if __name__ == "__main__":
         dashboard_title_with_filename = "Social Sandbox Dashboard: " + app_logger_filename_initial
         try:
             if triggered_id == "submit-button":
-                # Handle initial upload
                 if app_logger_contents_initial is not None:
                     # Process app_logger
                     content_type, content_string = app_logger_contents_initial.split(",")
@@ -833,12 +843,18 @@ if __name__ == "__main__":
                         toots_new,
                         votes_new,
                     )
+                    # *** Add these two lines: parse and store the raw data ***
+                    import io
+
+                    raw_df = pd.read_json(io.StringIO(app_logger_string), lines=True)
+                    serialized_new_data["raw_data"] = raw_df.to_dict(orient="records")
+                    # *** End additional lines ***
 
                     return dashboard_title_with_filename, serialized_new_data, "", ""
+
                 raise ValueError("Output Log file required.")
 
             if triggered_id == "upload-button-dashboard":
-                # Handle dashboard upload
                 if app_logger_contents_dashboard is not None:
                     # Process app_logger
                     content_type, content_string = app_logger_contents_dashboard.split(",")
@@ -860,10 +876,16 @@ if __name__ == "__main__":
                         toots_new,
                         votes_new,
                     )
+                    # *** Add these lines to store the raw file data ***
+                    import io
+
+                    raw_df = pd.read_json(io.StringIO(app_logger_string), lines=True)
+                    serialized_new_data["raw_data"] = raw_df.to_dict(orient="records")
+                    # *** End additional lines ***
+
                     dashboard_title_with_filename = (
                         "Social Sandbox Dashboard: " + app_logger_filename_dashboard
-                    )  # app_logger_filename_initial
-
+                    )
                     return dashboard_title_with_filename, serialized_new_data, "", ""
                 raise ValueError("Output Log files required for dashboard upload.")
 
@@ -875,6 +897,60 @@ if __name__ == "__main__":
             if triggered_id == "upload-button-dashboard":
                 return dash.no_update, "", f"Error uploading dashboard data: {e!s}"
             return dash.no_update, "", ""
+
+    @app.callback(Output("heatmap-graph", "figure"), Input("data-store", "data"))
+    def update_heatmap(data_store):
+        # If no data-store or no raw data is present, return a figure indicating so
+        if not data_store or "raw_data" not in data_store:
+            return go.Figure(data=[], layout=go.Layout(title="No data uploaded"))
+
+        # Build a DataFrame from the raw uploaded records
+        raw_data = data_store["raw_data"]
+        df = pd.DataFrame(raw_data)
+
+        # If the "data" column is stored as a string, parse it into a dict.
+        if not df.empty and isinstance(df.iloc[0]["data"], str):
+            df["data"] = df["data"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
+        # Filter for records with event_type "action" that have a non-null suggested_action.
+        dft = df[
+            (df["event_type"] == "action")
+            & (df["data"].apply(lambda x: x.get("suggested_action") is not None))
+        ].copy()
+
+        if dft.empty:
+            return go.Figure(
+                data=[], layout=go.Layout(title="No action records with a suggested_action found")
+            )
+
+        # If the suggested action equals "toot", convert it to "post"
+        dft["suggested_action"] = dft["data"].apply(
+            lambda x: "post" if x.get("suggested_action") == "toot" else x.get("suggested_action")
+        )
+
+        # Build a contingency table:
+        # Rows: suggested_action, Columns: actual action taken (from the "label" column)
+        contingency = pd.crosstab(dft["suggested_action"], dft["label"])
+
+        # Create the heatmap figure using Plotly
+        heatmap_fig = go.Figure(
+            data=go.Heatmap(
+                z=contingency.values,
+                x=list(contingency.columns),
+                y=list(contingency.index),
+                colorscale="YlOrRd",
+                colorbar=dict(title="Count"),
+            )
+        )
+
+        heatmap_fig.update_layout(
+            title="Suggested Action vs Actual Label",
+            xaxis_title="Actual Action (label)",
+            yaxis_title="Suggested Action",
+            margin=dict(l=40, r=40, t=40, b=40),
+        )
+
+        return heatmap_fig
 
     # Callback to update the dashboard based on data-store
     @app.callback(
@@ -1338,6 +1414,7 @@ if __name__ == "__main__":
             },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
+            legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
         )
         # # Update both y-axes
         # interactions_line_fig.update_yaxes(
@@ -1475,33 +1552,23 @@ if __name__ == "__main__":
         )
 
         interactions_line_fig.update_layout(
-            title={
-                "text": "Interactions Over Time",
-                "font": {"size": 14},  # Reduced title font size to 14
-            },
+            title={"text": "Interactions Over Time", "font": {"size": 14}},
             xaxis={
-                "title": {
-                    "text": "Episode",
-                    "font": {"size": 10},  # Reduced x-axis label font size to 12
-                },
-                "tickfont": {"size": 8},  # Reduced x-axis tick font size
-                "range": [
-                    min(int_episodes),
-                    max(int_episodes) + 1,
-                ],  # Setting the range from min to max episode
-                "dtick": 1,  # Show a tick marker every episode
+                "title": {"text": "Episode", "font": {"size": 10}},
+                "tickfont": {"size": 8},
+                "range": [min(int_episodes), max(int_episodes) + 1],
+                "dtick": 1,
             },
             yaxis={
-                "title": {
-                    "text": "Interactions/ Num. Agents",
-                    "font": {"size": 10},  # Reduced y-axis label font size to 12
-                },
-                "tickfont": {"size": 8},  # Reduced y-axis tick font size
+                "title": {"text": "Interactions/ Num. Agents", "font": {"size": 10}},
+                "tickfont": {"size": 8},
             },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
             showlegend=True,
+            legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
         )
+
         # Adjust the x-axis range to include all episodes
         interactions_line_fig.update_xaxes(range=[min(int_episodes), max(int_episodes) + 1])
 
