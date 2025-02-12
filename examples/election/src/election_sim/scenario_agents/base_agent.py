@@ -467,7 +467,6 @@ class BaseAgent(ABC):
         entity_components = [
             # Components that provide pre_act context.
             instructions,
-            overarching_goal,
             observation,
             observation_summary,
             relevant_memories,
@@ -499,6 +498,8 @@ class BaseAgent(ABC):
         memory_name = memory_model.DEFAULT_MEMORY_COMPONENT_NAME
         components_of_agent[memory_name] = memory_model.MemoryComponent(raw_memory)
         component_order.append(memory_name)
+        components_of_agent[goal_label] = overarching_goal
+        component_order.insert(1, goal_label)
 
         print("\n".join(["component_order:"] + component_order))
 
