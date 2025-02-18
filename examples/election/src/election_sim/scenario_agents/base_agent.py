@@ -4,6 +4,7 @@ import random
 import re
 from collections.abc import Callable, Sequence
 from decimal import ROUND_HALF_UP, Decimal
+from inspect import signature
 from typing import Any
 
 import numpy as np
@@ -13,7 +14,7 @@ from concordia.associative_memory import (
     formative_memories,
 )
 from concordia.clocks import game_clock
-from concordia.components import agent as new_components
+from concordia.components import agent as ext_components
 from concordia.components.agent import action_spec_ignored
 from concordia.document import interactive_document
 from concordia.language_model import language_model
@@ -42,6 +43,7 @@ DEFAULT_ACTION_PROBABILITIES = {
     "update_bio": 0.0,  # Updating profile
     "print_notifications": 0.00,  # 25,  # Checking notifications
 }
+NUM_MEMORIES = 10
 
 
 class AllActComponent(entity_component.ActingComponent):
@@ -78,7 +80,8 @@ class AllActComponent(entity_component.ActingComponent):
         order = self._component_order + tuple(
             sorted(set(contexts.keys()) - set(self._component_order))
         )
-        return "\n".join(contexts[name] for name in order if contexts[name])
+        return "\n".join(contexts[name] for name in order if contexts.get(name, False))
+        # return "\n".join(contexts[name] for name in order if contexts[name])
 
     def get_action_attempt(
         self,
@@ -335,24 +338,15 @@ class BaseAgent(ABC):
     """Base class that provides function inheritance without instantiation"""
 
     @classmethod
-    def _get_component_name(cls, object_: object) -> str:
-        if hasattr(object_, "name"):
-            return object_.name
-        return object_.__class__.__name__
-
-    @classmethod
-    def _get_class_name(cls, object_: object) -> str:
-        return object_.__class__.__name__
-
-    @classmethod
     @abstractmethod
     def add_custom_components(
         cls,
         model,
         measurements,
-        base_components: list[Any],
+        base_components: dict[str, Any],
+        base_component_names: list[str],
         custom_component_config: dict[str, Any],
-    ) -> list:
+    ) -> tuple[dict[str, Any], list[str]]:
         """Example of a base operation that all children must implement"""
 
     @classmethod
@@ -389,131 +383,133 @@ class BaseAgent(ABC):
             An agent.
         """
         del update_time_interval
+
+        # parse settings
         agent_name = config.name
         assert agent_name == role_and_setting_config["agent_name"], "agent names not same!"
+        goal = config.goal
 
         raw_memory = legacy_associative_memory.AssociativeMemoryBank(memory)
         measurements = measurements_lib.Measurements()
 
-        # instantiate base components
-        instructions = new_components.instructions.Instructions(
-            agent_name=agent_name,
-            logging_channel=measurements.get_channel("Instructions").on_next,
-        )
-
-        observation_label = "\nObservation"
-        observation = new_components.observation.Observation(
-            clock_now=clock.now,
-            timeframe=clock.get_step_size(),
-            pre_act_key=observation_label,
-            logging_channel=measurements.get_channel("Observation").on_next,
-        )
-        observation_summary_label = "\nSummary of recent observations"
-        observation_summary = new_components.observation.ObservationSummary(
-            model=model,
-            clock_now=clock.now,
-            timeframe_delta_from=datetime.timedelta(hours=4),
-            timeframe_delta_until=datetime.timedelta(hours=1),
-            pre_act_key=observation_summary_label,
-            logging_channel=measurements.get_channel("ObservationSummary").on_next,
-        )
-        time_display = new_components.report_function.ReportFunction(
-            function=clock.current_time_interval_str,
-            pre_act_key="\nCurrent time",
-            logging_channel=measurements.get_channel("TimeDisplay").on_next,
-        )
-        relevant_memories_label = "\nRecalled memories and observations"
-        relevant_memories = new_components.all_similar_memories.AllSimilarMemories(
-            model=model,
-            components={
-                cls._get_class_name(observation_summary): observation_summary_label,
-                cls._get_class_name(time_display): "The current date/time is",
-            },
-            num_memories_to_retrieve=10,
-            pre_act_key=relevant_memories_label,
-            logging_channel=measurements.get_channel("AllSimilarMemories").on_next,
-        )
-
-        goal_label = "\nOverarching goal"
-        overarching_goal = new_components.constant.Constant(
-            state=config.goal,
-            pre_act_key=goal_label,
-            logging_channel=measurements.get_channel(goal_label).on_next,
-        )
-
-        identity_label = "\nIdentity characteristics"
-        identity_characteristics = (
-            new_components.question_of_query_associated_memories.IdentityWithoutPreAct(
-                model=model,
-                logging_channel=measurements.get_channel("IdentityWithoutPreAct").on_next,
-                pre_act_key=identity_label,
-            )
-        )
-        self_perception_label = f"\nQuestion: What kind of person is {agent_name}?\nAnswer"
-        self_perception = new_components.question_of_recent_memories.SelfPerception(
-            model=model,
-            components={cls._get_class_name(identity_characteristics): identity_label},
-            pre_act_key=self_perception_label,
-            logging_channel=measurements.get_channel("SelfPerception").on_next,
-        )
-
-        action_suggester = ActionSuggester(
-            model=model,
-            action_probabilities=cls.get_suggested_action_probabilities(),
-            logging_channel=measurements.get_channel("ActionSuggester").on_next,
-        )
-
-        # now put these components together
-        entity_components = [
-            # Components that provide pre_act context.
-            instructions,
-            observation,
-            observation_summary,
-            relevant_memories,
-            self_perception,
-            time_display,
-            # Components that do not provide pre_act context.
-            identity_characteristics,
+        # labels of base components and common settings
+        names = [
+            ["Instructions", "Role playing instructions"],  # cls._get_component_name()=Instructions
+            ["OverarchingGoal", "Overarching Goal"],  # cls._get_component_name()=Constant
+            ["Observation", "Observations"],  # cls._get_component_name()=Observation
+            [
+                "ObservationSummary",
+                "Summary of recent observations",
+            ],  # cls._get_component_name()=ObservationSummary
+            [
+                "TimeDisplay",
+                "The current date/time is",
+            ],  #  cls._get_component_name()=ReportFunction
+            [
+                "AllSimilarMemories",
+                "Recalled memories and observations",
+            ],  # cls._get_component_name()=AllSimilarMemories,
+            [
+                "IdentityWithoutPreAct",
+                "Identity characteristics",
+            ],  # cls._get_component_name()=IdentityWithoutPreAct, # does not provide pre-act context
+            [
+                "SelfPerception",
+                f"Question: What kind of person is {agent_name}?\nAnswer",
+            ],  # cls._get_component_name()=SelfPerception
+            ["ActionSuggester", "[Action Suggestion]"],  # cls._get_component_name()=ActionSuggester
         ]
+        pre_act_keys_dict = {name: "\n" + pre_act_key + "\n" for name, pre_act_key in names}
+        component_order = [item[0] for item in names]
 
-        # add custom components
-        # Note: final component order determined inside this function (action suggestion and memory are appended below)
-        entity_components = cls.add_custom_components(
-            model, measurements, entity_components, role_and_setting_config
+        dependencies = {
+            "AllSimilarMemories": {
+                "ObservationSummary": pre_act_keys_dict["ObservationSummary"],
+                "TimeDisplay": pre_act_keys_dict["TimeDisplay"],
+            },
+            "SelfPerception": {
+                "IdentityWithoutPreAct": "Persona"  # why not pre_Act_key here?
+            },
+        }
+
+        # Instantiate components
+        z = {}
+        for name, pre_act_key in pre_act_keys_dict.items():
+            settings = {}
+
+            # add generic options
+            settings["logging_channel"] = measurements.get_channel(name).on_next
+            settings["pre_act_key"] = pre_act_key
+
+            # Add component-specific settings and assign constructor
+            if name == "Instructions":
+                settings["agent_name"] = agent_name
+                component_constructor = ext_components.instructions.Instructions
+            elif name == "OverarchingGoal":
+                settings["state"] = goal
+                component_constructor = ext_components.constant.Constant
+            elif name == "Observation":
+                settings["clock_now"] = clock.now
+                settings["timeframe"] = clock.get_step_size()
+                component_constructor = ext_components.observation.Observation
+            elif name == "ObservationSummary":
+                settings["clock_now"] = clock.now
+                settings["timeframe_delta_from"] = datetime.timedelta(hours=4)
+                settings["timeframe_delta_until"] = datetime.timedelta(hours=1)
+                component_constructor = ext_components.observation.ObservationSummary
+            elif name == "TimeDisplay":
+                settings["function"] = clock.current_time_interval_str
+                component_constructor = ext_components.report_function.ReportFunction
+            elif name == "AllSimilarMemories":
+                settings["num_memories_to_retrieve"] = NUM_MEMORIES
+                component_constructor = ext_components.all_similar_memories.AllSimilarMemories
+            elif name == "IdentityWithoutPreAct":
+                component_constructor = (
+                    ext_components.question_of_query_associated_memories.IdentityWithoutPreAct
+                )
+                settings["model"] = model
+            elif name == "SelfPerception":
+                component_constructor = ext_components.question_of_recent_memories.SelfPerception
+            elif name == "ActionSuggester":
+                settings["action_probabilities"] = cls.get_suggested_action_probabilities()
+                component_constructor = ActionSuggester
+
+            # check for and add dependencies
+            if name in dependencies:
+                settings["components"] = dependencies[name]
+            if "model" in signature(component_constructor.__init__).parameters.keys():
+                settings["model"] = model
+            if "model" in signature(component_constructor.__bases__[0].__init__).parameters.keys():
+                settings["model"] = model
+
+            # instantiate
+            z[name] = component_constructor(**settings)
+
+        # add custom components before action suggester and memory
+        # n.b. custom components can be interleaved so reassign order
+        z, component_order = cls.add_custom_components(
+            model, measurements, z, component_order, role_and_setting_config
         )
 
-        # always give maximum order priority (behind memory; see below) to the action suggester
-        entity_components.append(action_suggester)
+        # last component is the memory
+        memory_model = ext_components.memory_component
+        memory_component = memory_model.MemoryComponent(raw_memory)
+        memory_component_name = memory_model.DEFAULT_MEMORY_COMPONENT_NAME
+        z[memory_component_name] = memory_component
+        component_order.append(memory_component_name)
 
-        # named storage
-        components_of_agent = {}
-        component_order = []
-        for component in entity_components:
-            name = cls._get_component_name(component)
-            components_of_agent[name] = component
-            component_order.append(name)
-
-        # final step is to add the memory
-        memory_model = new_components.memory_component
-        memory_name = memory_model.DEFAULT_MEMORY_COMPONENT_NAME
-        components_of_agent[memory_name] = memory_model.MemoryComponent(raw_memory)
-        component_order.append(memory_name)
-        components_of_agent[goal_label] = overarching_goal
-        component_order.insert(1, goal_label)
-
-        print("\n".join(["component_order:"] + component_order))
-
+        # instantiate act component
         act_component = AllActComponent(
             model=model,
             clock=clock,
             component_order=component_order,
             logging_channel=measurements.get_channel("ActComponent").on_next,
         )
-
+        # and finally the agent
         agent = entity_agent_with_logging.EntityAgentWithLogging(
             agent_name=agent_name,
             act_component=act_component,
-            context_components=components_of_agent,
+            context_components=z,
             component_logging=measurements,
         )
 

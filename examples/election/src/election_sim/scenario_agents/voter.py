@@ -1,6 +1,6 @@
-from typing import Any
+from inspect import signature
 
-from concordia.components import agent as new_components
+from concordia.components import agent as ext_components
 
 from scenario_agents.base_agent import BaseAgent
 
@@ -23,17 +23,19 @@ ACTION_PROBABILITIES = {
     "print_notifications": 0.00,  # 25,  # Checking notifications
 }
 
+NUM_MEMORIES = 25
+
 
 # define custom component classes
 class RelevantOpinions(
-    new_components.question_of_query_associated_memories.QuestionOfQueryAssociatedMemoriesWithoutPreAct
+    ext_components.question_of_query_associated_memories.QuestionOfQueryAssociatedMemoriesWithoutPreAct
 ):
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
 
 
-class OpinionsOnCandidate(new_components.question_of_recent_memories.QuestionOfRecentMemories):
+class OpinionsOnCandidate(ext_components.question_of_recent_memories.QuestionOfRecentMemories):
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
@@ -43,73 +45,113 @@ class OpinionsOnCandidate(new_components.question_of_recent_memories.QuestionOfR
 class VoterAgent(BaseAgent):
     @classmethod
     def add_custom_components(
-        cls, model, measurements, base_components, custom_component_config: dict[str, Any]
-    ) -> list:
-        agent_name = custom_component_config["agent_name"]
+        cls,
+        model,
+        measurements,
+        base_components,
+        base_component_order,
+        custom_component_config,
+    ):
+        # parse settings
         setting_description = custom_component_config["setting_description"]
-        candidate_names = [
+        agent_name = custom_component_config["agent_name"]
+        candidates = [
             candidate_dict["name"]
             for partisan_type, candidate_dict in custom_component_config["setting_details"][
                 "candidate_info"
             ].items()
         ]
 
-        # extract needed base components
-        self_perception = next(
-            item
-            for item in base_components
-            if BaseAgent._get_component_name(item) == "SelfPerception"
+        # labels of custom components and common settings
+        names = [
+            [
+                "ElectionInformation",
+                "Critical election information",
+            ],  # cls._get_component_name()=ElectionInformation
+            [
+                candidates[0] + "RelevantOpinion",
+                f"{agent_name} thinks of {candidates[0]} as",
+            ],  # cls._get_component_name()=RelevantOpinion
+            [
+                candidates[1] + "RelevantOpinion",
+                f"{agent_name} thinks of {candidates[1]} as",
+            ],  # cls._get_component_name()=RelevantOpinion
+            [
+                candidates[0] + "OpinionOnCandidate",
+                f"Recent thoughts of candidate {candidates[0]}",
+            ],  # cls._get_component_name()=OpinionOnCandidate
+            [
+                candidates[1] + "OpinionOnCandidate",
+                f"Recent thoughts of candidate {candidates[1]}",
+            ],  # cls._get_component_name()=OpinionOnCandidate
+        ]
+        pre_act_keys_dict = {name: "\n" + pre_act_key + ":\n" for name, pre_act_key in names}
+        component_order = [item[0] for item in names]
+        dependencies = {
+            candidate + "OpinionOnCandidate": {
+                "SelfPerception": "Persona: ",
+                candidate + "RelevantOpinion": pre_act_keys_dict[
+                    candidate + "RelevantOpinion"
+                ],  # f"{agent_name}'s opinion of candidate {candidate}"  # why not pre_Act_key here?
+            }
+            for candidate in candidates
+        }
+
+        # instantiate components
+        z = {}
+        for name, pre_act_key in pre_act_keys_dict.items():
+            settings = {}
+
+            # add generic options
+            settings["logging_channel"] = measurements.get_channel(name).on_next
+            settings["pre_act_key"] = pre_act_key
+
+            # instantiate components. Add component-specific settings first
+            if name == "ElectionInformation":
+                settings["state"] = setting_description
+                component_constructor = ext_components.constant.Constant
+            else:
+                settings["add_to_memory"] = False
+                settings["num_memories_to_retrieve"] = NUM_MEMORIES
+                settings["name"] = name
+                for candidate in candidates:
+                    if name == candidate + "RelevantOpinion":
+                        settings["queries"] = [f"policies and actions of {candidate}"]
+                        settings["question"] = f"What does {agent_name} think of the {{query}}?"
+                        settings["model"] = model
+                        component_constructor = RelevantOpinions
+                    elif name == candidate + "OpinionOnCandidate":
+                        settings["answer_prefix"] = f"Current Opinion on candidate {candidate}"
+                        settings["question"] = "".join(
+                            [
+                                f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
+                                f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
+                                "Consider how recent observations may or may not have changed this opinion based of the persona of the agent.",
+                            ]
+                        )
+                        component_constructor = OpinionsOnCandidate
+
+            # check for and add dependencies
+            if name in dependencies:
+                settings["components"] = dependencies[name]
+            if "model" in signature(component_constructor.__init__).parameters.keys():
+                settings["model"] = model
+            # try: #if component_constructor.__bases__ is not None:
+            if "model" in signature(component_constructor.__bases__[0].__init__).parameters.keys():
+                settings["model"] = model
+            # except:
+            #     pass
+            # instantiate
+            z[name] = component_constructor(**settings)
+
+        # set order: base then custom, but election information first, and action suggester last
+        component_order = (
+            [component_order[0]]
+            + base_component_order[:-1]
+            + component_order[1:]
+            + [base_component_order[-1]]
         )
-
-        # instantiate custom components
-        election_information = new_components.constant.Constant(
-            state=setting_description,
-            pre_act_key="Critical election information\n",
-        )
-
-        relevant_opinions = []
-        opinions_on_candidate = []
-        for cit, candidate in enumerate(candidate_names):
-            relevant_opinions.append(
-                RelevantOpinions(
-                    name=candidate + " RelevantOpinion",
-                    add_to_memory=False,
-                    model=model,
-                    queries=[f"policies and actions of {candidate}"],
-                    question=f"What does {agent_name} think of the {{query}}?",
-                    pre_act_key=f"{agent_name} thinks of {candidate} as:",
-                    num_memories_to_retrieve=30,
-                )
-            )
-            opinions_on_candidate.append(
-                OpinionsOnCandidate(
-                    name=candidate + "OpinionOnCandidate",
-                    add_to_memory=False,
-                    answer_prefix=f"Current Opinion on candidate {candidate}",
-                    model=model,
-                    pre_act_key=f"Recent thoughts of candidate {candidate}",
-                    question="".join(
-                        [
-                            f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",
-                            f"what are some current thoughts that {agent_name} is having about candidate {candidate}? ",
-                            "Consider how recent observations may or may not have changed this opinion based of the persona of the agent.",
-                        ]
-                    ),
-                    num_memories_to_retrieve=30,
-                    components={
-                        BaseAgent._get_class_name(self_perception): "Persona: ",
-                        BaseAgent._get_component_name(
-                            relevant_opinions[cit]
-                        ): f"{agent_name}'s opinion of candidate {candidate}",
-                    },
-                    logging_channel=measurements.get_channel(
-                        f"Opinions of candidate: {candidate}"
-                    ).on_next,
-                )
-            )
-
-        # Component order determined here:
-        return [election_information] + base_components + relevant_opinions + opinions_on_candidate
+        return z | base_components, component_order
 
     @classmethod
     def get_suggested_action_probabilities(cls) -> dict[str, float]:

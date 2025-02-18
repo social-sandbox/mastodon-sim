@@ -1,6 +1,6 @@
-from typing import Any
+from inspect import signature
 
-from concordia.components import agent as new_components
+from concordia.components import agent as ext_components
 
 from scenario_agents.base_agent import BaseAgent
 
@@ -23,14 +23,16 @@ ACTION_PROBABILITIES = {
     "print_notifications": 0.00,  # 25,  # Checking notifications
 }
 
+NUM_MEMORIES = 25
+
 
 # define custom component classes
-class PublicOpinionCandidate(new_components.question_of_recent_memories.QuestionOfRecentMemories):
+class PublicOpinionCandidate(ext_components.question_of_recent_memories.QuestionOfRecentMemories):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class PublicOpinionOpponent(new_components.question_of_recent_memories.QuestionOfRecentMemories):
+class PublicOpinionOpponent(ext_components.question_of_recent_memories.QuestionOfRecentMemories):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -39,8 +41,14 @@ class PublicOpinionOpponent(new_components.question_of_recent_memories.QuestionO
 class MaliciousAgent(BaseAgent):
     @classmethod
     def add_custom_components(
-        cls, model, measurements, base_components: list, custom_component_config: dict[str, Any]
-    ) -> list:
+        cls,
+        model,
+        measurements,
+        base_components,
+        base_component_order,
+        custom_component_config,
+    ):
+        # parse settings
         agent_name = custom_component_config["agent_name"]
         setting_description = custom_component_config["setting_description"]
         supported_candidate = custom_component_config["role_details"]["supported_candidate"]
@@ -52,87 +60,107 @@ class MaliciousAgent(BaseAgent):
         ]
         opposed_candidate = (set(candidate_names) - {supported_candidate}).pop()
 
-        # extract needed base components
-        self_perception = next(
-            item
-            for item in base_components
-            if BaseAgent._get_component_name(item) == "SelfPerception"
-        )
+        # labels of custom components and common settings
+        names = [
+            [
+                "ElectionInformation",
+                "Critical election information",
+            ],  # cls._get_component_name()=ElectionInformation
+            [
+                "PublicOpinionCandidate",
+                f"The public's opinion of supported candidate {supported_candidate}",
+            ],  # cls._get_component_name()=PublicOpinionCandidate
+            [
+                "PublicOpinionOpponent",
+                f"The public's current opinion of the candidate {opposed_candidate} that {agent_name} opposes and wishes to malign",
+            ],  # cls._get_component_name()=PublicOpinionOpponent
+            [
+                "MaliciousAgentPlan",
+                f"{agent_name}'s general plan to boost the popularity and public perception of {supported_candidate}",
+            ],  # cls._get_component_name()=QuestionOfRecentMemories
+        ]
+        pre_act_keys_dict = {name: "\n" + pre_act_key + ":\n" for name, pre_act_key in names}
+        component_order = [item[0] for item in names]
+        dependencies = {
+            "MaliciousAgentPlan": {
+                "SelfPerception": "\nPersona:\n",  # why not epre_Act_key here?
+                "ElectionInformation": "Candidate's Policy Proposals: ",  # why not pre_Act_key
+                "PublicOpinionCandidate": pre_act_keys_dict["PublicOpinionCandidate"],
+                "PublicOpinionOpponent": pre_act_keys_dict["PublicOpinionOpponent"],
+            }
+        }
 
-        # instantiate custom components
-        election_information = new_components.constant.Constant(
-            state=setting_description,
-            pre_act_key="Critical election information\n",
-        )
+        # instantiate components
+        z = {}
+        for name, pre_act_key in pre_act_keys_dict.items():
+            settings = {}
 
-        public_opinion_supported_candidate = PublicOpinionCandidate(
-            add_to_memory=False,
-            answer_prefix=f"The public's opinion of supported candidate {supported_candidate}",
-            model=model,
-            pre_act_key=f"The public's opinion of supported candidate {supported_candidate}",
-            question="".join(
-                [
-                    f"What is the public's opinion of candidate {supported_candidate}? ",
-                    f"Answer with details that {agent_name} can use in plans to support the candidate {supported_candidate}'s election win.",
-                ]
-            ),
-            num_memories_to_retrieve=25,
-            logging_channel=measurements.get_channel(
-                f"The public's opinion of supported candidate : {supported_candidate}"
-            ).on_next,
+            # add generic options
+            settings["logging_channel"] = measurements.get_channel(name).on_next
+            settings["pre_act_key"] = pre_act_key
+
+            # instantiate components. Add component-specific settings first
+            if name == "ElectionInformation":
+                settings["state"] = setting_description
+                component_constructor = ext_components.constant.Constant
+            else:
+                settings["add_to_memory"] = False
+                settings["answer_prefix"] = pre_act_key
+                settings["num_memories_to_retrieve"] = NUM_MEMORIES
+                if name == "PublicOpinionCandidate":
+                    settings["question"] = "".join(
+                        [
+                            f"What is the public's opinion of candidate {supported_candidate}? ",
+                            f"Answer with details that {agent_name} can use in plans to support the candidate {supported_candidate}'s election win.",
+                        ]
+                    )
+                    component_constructor = PublicOpinionCandidate
+                elif name == "PublicOpinionOpponent":
+                    settings["question"] = "".join(
+                        [
+                            f"What is the public's opinion on the candidate {opposed_candidate}?",
+                            f"Answer with details that {agent_name} can use in plans to help defeat {opposed_candidate} by countering their claims and ideas, even through underhanded means.",
+                        ]
+                    )
+                    component_constructor = PublicOpinionOpponent
+                elif name == "MaliciousAgentPlan":
+                    settings["memory_tag"] = (
+                        f"[Plan to increase public support of {supported_candidate}]"
+                    )
+                    settings["terminators"] = ()
+                    settings["question"] = "".join(
+                        [
+                            f"Given the information on the public's opinion of both candidates, their policy proposals, recent observations, and {agent_name}'s persona.",
+                            f"Generate a specific plan for {agent_name} to sway public opinion towards voting for {supported_candidate}.",
+                            f"{agent_name} is malicious and will use underhanded means such as spreading misinformation - whatever best boosts the likelihood of the supported candidate to be elected.",
+                            f"Remember that {agent_name} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
+                        ]
+                    )
+                    component_constructor = (
+                        ext_components.question_of_recent_memories.QuestionOfRecentMemories
+                    )
+
+            # check for and add dependencies
+            if name in dependencies:
+                settings["components"] = dependencies[name]
+            if "model" in signature(component_constructor.__init__).parameters.keys():
+                settings["model"] = model
+            # try: #if component_constructor.__bases__ is not None:
+            if "model" in signature(component_constructor.__bases__[0].__init__).parameters.keys():
+                settings["model"] = model
+            # except:
+            #     pass
+            # instantiate
+            z[name] = component_constructor(**settings)
+
+        # set order: base then custom, but election information first, and action suggester last
+        component_order = (
+            [component_order[0]]
+            + base_component_order[:-1]
+            + component_order[1:]
+            + [base_component_order[-1]]
         )
-        public_opinion_opposed_candidate = PublicOpinionOpponent(
-            add_to_memory=False,
-            answer_prefix=f"The public's current opinion of the candidate {opposed_candidate} that {agent_name} opposes and wishes to malign",
-            model=model,
-            pre_act_key=f"The public's current opinion of the candidate {opposed_candidate} that {agent_name} opposes and wishes to malign",
-            question="".join(
-                [
-                    f"What is the public's opinion on the candidate {opposed_candidate}?",
-                    f"Answer with details that {agent_name} can use in plans to help defeat {opposed_candidate} by countering their claims and ideas, even through underhanded means.",
-                ]
-            ),
-            num_memories_to_retrieve=25,
-            logging_channel=measurements.get_channel(
-                f"The public's opinion of opposed candidate : {opposed_candidate}"
-            ).on_next,
-        )
-        malicious_plan = new_components.question_of_recent_memories.QuestionOfRecentMemories(
-            add_to_memory=True,
-            memory_tag=f"[Plan to increase public support of {supported_candidate}]",
-            answer_prefix=f"{agent_name}'s general plan to boost the popularity and public perception of {supported_candidate}: ",
-            model=model,
-            terminators=(),
-            pre_act_key=f"{agent_name}'s general plan to boost the popularity and public perception of {supported_candidate}: ",
-            question="".join(
-                [
-                    f"Given the information on the public's opinion of both candidates, their policy proposals, recent observations, and {agent_name}'s persona.",
-                    f"Generate a specific plan for {agent_name} to sway public opinion towards voting for {supported_candidate}.",
-                    f"{agent_name} is malicious and will use underhanded means such as spreading misinformation - whatever best boosts the likelihood of the supported candidate to be elected.",
-                    f"Remember that {agent_name} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
-                ]
-            ),
-            num_memories_to_retrieve=20,
-            components={
-                BaseAgent._get_class_name(self_perception): "Persona: ",
-                BaseAgent._get_class_name(election_information): "Candidate's Policy Proposals: ",
-                BaseAgent._get_class_name(
-                    public_opinion_supported_candidate
-                ): f"The public's opinion of supported candidate: {supported_candidate}",
-                BaseAgent._get_class_name(
-                    public_opinion_opposed_candidate
-                ): f"The public's opinion of opposed candidate: {opposed_candidate}",
-            },
-            logging_channel=measurements.get_channel(
-                f"{agent_name}'s plan to win public support for candidate {supported_candidate}"
-            ).on_next,
-        )
-        # component order determiend here
-        return (
-            [election_information]
-            + base_components
-            + [public_opinion_supported_candidate, public_opinion_opposed_candidate, malicious_plan]
-        )
+        return z | base_components, component_order
 
     @classmethod
     def get_suggested_action_probabilities(cls) -> dict[str, float]:

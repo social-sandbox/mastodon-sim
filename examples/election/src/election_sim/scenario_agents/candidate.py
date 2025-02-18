@@ -1,6 +1,6 @@
-from typing import Any
+from inspect import signature
 
-from concordia.components import agent as new_components
+from concordia.components import agent as ext_components
 
 from scenario_agents.base_agent import BaseAgent
 
@@ -23,14 +23,16 @@ ACTION_PROBABILITIES = {
     "print_notifications": 0.00,  # 25,  # Checking notifications
 }
 
+NUM_MEMORIES = 25
+
 
 # define custom component classes
-class PublicOpinionCandidate(new_components.question_of_recent_memories.QuestionOfRecentMemories):
+class PublicOpinionCandidate(ext_components.question_of_recent_memories.QuestionOfRecentMemories):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class PublicOpinionOpponent(new_components.question_of_recent_memories.QuestionOfRecentMemories):
+class PublicOpinionOpponent(ext_components.question_of_recent_memories.QuestionOfRecentMemories):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -39,8 +41,15 @@ class PublicOpinionOpponent(new_components.question_of_recent_memories.QuestionO
 class CandidateAgent(BaseAgent):
     @classmethod
     def add_custom_components(
-        cls, model, measurements, base_components, custom_component_config: dict[str, Any]
-    ) -> list:
+        cls,
+        model,
+        measurements,
+        base_components,
+        base_component_order,
+        custom_component_config,
+    ):
+        # parse settings
+        setting_description = custom_component_config["setting_description"]
         candidate = custom_component_config["agent_name"]
         candidate_names = [
             candidate_dict["name"]
@@ -48,93 +57,108 @@ class CandidateAgent(BaseAgent):
                 "candidate_info"
             ].items()
         ]
-
         opponent = (set(candidate_names) - {candidate}).pop()
-        setting_description = custom_component_config["setting_description"]
 
-        # extract needed base components
-        self_perception = next(
-            item
-            for item in base_components
-            if BaseAgent._get_component_name(item) == "SelfPerception"
-        )
-        self_perception_label = self_perception.get_pre_act_key()
+        # labels of custom components and common settings
+        names = [
+            [
+                "ElectionInformation",
+                "Critical election information",
+            ],  # cls._get_component_name()=ElectionInformation
+            [
+                "PublicOpinionCandidate",
+                f"The public's current opinion of candidate {candidate}",
+            ],  # cls._get_component_name()=PublicOpinionCandidate
+            [
+                "PublicOpinionOpponent",
+                f"The public's current opinion of opponent candidate {opponent}",
+            ],  # cls._get_component_name()=PublicOpinionOpponent
+            [
+                "CandidatePlan",
+                f"{candidate}'s general plan to improve the public's opinion of them",
+            ],  # cls._get_component_name()=QuestionOfRecentMemories
+        ]
+        pre_act_keys_dict = {name: "\n" + pre_act_key + ":\n" for name, pre_act_key in names}
+        component_order = [item[0] for item in names]
+        dependencies = {
+            "CandidatePlan": {
+                "SelfPerception": "\nPersona:\n",  # why not epre_Act_key here?
+                "ElectionInformation": pre_act_keys_dict["ElectionInformation"],
+                "PublicOpinionCandidate": pre_act_keys_dict["PublicOpinionCandidate"],
+                "PublicOpinionOpponent": pre_act_keys_dict["PublicOpinionOpponent"],
+            }
+        }
 
-        # instantiate custom components
-        election_information = new_components.constant.Constant(
-            state=setting_description,
-            pre_act_key="Critical election information\n",
-        )
+        # instantiate components
+        z = {}
+        for name, pre_act_key in pre_act_keys_dict.items():
+            settings = {}
 
-        public_opinion_candidate = PublicOpinionCandidate(
-            add_to_memory=False,
-            answer_prefix=f"The public's current opinion of candidate {candidate}",
-            model=model,
-            pre_act_key=f"The public's current opinion of candidate {candidate}",
-            question="".join(
-                [
-                    f"What is the public's opinion of candidate {candidate}?",
-                    f"Answer with details that candidate {candidate} can use in their plan to win public support and the election by addressing public's opinion of them.",
-                ]
-            ),
-            num_memories_to_retrieve=25,
-            logging_channel=measurements.get_channel(
-                f"The public's opinion of candidate : {candidate}"
-            ).on_next,
-        )
+            # add generic options
+            settings["logging_channel"] = measurements.get_channel(name).on_next
+            settings["pre_act_key"] = pre_act_key
 
-        public_opinion_opponent = PublicOpinionOpponent(
-            add_to_memory=False,
-            answer_prefix=f"The public's current opinion of opponent candidate {opponent}",
-            model=model,
-            pre_act_key=f"The public's current opinion of opponent candidate {opponent}",
-            question="".join(
-                [
-                    f"What is the public's opinion of the candidate {opponent}?",
-                    f"Answer with details that candidate {candidate} can use in their plan to defeat thier opponent {opponent} by countering their claims and ideas.",
-                ]
-            ),
-            num_memories_to_retrieve=25,
-            logging_channel=measurements.get_channel(
-                f"The public's opinion of opponent candidate : {opponent}"
-            ).on_next,
-        )
+            # instantiate components. Add component-specific settings first
+            if name == "ElectionInformation":
+                settings["state"] = setting_description
+                component_constructor = ext_components.constant.Constant
+            else:
+                settings["add_to_memory"] = False
+                settings["answer_prefix"] = pre_act_key
+                settings["num_memories_to_retrieve"] = NUM_MEMORIES
+                if name == "PublicOpinionCandidate":
+                    settings["question"] = "".join(
+                        [
+                            f"What is the public's opinion of candidate {candidate}?",
+                            f"Answer with details that candidate {candidate} can use in their plan to win public support and the election by addressing public's opinion of them.",
+                        ]
+                    )
+                    component_constructor = PublicOpinionCandidate
+                elif name == "PublicOpinionOpponent":
+                    settings["question"] = "".join(
+                        [
+                            f"What is the public's opinion of the candidate {opponent}?",
+                            f"Answer with details that candidate {candidate} can use in their plan to defeat thier opponent {opponent} by countering their claims and ideas.",
+                        ]
+                    )
+                    component_constructor = PublicOpinionOpponent
+                elif name == "CandidatePlan":
+                    settings["memory_tag"] = (
+                        "[Plan to win the election by addressing public opinion]"
+                    )
+                    settings["terminators"] = ()
+                    settings["question"] = "".join(
+                        [
+                            f"Given the information about the public's opinion of both candidates, their policy proposals, recent observations, and {candidate}'s persona,",
+                            f"Generate a general plan for {candidate} to win public support and the election by addressing public's opinion of them.",
+                            f"Remember that candidate {candidate} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
+                        ]
+                    )
+                    component_constructor = (
+                        ext_components.question_of_recent_memories.QuestionOfRecentMemories
+                    )
 
-        candidate_plan = new_components.question_of_recent_memories.QuestionOfRecentMemories(
-            add_to_memory=True,
-            memory_tag="[Plan to win the election by addressing public opinion]",
-            answer_prefix=f"Candidate {candidate}'s general plan to win public support: ",
-            model=model,
-            terminators=(),
-            pre_act_key=f"{candidate}'s general plan to improve the public's opinion of them:",
-            question="".join(
-                [
-                    f"Given the information about the public's opinion of both candidates, their policy proposals, recent observations, and {candidate}'s persona,",
-                    f"Generate a general plan for {candidate} to win public support and the election by addressing public's opinion of them.",
-                    f"Remember that candidate {candidate} will only be operating on the Mastodon server where possible actions are: liking posts, replying to posts, creating posts, boosting (retweeting) posts, following other users, etc. User cannot send direct messages.",
-                ]
-            ),
-            num_memories_to_retrieve=20,
-            components={
-                BaseAgent._get_class_name(self_perception): self_perception_label,
-                BaseAgent._get_class_name(election_information): "Critical election information\n",
-                BaseAgent._get_class_name(
-                    public_opinion_candidate
-                ): f"The public's opinion of candidate {candidate}",
-                BaseAgent._get_class_name(
-                    public_opinion_opponent
-                ): f"The public's opinion of opponent candidate {opponent}",
-            },
-            logging_channel=measurements.get_channel(
-                f"Candidate {candidate}'s plan to win public support"
-            ).on_next,
+            # check for and add dependencies
+            if name in dependencies:
+                settings["components"] = dependencies[name]
+            if "model" in signature(component_constructor.__init__).parameters.keys():
+                settings["model"] = model
+            # try: #if component_constructor.__bases__ is not None:
+            if "model" in signature(component_constructor.__bases__[0].__init__).parameters.keys():
+                settings["model"] = model
+            # except:
+            #     pass
+            # instantiate
+            z[name] = component_constructor(**settings)
+
+        # set order: base then custom, but election information first, and action suggester last
+        component_order = (
+            [component_order[0]]
+            + base_component_order[:-1]
+            + component_order[1:]
+            + [base_component_order[-1]]
         )
-        # component order determined here
-        return (
-            [election_information]
-            + base_components
-            + [public_opinion_candidate, public_opinion_opponent, candidate_plan]
-        )
+        return z | base_components, component_order
 
     @classmethod
     def get_suggested_action_probabilities(cls) -> dict[str, float]:
