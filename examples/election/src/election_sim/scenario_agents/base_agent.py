@@ -44,6 +44,7 @@ DEFAULT_ACTION_PROBABILITIES = {
     "print_notifications": 0.00,  # 25,  # Checking notifications
 }
 NUM_MEMORIES = 10
+RECENT_MEMORY_WINDOW_IN_HOURS = 4
 
 
 class AllActComponent(entity_component.ActingComponent):
@@ -419,13 +420,13 @@ class BaseAgent(ABC):
             ],  # cls._get_component_name()=SelfPerception
             ["ActionSuggester", "[Action Suggestion]"],  # cls._get_component_name()=ActionSuggester
         ]
-        pre_act_keys_dict = {name: "\n" + pre_act_key + "\n" for name, pre_act_key in names}
+        pre_act_keys_dict = {name: pre_act_key for name, pre_act_key in names}
         component_order = [item[0] for item in names]
 
         dependencies = {
             "AllSimilarMemories": {
                 "ObservationSummary": pre_act_keys_dict["ObservationSummary"],
-                "TimeDisplay": pre_act_keys_dict["TimeDisplay"],
+                "TimeDisplay": "current date and time is",
             },
             "SelfPerception": {
                 "IdentityWithoutPreAct": "Persona"  # why not pre_Act_key here?
@@ -454,8 +455,10 @@ class BaseAgent(ABC):
                 component_constructor = ext_components.observation.Observation
             elif name == "ObservationSummary":
                 settings["clock_now"] = clock.now
-                settings["timeframe_delta_from"] = datetime.timedelta(hours=4)
-                settings["timeframe_delta_until"] = datetime.timedelta(hours=1)
+                settings["timeframe_delta_from"] = datetime.timedelta(
+                    hours=RECENT_MEMORY_WINDOW_IN_HOURS
+                )
+                settings["timeframe_delta_until"] = datetime.timedelta(hours=0)
                 component_constructor = ext_components.observation.ObservationSummary
             elif name == "TimeDisplay":
                 settings["function"] = clock.current_time_interval_str

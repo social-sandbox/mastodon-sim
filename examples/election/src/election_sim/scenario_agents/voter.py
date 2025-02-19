@@ -89,10 +89,9 @@ class VoterAgent(BaseAgent):
         component_order = [item[0] for item in names]
         dependencies = {
             candidate + "OpinionOnCandidate": {
-                "SelfPerception": "Persona: ",
-                candidate + "RelevantOpinion": pre_act_keys_dict[
-                    candidate + "RelevantOpinion"
-                ],  # f"{agent_name}'s opinion of candidate {candidate}"  # why not pre_Act_key here?
+                "SelfPerception": "Persona Information",
+                candidate
+                + "RelevantOpinion": f"{agent_name}'s opinion of candidate {candidate}",  # why not pre_Act_key here?
             }
             for candidate in candidates
         }
@@ -117,11 +116,15 @@ class VoterAgent(BaseAgent):
                 for candidate in candidates:
                     if name == candidate + "RelevantOpinion":
                         settings["queries"] = [f"policies and actions of {candidate}"]
-                        settings["question"] = f"What does {agent_name} think of the {{query}}?"
+                        settings["question"] = (
+                            f"Given the following statements, what does {agent_name} think of the {{query}}?"
+                        )
                         settings["model"] = model
                         component_constructor = RelevantOpinions
                     elif name == candidate + "OpinionOnCandidate":
-                        settings["answer_prefix"] = f"Current Opinion on candidate {candidate}"
+                        settings["answer_prefix"] = (
+                            f"{agent_name}'s current opinion on candidate {candidate} is"
+                        )
                         settings["question"] = "".join(
                             [
                                 f"Given {agent_name}'s opinion about candidate {candidate}, and the recent observations,",

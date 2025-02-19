@@ -104,7 +104,7 @@ class CandidateAgent(BaseAgent):
                 component_constructor = ext_components.constant.Constant
             else:
                 settings["add_to_memory"] = False
-                settings["answer_prefix"] = pre_act_key
+                settings["answer_prefix"] = pre_act_key + " is"
                 settings["num_memories_to_retrieve"] = NUM_MEMORIES
                 if name == "PublicOpinionCandidate":
                     settings["question"] = "".join(

@@ -478,7 +478,7 @@ if __name__ == "__main__":
 
     shared_memories_template = (
         [
-            "{name} is a user on Storhampton.social, a Mastodon instance created for the residents of Storhampton."
+            "They are a long-time active user on Storhampton.social, a Mastodon instance created for the residents of Storhampton."
         ]
         + town_history
         + [

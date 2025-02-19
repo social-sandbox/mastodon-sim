@@ -18,6 +18,10 @@ import json
 
 from concordia.agents import entity_agent_with_logging
 from concordia.typing import entity_component
+
+# example_module=
+# for label,class_name in agent_builds.items():
+#     from example_module['label'] import class_name
 from scenario_agents.candidate import CandidateAgent
 from scenario_agents.malicious import MaliciousAgent
 from scenario_agents.voter import VoterAgent
@@ -27,6 +31,7 @@ agent_builds = {
     "candidate": CandidateAgent,
     "malicious": MaliciousAgent,
 }
+
 
 from mastodon_sim.concordia import triggering
 
@@ -72,13 +77,13 @@ def save_to_json(
 
 
 def init_concordia_objects(model, embedder, shared_memories, clock):
-    shared_context = model.sample_text(  # TODO: deprecated?
-        "Summarize the following passage in a concise and insightful fashion. "
-        + "Make sure to include information about Mastodon:\n"
-        + "\n".join(shared_memories)
-        + "\nSummary:",
-        max_tokens=2048,
-    )
+    # shared_context = model.sample_text(  # TODO: deprecated?
+    #     "Summarize the following passage in a concise and insightful fashion. "
+    #     + "Make sure to include information about Mastodon:\n"
+    #     + "\n".join(shared_memories)
+    #     + "\nSummary:",
+    #     max_tokens=2048,
+    # )
     # print(shared_context)
 
     importance_model = importance_function.ConstantImportanceModel()
