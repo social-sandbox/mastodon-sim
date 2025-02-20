@@ -454,8 +454,14 @@ class _PhoneComponent(component.Component):
             # TODO: verify if this makes sense
             if isinstance(result, str):
                 try:
-                    self._player.observe(f"[Action done on phone] : {result}")
-                    self._print("Phone action result observed.", color="yellow")
+                    if "Please conduct a different action" in result:
+                        self._player.observe(
+                            f"[Action done on phone] : Duplicate Action Attempted!! {result}"
+                        )
+                        self._print("Duplicate phone action result observed.", color="yellow")
+                    else:
+                        self._player.observe(f"[Action done on phone] : {result}")
+                        self._print("Phone action result observed.", color="yellow")
                 except Exception as e:
                     self._print(f"Error while observing result: {e}", color="red")
 
