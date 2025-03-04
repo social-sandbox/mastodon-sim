@@ -59,6 +59,21 @@ parser.add_argument(
     default=None,
     help="Path to Reddit-based JSON file for agent data (if you want to load from JSON).",
 )
+
+parser.add_argument(
+    "--sentence_encoder",
+    type=str,
+    default="sentence-transformers/all-mpnet-base-v2",
+    help="select sentence embedding model",
+)  # NA
+
+parser.add_argument(
+    "--model",
+    type=str,
+    default="gpt-4o-mini",
+    help="select language model to run sim",
+)  # NA
+
 args = parser.parse_args()
 
 
@@ -595,6 +610,8 @@ if __name__ == "__main__":
                 p_from_to[role_i][role_j] = base_prob
 
     config_data = {}
+    config_data["model"] = args.model
+    config_data["sentence_encoder"] = args.sentence_encoder
     config_data["agents"] = agent_configs
     config_data["shared_memories_template"] = shared_memories_template
     config_data["mastodon_usage_instructions"] = mastodon_usage_instructions

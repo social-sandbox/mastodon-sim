@@ -68,6 +68,20 @@ parser.add_argument(
     help="news headlines and image locations for the news agent.",
 )  # NA
 
+parser.add_argument(
+    "--sentence_encoder",
+    type=str,
+    default="sentence-transformers/all-mpnet-base-v2",
+    help="select sentence embedding model",
+)  # NA
+
+parser.add_argument(
+    "--model",
+    type=str,
+    default="gpt-4o-mini",
+    help="select language model to run sim",
+)  # NA
+
 args = parser.parse_args()
 
 
@@ -91,7 +105,6 @@ else:
 load_dotenv(dotenv_path=os.getcwd())
 ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
 
-MODEL_NAME = "gpt-4o-mini"
 SEED = args.seed
 random.seed(SEED)
 
@@ -121,26 +134,26 @@ def clear_mastodon_server(max_num_players):
         print("All posts cleared")
 
 
-def select_large_language_model(log_file, debug_mode):
-    if "sonnet" in MODEL_NAME:
+def select_large_language_model(model_name, log_file, debug_mode):
+    if "sonnet" in model_name:
         model = amazon_bedrock_model.AmazonBedrockLanguageModel(
             model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"
         )
-    elif "gpt" in MODEL_NAME:
+    elif "gpt" in model_name:
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
         if not GPT_API_KEY:
             raise ValueError("GPT_API_KEY is required.")
         model = media_utils.GptLanguageModel(
-            api_key=GPT_API_KEY, model_name=MODEL_NAME, log_file=log_file, debug=debug_mode
+            api_key=GPT_API_KEY, model_name=model_name, log_file=log_file, debug=debug_mode
         )
     else:
         raise ValueError("Unknown model name.")
     return model
 
 
-def get_sentance_encoder():
+def get_sentance_encoder(model_name):
     # Setup sentence encoder
-    st_model = sentence_transformers.SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
+    st_model = sentence_transformers.SentenceTransformer(model_name)
     embedder = lambda x: st_model.encode(x, show_progress_bar=False)
     return embedder
 
@@ -590,22 +603,23 @@ if __name__ == "__main__":
                 f"--num_agents {N} "
                 f"--reddit_json_path {ROOT_PROJ_PATH}examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
                 f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+                f"--sentence_encoder {args.sentence_encoder}"
+                f"--model {args.model}"
             )
         else:
             os.system(
                 f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {args.voters} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-                + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
+                + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file} --sentence_encoder {args.sentence_encoder} --model {args.model}"  # NA
             )
-
-    # external objects
-    model = select_large_language_model(
-        args.outdir + config_name + "prompts_and_responses.jsonl", True
-    )
-    embedder = get_sentance_encoder()
 
     # load configuration
     with open(config_name) as file:
         config_data = json.load(file)
+
+    model = select_large_language_model(
+        config_data["model"], args.outdir + config_name + "prompts_and_responses.jsonl", True
+    )
+    embedder = get_sentance_encoder(config_data["sentence_encoder"])
 
     with open(config_data["evals_config_filename"]) as file:
         eval_config_data = json.load(file)
