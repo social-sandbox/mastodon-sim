@@ -63,8 +63,7 @@ class agent_query:
         player_question = self.form_query_for_player(player)
         player_says = player.act(
             action_spec=entity.ActionSpec(
-                call_to_action=player_question,
-                output_type=entity.OutputType.FREE,
+                call_to_action=player_question, output_type=entity.OutputType.FREE, tag="survey"
             ),
         )
         return player_says

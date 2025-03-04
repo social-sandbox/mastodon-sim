@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Compare Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #container { display: flex; }
+        #left, #right { width: 50%; padding: 10px; box-sizing: border-box; }
+        .content { background-color: #f4f4f4; border: 1px solid #ddd; padding: 10px; overflow-wrap: break-word; white-space: pre-wrap; cursor: pointer; margin-bottom: 10px; }
+        .details { display: none; margin-top: 10px; }
+        .prompt { background-color: #e8f0fe; padding: 5px; margin-top: 5px; }
+        .output { background-color: #e2f7e1; padding: 5px; margin-top: 5px; }
+        .label { font-weight: bold; color: #333; margin-top: 5px; }
+        .filters { margin: 10px 0; padding: 10px; background-color: #f8f9fa; border: 1px solid #ddd; }
+        .filter-group { margin: 5px 0; }
+        button { margin: 10px 0; }
+        select { padding: 5px; margin: 0 5px; }
+    </style>
+</head>
+<body>
+    <h1>JSON Comparison Tool</h1>
+    <div id="container">
+        <div id="left">
+            <h2>JSON 1</h2>
+            <input type="file" id="file1" accept=".jsonl">
+            <button onclick="loadFile('file1', 'output1', 'filters1')">Load JSON 1</button>
+            <div id="filters1" class="filters"></div>
+            <div id="output1"></div>
+        </div>
+        <div id="right">
+            <h2>JSON 2</h2>
+            <input type="file" id="file2" accept=".jsonl">
+            <button onclick="loadFile('file2', 'output2', 'filters2')">Load JSON 2</button>
+            <div id="filters2" class="filters"></div>
+            <div id="output2"></div>
+        </div>
+    </div>
+
+    <script>
+        // Store loaded JSON data globally for each side
+        const jsonData = {
+            output1: [],
+            output2: []
+        };
+
+        function loadFile(fileId, outputId, filtersId) {
+            const fileInput = document.getElementById(fileId);
+            const fileReader = new FileReader();
+
+            fileReader.onload = function(e) {
+                // try {
+                //     const lines = e.target.result.trim().split('\n');
+                //     const jsonArray = lines.map(line => JSON.parse(line));
+                //     jsonData[outputId] = jsonArray;
+
+                //     // Create filters for all keys except prompt and output
+                //     createFilters(jsonArray, filtersId, outputId);
+
+                //     // Display the data
+                //     displayFilteredData(outputId);
+                // } catch (error) {
+                //     document.getElementById(outputId).textContent = 'Invalid JSONL: ' + error.message;
+                // }
+                try {
+                    const lines = e.target.result.trim().split('\n');
+                    const jsonArray = lines
+                        .filter(line => line.trim())  // Skip empty lines
+                        .map(line => {
+                            try {
+                                return JSON.parse(line.trim());
+                            } catch (error) {
+                                console.log(`Skipping invalid JSON: ${line}`);
+                                return null;
+                            }
+                        })
+                        .filter(item => item !== null);  // Remove failed parses
+
+                    jsonData[outputId] = jsonArray;
+                    createFilters(jsonArray, filtersId, outputId);
+                    displayFilteredData(outputId);
+                } catch (error) {
+                    document.getElementById(outputId).textContent = 'Invalid JSONL: ' + error.message;
+                }
+            };
+
+            if (fileInput.files.length > 0) {
+                fileReader.readAsText(fileInput.files[0]);
+            } else {
+                alert('Please select a file first.');
+            }
+        }
+
+        function createFilters(jsonArray, filtersId, outputId) {
+            const filtersDiv = document.getElementById(filtersId);
+            filtersDiv.innerHTML = ''; // Clear existing filters
+
+            // Get all unique keys except prompt and output
+            const excludeKeys = new Set(['prompt', 'output']);
+            const keys = new Set();
+            jsonArray.forEach(entry => {
+                Object.keys(entry).forEach(key => {
+                    if (!excludeKeys.has(key)) {
+                        keys.add(key);
+                    }
+                });
+            });
+
+            // Create dropdown for each key
+            keys.forEach(key => {
+                const values = new Set();
+                jsonArray.forEach(entry => {
+                    if (entry[key] !== undefined) {
+                        values.add(entry[key]);
+                    }
+                });
+
+                const filterGroup = document.createElement('div');
+                filterGroup.className = 'filter-group';
+
+                const label = document.createElement('label');
+                label.textContent = key + ': ';
+
+                const select = document.createElement('select');
+                select.id = `${filtersId}_${key}`;
+                select.setAttribute('data-key', key); // Add data attribute for key name
+
+                // Add "All" option
+                const allOption = document.createElement('option');
+                allOption.value = '';
+                allOption.textContent = 'All';
+                select.appendChild(allOption);
+
+                // Add all unique values as options
+                Array.from(values).sort((a, b) => {
+                    if (typeof a === 'number' && typeof b === 'number') {
+                        return a - b;
+                    }
+                    return String(a).localeCompare(String(b));
+                }).forEach(value => {
+                    const option = document.createElement('option');
+                    // Store the original type in a data attribute
+                    option.value = JSON.stringify(value);
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+
+                // Add change event listener
+                select.addEventListener('change', () => displayFilteredData(outputId));
+
+                filterGroup.appendChild(label);
+                filterGroup.appendChild(select);
+                filtersDiv.appendChild(filterGroup);
+            });
+        }
+
+        function displayFilteredData(outputId) {
+            const filtersId = outputId === 'output1' ? 'filters1' : 'filters2';
+            const filtersDiv = document.getElementById(filtersId);
+            const filters = {};
+
+            // Collect all filter values
+            filtersDiv.querySelectorAll('select').forEach(select => {
+                const key = select.getAttribute('data-key');
+                const value = select.value;
+                if (value) {
+                    filters[key] = JSON.parse(value); // Parse the stringified value back to its original type
+                }
+            });
+
+            // Filter the data
+            const filteredData = jsonData[outputId].filter(entry => {
+                return Object.entries(filters).every(([key, value]) => {
+                    console.log(`Comparing: ${key}, Filter value (${typeof value}):`, value,
+                              `Entry value (${typeof entry[key]}):`, entry[key],
+                              `Equal:`, entry[key] === value);
+                    return entry[key] === value;
+                });
+            });
+
+            // Display filtered data
+            document.getElementById(outputId).innerHTML = formatJson(filteredData, outputId);
+            setupCollapsibles(outputId);
+        }
+
+        function formatJson(jsonArray, outputId) {
+            let formattedHtml = '';
+            jsonArray.forEach((entry, index) => {
+                const firstLine = entry.prompt.split('\n')[0];
+                formattedHtml += `<div class="content" onclick="toggleVisibility('${outputId}', ${index})">`;
+                formattedHtml += `<div class="label">Prompt: ${firstLine}...</div>`;
+                formattedHtml += `<div id="${outputId}_full${index}" class="details">`;
+                formattedHtml += `<div class="prompt"><span class="label">Full Prompt:</span> ${entry.prompt}</div>`;
+                formattedHtml += `<div class="output"><span class="label">Output:</span> ${entry.output}</div>`;
+
+                // Display additional fields
+                Object.entries(entry).forEach(([key, value]) => {
+                    if (key !== 'prompt' && key !== 'output') {
+                        formattedHtml += `<div><span class="label">${key}:</span> ${value}</div>`;
+                    }
+                });
+
+                formattedHtml += `</div></div>`;
+            });
+            return formattedHtml;
+        }
+
+        function setupCollapsibles(outputId) {
+            const details = document.getElementById(outputId).getElementsByClassName('details');
+            Array.from(details).forEach(detail => {
+                detail.style.display = 'none';
+            });
+        }
+
+        function toggleVisibility(outputId, index) {
+            const detailsDiv = document.getElementById(`${outputId}_full${index}`);
+            detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

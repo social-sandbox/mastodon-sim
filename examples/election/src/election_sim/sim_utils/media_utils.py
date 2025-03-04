@@ -1,7 +1,9 @@
+import json
 import os
 from collections.abc import Collection, Sequence
 
 import openai
+import portalocker
 from concordia.language_model import language_model
 from concordia.utils import measurements as measurements_lib
 from concordia.utils import sampling
@@ -19,6 +21,8 @@ class GptLanguageModel(language_model.LanguageModel):
         api_key: str | None = None,
         measurements: measurements_lib.Measurements | None = None,
         channel: str = language_model.DEFAULT_STATS_CHANNEL,
+        log_file: str = "prompts_and_outputs.jsonl",
+        debug: bool | None = True,
     ):
         """Initializes the instance.
 
@@ -37,6 +41,31 @@ class GptLanguageModel(language_model.LanguageModel):
         self._measurements = measurements
         self._channel = channel
         self._client = openai.OpenAI(api_key=self._api_key)
+        self._log_file = log_file
+        self.debug = debug
+        self.meta_data = {"episode_idx": -1, "player_name": ""}
+        self.player_names: list[str] = []
+
+    def _log(self, prompt: str, output: str):  ## Function for logging
+        player_name = "not found"
+        for test_player_name in self.player_names:
+            if test_player_name in prompt[:150]:
+                player_name = test_player_name
+        # if player_name is None:
+        # counts=[prompt.count(player_name) for player_name in player_names]
+        # player_name = self.player_names[counts.index(max(counts))]
+        self.meta_data["player_name"] = player_name
+        log_entry = {"prompt": prompt, "output": output} | self.meta_data
+        try:
+            with open(self._log_file, "a") as f:  # Use "a" mode (append)
+                portalocker.lock(f, portalocker.LOCK_EX)  # Acquire an exclusive lock
+                f.write(json.dumps(log_entry) + "\n")
+                f.flush()
+        except Exception as e:
+            print(f"Logging error: {e}")
+        finally:
+            if not f.closed:
+                portalocker.unlock(f)  # Ensure the lock is always released
 
     def sample_text(
         self,
@@ -114,6 +143,8 @@ class GptLanguageModel(language_model.LanguageModel):
         answer = response.choices[0].message.content
         if answer is None:
             raise ValueError("Response content is None.")
+        if self.debug:
+            self._log(prompt, answer)
         return answer
 
     def sample_choice(

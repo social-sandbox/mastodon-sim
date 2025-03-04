@@ -1,5 +1,8 @@
 import argparse
 import base64
+import json
+from collections.abc import Generator
+from typing import Any
 
 import dash
 import dash_cytoscape as cyto
@@ -12,6 +15,106 @@ from plotly.subplots import make_subplots
 
 cyto.load_extra_layouts()
 from io import StringIO
+
+
+def stream_filtered_jsonl(
+    content_string: str, selected_name: str, selected_episode: int
+) -> Generator[dict[Any, Any], None, None]:
+    """
+    Stream and filter JSONL content line by line, only yielding matching records.
+
+    Args:
+        content_string: Base64 encoded content string
+        selected_name: Name to filter by
+        selected_episode: Episode index to filter by
+
+    Yields
+    ------
+        Dict: Parsed JSON objects that match the filter criteria
+    """
+    # Handle the data URI format if present
+    if "," in content_string:
+        _, content_string = content_string.split(",", 1)
+
+    if not content_string:
+        print("content string is empty")
+    # Create a text stream from the decoded content
+    decoded = base64.b64decode(content_string).decode("utf-8")
+    stream = StringIO(decoded)
+
+    # Process and filter the stream line by line
+    for line in stream:
+        line = line.strip()
+        if not line:  # Skip empty lines
+            continue
+        try:
+            record = json.loads(line)
+            # Only yield records that match our filters
+            if (selected_name is None or record.get("player_name") == selected_name) and (
+                selected_episode is None or record.get("episode_idx") == selected_episode
+            ):
+                yield record
+        except json.JSONDecodeError as e:
+            print(f"Error processing JSONL line: {e!s}")
+            continue
+
+
+# def parse_jsonl(selected_name,selected_episode, contents):
+# def parse_jsonl(contents):
+#     if not contents:
+#         print("nothing in contents")
+#     if ',' in contents:
+#         _, content_string = contents.split(',', 1)
+#     else:
+#         content_string = contents
+#     # content_type, content_string = contents.split(",")
+#     # content_string = contents
+#     if not content_string:
+#         print("nothing in content_string")
+#     decoded = base64.b64decode(content_string).decode("utf-8")
+#     for line in decoded.splitlines()[:10]:
+#         print(line)
+#     return [json.loads(line) for line in decoded.splitlines()]
+
+# return [json.loads(line) for line in decoded.strip().split("\n")]
+
+
+def convert_linebreaks(string):
+    lst = string.split("\n")
+    item = html.Br()
+    result = [item] * (len(lst) * 2 - 1)
+    result[0::2] = lst
+    return result
+
+
+def create_display(entry):
+    first_line = entry["prompt"].split("\n")[0]
+    return html.Details(
+        [
+            html.Summary(f"Prompt: {first_line}..."),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Strong("Full Prompt: "),
+                            html.Span(convert_linebreaks(entry["prompt"])),
+                        ],
+                        style={"backgroundColor": "#e8f0fe", "padding": "5px", "margin": "5px"},
+                    ),
+                    html.Div(
+                        [html.Strong("Output: "), html.Span(convert_linebreaks(entry["output"]))],
+                        style={"backgroundColor": "#e2f7e1", "padding": "5px", "margin": "5px"},
+                    ),
+                    *[
+                        html.Div([html.Strong(f"{k}: "), html.Span(convert_linebreaks(str(v)))])
+                        for k, v in entry.items()
+                        if k not in {"prompt", "output"}
+                    ],
+                ]
+            ),
+        ],
+        style={"backgroundColor": "#f4f4f4", "padding": "10px", "margin": "5px"},
+    )
 
 
 def compute_positions(graph):
@@ -230,7 +333,7 @@ if __name__ == "__main__":
                     html.Div(
                         [
                             html.Label(
-                                "Upload Output Log:",
+                                "Upload an output file:",
                                 style={
                                     "font-size": "18px",
                                     "font-weight": "bold",
@@ -317,6 +420,60 @@ if __name__ == "__main__":
             html.Div(
                 id="dashboard",  # Added 'dashboard' id here
                 children=[
+                    # Upload components and Submit button added at the bottom
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.Label("Upload an output file:"),
+                                    dcc.Upload(
+                                        id="upload-app-logger-dashboard",
+                                        children=html.Div([html.A("Select Files")]),
+                                        style={
+                                            "width": "50px",
+                                            "height": "24px",
+                                            "lineHeight": "15px",
+                                            "borderWidth": "2px",
+                                            "borderStyle": "dashed",
+                                            "borderRadius": "2px",
+                                            "textAlign": "center",
+                                            "background-color": "#f0f0f0",
+                                            "cursor": "pointer",
+                                            "padding": "7px",
+                                        },
+                                        multiple=False,
+                                    ),
+                                ],
+                                className="upload-component",
+                            ),
+                            html.Div(
+                                [
+                                    html.Button(
+                                        "Upload Files",
+                                        id="upload-button-dashboard",
+                                        n_clicks=0,
+                                        style={
+                                            "width": "70px",
+                                            "height": "40px",
+                                            "lineHeight": "15px",
+                                            "padding": "7px",
+                                            "margin-top": "20px",
+                                        },
+                                    ),
+                                ],
+                                className="upload-button-container",
+                            ),
+                        ],
+                        style={
+                            "display": "flex",
+                            "justify-content": "space-around",
+                            # 'flex-wrap': 'wrap',
+                            "gap": "20px",
+                            "margin-top": "20px",
+                            "margin-bottom": "20px",
+                        },
+                        id="dashboard-upload-section",
+                    ),
                     # Line graphs container
                     html.Div(
                         [
@@ -325,8 +482,8 @@ if __name__ == "__main__":
                                 id="vote-distribution-line",
                                 config={"displayModeBar": False},
                                 style={
-                                    "height": "170px",
-                                    "width": "48%",
+                                    "height": "220px",
+                                    "width": "32%",
                                     "display": "inline-block",
                                 },
                             ),
@@ -336,7 +493,17 @@ if __name__ == "__main__":
                                 config={"displayModeBar": False},
                                 style={
                                     "height": "170px",
-                                    "width": "48%",
+                                    "width": "32%",
+                                    "display": "inline-block",
+                                },
+                            ),
+                            # Heatmap graph
+                            dcc.Graph(
+                                id="heatmap-graph",
+                                config={"displayModeBar": False},
+                                style={
+                                    "height": "250px",
+                                    "width": "32%",
                                     "display": "inline-block",
                                 },
                             ),
@@ -344,7 +511,8 @@ if __name__ == "__main__":
                         style={
                             "display": "flex",
                             "justify-content": "space-between",
-                            "margin-top": "20px",
+                            "margin-top": "15px",
+                            "margin-bottom": "20px",
                         },
                     ),
                     # Main content: Cytoscape graph and interactions window
@@ -366,22 +534,22 @@ if __name__ == "__main__":
                                             "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
                                         },
                                     ),
-                                    dcc.Dropdown(
-                                        id="mode-dropdown",
-                                        options=[
-                                            {"label": "Universal View", "value": "normal"},
-                                            {"label": "Active View", "value": "focused"},
-                                        ],
-                                        value="normal",
-                                        clearable=False,
-                                        style={
-                                            "padding": "10px",
-                                            "font-size": "16px",
-                                            "font-weight": "bold",
-                                            "width": "200px",
-                                            "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
-                                        },
-                                    ),
+                                    # dcc.Dropdown(
+                                    #     id="mode-dropdown",
+                                    #     options=[
+                                    #         {"label": "Universal View", "value": "normal"},
+                                    #         {"label": "Active View", "value": "focused"},
+                                    #     ],
+                                    #     value="normal",
+                                    #     clearable=False,
+                                    #     style={
+                                    #         "padding": "10px",
+                                    #         "font-size": "16px",
+                                    #         "font-weight": "bold",
+                                    #         "width": "200px",
+                                    #         "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                                    #     },
+                                    # ),
                                 ],
                                 style={
                                     "position": "absolute",
@@ -419,7 +587,7 @@ if __name__ == "__main__":
                                         },  # To be updated by callback
                                         style={
                                             "width": "100%",  # Initial width set to 100%
-                                            "height": "600px",
+                                            "height": "500px",
                                             "background-color": "#e1e1e1",
                                             "transition": "width 0.5s",  # Smooth width transition
                                         },
@@ -511,7 +679,7 @@ if __name__ == "__main__":
                                     # Interactions Window
                                     html.Div(
                                         [
-                                            html.H3("Interactions"),
+                                            html.H3("Platform Interactions"),
                                             html.Div(
                                                 id="interactions-window",
                                                 style={"overflowY": "auto", "height": "580px"},
@@ -542,8 +710,11 @@ if __name__ == "__main__":
                             "height": "600px",
                             "margin-top": "10px",
                             "margin-bottom": "20px",
+                            "width": "70%",
+                            "margin": "auto",
                         },
                     ),
+                    html.Label("Select Episode:"),
                     # Episode slider
                     dcc.Slider(
                         id="episode-slider",
@@ -554,66 +725,43 @@ if __name__ == "__main__":
                         step=None,
                         tooltip={"placement": "bottom", "always_visible": True},
                     ),
-                    dcc.Graph(
-                        id="vote-percentages-bar",
-                        config={"displayModeBar": False},
-                        style={"height": "50px", "margin-top": "20px"},
-                    ),
-                    # Upload components and Submit button added at the bottom
+                    # dcc.Graph(
+                    #     id="vote-percentages-bar",
+                    #     config={"displayModeBar": False},
+                    #     style={"height": "50px", "margin-top": "20px"},
+                    # ),
+                    # After dashboard-upload-section, add:
+                    html.Hr(style={"margin": "20px 0"}),  # Separator
+                    # JSONL Viewer Section
                     html.Div(
                         [
-                            html.Div(
-                                [
-                                    html.Label("Upload Output Log:"),
-                                    dcc.Upload(
-                                        id="upload-app-logger-dashboard",
-                                        children=html.Div([html.A("Select Files")]),
-                                        style={
-                                            "width": "60%",
-                                            "height": "50px",
-                                            "lineHeight": "80px",
-                                            "borderWidth": "2px",
-                                            "borderStyle": "dashed",
-                                            "borderRadius": "10px",
-                                            "textAlign": "center",
-                                            "background-color": "#f0f0f0",
-                                            "cursor": "pointer",
-                                            # "margin-bottom": "20px",
-                                            "margin-right": "100px",
-                                            "padding": "30px",
-                                        },
-                                        multiple=False,
-                                    ),
-                                ],
-                                className="upload-component",
+                            dcc.Upload(
+                                id="upload-jsonl",
+                                children=html.Button(
+                                    "Upload prompts & responses file",
+                                    style={
+                                        "padding": "10px 20px",
+                                        "fontSize": "16px",
+                                        "backgroundColor": "#4CAF50",
+                                        "color": "white",
+                                        "border": "none",
+                                        "borderRadius": "5px",
+                                        "cursor": "pointer",
+                                    },
+                                ),
+                                multiple=False,
+                                style={"margin": "20px 0", "textAlign": "center"},
+                                max_size=-1,
                             ),
-                            html.Div(
-                                [
-                                    html.Button(
-                                        "Upload Files",
-                                        id="upload-button-dashboard",
-                                        n_clicks=0,
-                                        style={
-                                            "width": "125px",
-                                            "height": "100px",
-                                            # "font-size": "12px",
-                                            "padding": "30px",
-                                            "margin-top": "20px",
-                                        },
-                                    ),
-                                ],
-                                className="upload-button-container",
+                            html.H2(
+                                "Within-agent processing for selected agent and episode",
+                                style={"textAlign": "center"},
                             ),
+                            html.Div(id="jsonl-output"),
+                            dcc.Store(id="jsonl-store"),
                         ],
-                        style={
-                            "display": "flex",
-                            "justify-content": "space-around",
-                            # 'flex-wrap': 'wrap',
-                            "gap": "20px",
-                            "margin-top": "20px",
-                            "margin-bottom": "20px",
-                        },
-                        id="dashboard-upload-section",
+                        id="jsonl-viewer-section",
+                        style={"padding": "20px"},
                     ),
                 ],
                 style={"display": "none"},  # Initially hidden; shown when data is available
@@ -622,6 +770,37 @@ if __name__ == "__main__":
             html.Div(id="error-message", style={"color": "red", "textAlign": "center"}),
         ]
     )
+
+    @app.callback(
+        Output("jsonl-output", "children"),
+        [
+            Input("upload-jsonl", "contents"),
+            Input("name-selector", "value"),
+            Input("episode-slider", "value"),
+        ],
+        prevent_initial_call=True,
+    )
+    def process_jsonl_data(contents, selected_name, selected_episode):
+        # print("contents:")
+        # print(contents)
+        """Process JSONL data with streaming and filtering."""
+        if contents is None:
+            print("contents is None")
+            return None
+        if not contents:
+            print("Contents is empty")
+
+        print("streaming")
+        try:
+            # Stream and filter the data, collecting only matching records
+            return [
+                create_display(record)
+                for record in stream_filtered_jsonl(contents, selected_name, selected_episode)
+            ]
+
+        except Exception as e:
+            print(f"Error processing JSONL: {e!s}")
+            return None
 
     @app.callback(
         [
@@ -687,7 +866,6 @@ if __name__ == "__main__":
         dashboard_title_with_filename = "Social Sandbox Dashboard: " + app_logger_filename_initial
         try:
             if triggered_id == "submit-button":
-                # Handle initial upload
                 if app_logger_contents_initial is not None:
                     # Process app_logger
                     content_type, content_string = app_logger_contents_initial.split(",")
@@ -709,12 +887,18 @@ if __name__ == "__main__":
                         toots_new,
                         votes_new,
                     )
+                    # *** Add these two lines: parse and store the raw data ***
+                    import io
+
+                    raw_df = pd.read_json(io.StringIO(app_logger_string), lines=True)
+                    serialized_new_data["raw_data"] = raw_df.to_dict(orient="records")
+                    # *** End additional lines ***
 
                     return dashboard_title_with_filename, serialized_new_data, "", ""
+
                 raise ValueError("Output Log file required.")
 
             if triggered_id == "upload-button-dashboard":
-                # Handle dashboard upload
                 if app_logger_contents_dashboard is not None:
                     # Process app_logger
                     content_type, content_string = app_logger_contents_dashboard.split(",")
@@ -736,10 +920,16 @@ if __name__ == "__main__":
                         toots_new,
                         votes_new,
                     )
+                    # *** Add these lines to store the raw file data ***
+                    import io
+
+                    raw_df = pd.read_json(io.StringIO(app_logger_string), lines=True)
+                    serialized_new_data["raw_data"] = raw_df.to_dict(orient="records")
+                    # *** End additional lines ***
+
                     dashboard_title_with_filename = (
                         "Social Sandbox Dashboard: " + app_logger_filename_dashboard
-                    )  # app_logger_filename_initial
-
+                    )
                     return dashboard_title_with_filename, serialized_new_data, "", ""
                 raise ValueError("Output Log files required for dashboard upload.")
 
@@ -752,13 +942,68 @@ if __name__ == "__main__":
                 return dash.no_update, "", f"Error uploading dashboard data: {e!s}"
             return dash.no_update, "", ""
 
+    @app.callback(Output("heatmap-graph", "figure"), Input("data-store", "data"))
+    def update_heatmap(data_store):
+        # If no data-store or no raw data is present, return a figure indicating so
+        if not data_store or "raw_data" not in data_store:
+            return go.Figure(data=[], layout=go.Layout(title="No data uploaded"))
+
+        # Build a DataFrame from the raw uploaded records
+        raw_data = data_store["raw_data"]
+        df = pd.DataFrame(raw_data)
+
+        # If the "data" column is stored as a string, parse it into a dict.
+        if not df.empty and isinstance(df.iloc[0]["data"], str):
+            df["data"] = df["data"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
+        # Filter for records with event_type "action" that have a non-null suggested_action.
+        dft = df[
+            (df["event_type"] == "action")
+            & (df["data"].apply(lambda x: x.get("suggested_action") is not None))
+        ].copy()
+
+        if dft.empty:
+            return go.Figure(
+                data=[], layout=go.Layout(title="No action records with a suggested_action found")
+            )
+
+        # If the suggested action equals "toot", convert it to "post"
+        dft["suggested_action"] = dft["data"].apply(
+            lambda x: "post" if x.get("suggested_action") == "toot" else x.get("suggested_action")
+        )
+
+        # Build a contingency table:
+        # Rows: suggested_action, Columns: actual action taken (from the "label" column)
+        contingency = pd.crosstab(dft["label"], dft["suggested_action"])
+
+        # Create the heatmap figure using Plotly
+        heatmap_fig = go.Figure(
+            data=go.Heatmap(
+                z=contingency.values,
+                x=list(contingency.columns),
+                y=list(contingency.index),
+                colorscale="YlOrRd",
+                colorbar=dict(title="Count"),
+            )
+        )
+
+        heatmap_fig.update_layout(
+            title={"text": "Action alignment distribution", "font": {"size": 14}},
+            xaxis_title="Suggested Action",
+            yaxis_title="Chosen Action",
+            margin=dict(l=40, r=40, t=40, b=40),
+            height=270,
+        )
+
+        return heatmap_fig
+
     # Callback to update the dashboard based on data-store
     @app.callback(
         [
             Output("cytoscape-graph", "elements"),
             Output("cytoscape-graph", "layout"),
             Output("cytoscape-graph", "stylesheet"),
-            Output("vote-percentages-bar", "figure"),
+            # Output("vote-percentages-bar", "figure"),
             Output("vote-distribution-line", "figure"),
             Output("interactions-line-graph", "figure"),
             Output("current-episode", "children"),
@@ -773,19 +1018,19 @@ if __name__ == "__main__":
         ],
         [
             Input("episode-slider", "value"),
-            Input("mode-dropdown", "value"),
+            # Input("mode-dropdown", "value"),
             Input("name-selector", "value"),  # Added Input
             Input("data-store", "data"),  # Added Input to trigger update on data change
         ],
     )
-    def update_graph(selected_episode, selected_mode, selected_name, data_store):
+    def update_graph(selected_episode, selected_name, data_store):  # selected_mode,
         if not data_store:
             # If no data is present, return defaults
             return (
                 [],  # elements
                 {"name": "preset", "positions": {}},  # layout
                 [],  # stylesheet
-                {},  # vote-percentages-bar
+                # {},  # vote-percentages-bar
                 {},  # vote-distribution-line
                 {},  # interactions-line-graph
                 "Episode: N/A",  # current-episode
@@ -955,6 +1200,7 @@ if __name__ == "__main__":
                 for interaction in interactions_by_episode.get(selected_episode, [])
                 if interaction["source"] == selected_name
             ]
+
             if interactions:
                 for interaction in interactions:
                     action = interaction["action"]
@@ -986,7 +1232,7 @@ if __name__ == "__main__":
                         reply_content = toots.get(reply_toot_id, {}).get(
                             "content", "No content available."
                         )
-                        user = toots.get(reply_toot_id, {}).get("user", "No user available.")
+                        user = toots.get(parent_toot_id, {}).get("user", "No user available.")
                         interactions_content.append(
                             html.Div(
                                 [
@@ -1120,38 +1366,38 @@ if __name__ == "__main__":
         bill_percentage = (vote_counts["Bill"] / total_votes) * 100 if total_votes > 0 else 0
         bradley_percentage = (vote_counts["Bradley"] / total_votes) * 100 if total_votes > 0 else 0
 
-        # Create bar graph for vote percentages
-        fig = go.Figure()
-        fig.add_trace(
-            go.Bar(
-                x=[bill_percentage],
-                y=["Support"],
-                orientation="h",
-                marker=dict(color="#1f77b4"),
-                text=f"Bill: {bill_percentage:.1f}%",
-                textposition="inside",
-            )
-        )
-        fig.add_trace(
-            go.Bar(
-                x=[bradley_percentage],
-                y=["Support"],
-                orientation="h",
-                marker=dict(color="#ff7f0e"),
-                text=f"Bradley: {bradley_percentage:.1f}%",
-                textposition="inside",
-                base=bill_percentage,
-            )
-        )
-        fig.update_layout(
-            xaxis=dict(range=[0, 100], showticklabels=False),
-            yaxis=dict(showticklabels=False),
-            barmode="stack",
-            title=f"Vote Percentages for Episode {selected_episode}",
-            showlegend=False,
-            height=50,
-            margin=dict(l=0, r=0, t=30, b=0),
-        )
+        # # Create bar graph for vote percentages
+        # fig = go.Figure()
+        # fig.add_trace(
+        #     go.Bar(
+        #         x=[bill_percentage],
+        #         y=["Support"],
+        #         orientation="h",
+        #         marker=dict(color="#1f77b4"),
+        #         text=f"Bill: {bill_percentage:.1f}%",
+        #         textposition="inside",
+        #     )
+        # )
+        # fig.add_trace(
+        #     go.Bar(
+        #         x=[bradley_percentage],
+        #         y=["Support"],
+        #         orientation="h",
+        #         marker=dict(color="#ff7f0e"),
+        #         text=f"Bradley: {bradley_percentage:.1f}%",
+        #         textposition="inside",
+        #         base=bill_percentage,
+        #     )
+        # )
+        # fig.update_layout(
+        #     xaxis=dict(range=[0, 100], showticklabels=False),
+        #     yaxis=dict(showticklabels=False),
+        #     barmode="stack",
+        #     title=f"Vote Percentages for Episode {selected_episode}",
+        #     showlegend=False,
+        #     height=50,
+        #     margin=dict(l=0, r=0, t=30, b=0),
+        # )
 
         # Create the line graph showing vote distribution over time
         vote_episodes = sorted(votes.keys())
@@ -1204,9 +1450,15 @@ if __name__ == "__main__":
                 line=dict(color="#808080"),
             )
         )
+        max_episode = max(list(interactions_by_episode.keys()))
         vote_line_fig.update_layout(
             title={"text": "Vote Distribution Over Time", "font": {"size": 14}},
-            xaxis={"title": {"text": "Episode", "font": {"size": 10}}, "tickfont": {"size": 8}},
+            xaxis={
+                "title": {"text": "Episode", "font": {"size": 10}},
+                "tickfont": {"size": 8},
+                "range": [-1, max_episode + 1],
+                "dtick": 1,
+            },
             yaxis={
                 "title": {"text": "Vote Percentage", "font": {"size": 10}},
                 "tickfont": {"size": 8},
@@ -1214,6 +1466,7 @@ if __name__ == "__main__":
             },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
+            legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
         )
         # # Update both y-axes
         # interactions_line_fig.update_yaxes(
@@ -1242,7 +1495,7 @@ if __name__ == "__main__":
             # ).union(set(active_users_by_episode.get(ep, [])))
 
             # num_active_users = len(active_nodes_in_ep)
-            num_active_users = len(active_users_by_episode[ep]) - 1
+            num_active_users = len(active_users_by_episode[ep]) - 1  # dont count news agent
 
             counts = {interaction: 0 for interaction in interaction_types}
 
@@ -1351,35 +1604,25 @@ if __name__ == "__main__":
         )
 
         interactions_line_fig.update_layout(
-            title={
-                "text": "Interactions Over Time",
-                "font": {"size": 14},  # Reduced title font size to 14
-            },
+            title={"text": "Interactions Over Time", "font": {"size": 14}},
             xaxis={
-                "title": {
-                    "text": "Episode",
-                    "font": {"size": 10},  # Reduced x-axis label font size to 12
-                },
-                "tickfont": {"size": 8},  # Reduced x-axis tick font size
-                "range": [
-                    min(int_episodes),
-                    max(int_episodes) + 1,
-                ],  # Setting the range from min to max episode
-                "dtick": 1,  # Show a tick marker every episode
+                "title": {"text": "Episode", "font": {"size": 10}},
+                "tickfont": {"size": 8},
+                "range": [-1, max_episode + 1],
+                "dtick": 1,
             },
             yaxis={
-                "title": {
-                    "text": "Interactions/ Num. Agents",
-                    "font": {"size": 10},  # Reduced y-axis label font size to 12
-                },
-                "tickfont": {"size": 8},  # Reduced y-axis tick font size
+                "title": {"text": "Interactions/ Num. Agents", "font": {"size": 10}},
+                "tickfont": {"size": 8},
             },
             height=200,
             margin=dict(l=40, r=40, t=20, b=10),
             showlegend=True,
+            legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
         )
+
         # Adjust the x-axis range to include all episodes
-        interactions_line_fig.update_xaxes(range=[min(int_episodes), max(int_episodes) + 1])
+        interactions_line_fig.update_xaxes(range=[-1, max(int_episodes) + 1])
 
         # Update the name-selector dropdown options
         unique_names = sorted(follow_graph.nodes)
@@ -1396,7 +1639,7 @@ if __name__ == "__main__":
             elements,  # Updated elements
             layout,
             stylesheet,
-            fig,
+            # fig,
             vote_line_fig,
             interactions_line_fig,
             f"Episode: {selected_episode}",  # Updated episode display

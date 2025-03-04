@@ -465,9 +465,9 @@ def get_agent_configs(
         for row in reddit_rows[: active_voter_config["num_agents"]]:
             agent = make_agent_from_reddit_row(row)
             count += 1
-            agent["role"] = "active_voter"
+            agent["role"] = {"name": "active_voter"}
             agent["goal"] = active_voter_config["goal"]
-            agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
+            # agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
             agent_configs_list.append(agent)
     else:
         agent_demographics = get_trait_demographics(
@@ -482,16 +482,19 @@ def get_agent_configs(
             agent["name"] = name
             for field in demographic_list:
                 agent[field] = agent_demographics[field][ait]
-            agent["role"] = "active_voter"
+            agent["role"] = {"name": "active_voter"}
             agent["goal"] = active_voter_config["goal"]
             agent["context"] = f"{agent['name']} is a person who {active_voter_config['context']}"
-            agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
+            # agent["candidate_info"] = [cfg["policy_proposals"] for cfg in candidate_configs]
             agent["party"] = ""
             agent["seed_toot"] = ""
             agent_configs_list.append(agent)
     all_agents = candidate_configs + agent_configs_list
     if malicious_actor_config is not None:
-        for agent in all_agents:
-            if agent["name"] == malicious_actor_config["name"]:
-                agent.update(malicious_actor_config)
+        if malicious_actor_config["name"] in [agent["name"] for agent in all_agents]:
+            for agent in all_agents:
+                if agent["name"] == malicious_actor_config["name"]:
+                    agent.update(malicious_actor_config)
+        else:
+            exit("malicious agent name not in list of agent names")
     return all_agents
