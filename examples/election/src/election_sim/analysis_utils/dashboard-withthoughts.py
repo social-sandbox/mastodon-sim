@@ -16,7 +16,66 @@ from plotly.subplots import make_subplots
 cyto.load_extra_layouts()
 from io import StringIO
 
+# Example-specific code
+EVAL_LABEL = "VotePref"
+custom_names = ["Bill Fredrickson", "Bradley Carter"]
+line_colors = {
+    "Bill Fredrickson": "#1f77b4",
+    "Bradley Carter": "#ff7f0e",
+    "did not vote": "#000000",
+}
+node_colors = {"Bill Fredrickson": "#1f77b4", "Bradley Carter": "#ff7f0e", "Other": "#808080"}
 
+
+def eval_graph_processing(eval_data):
+    candidate1_votes_over_time = []
+    candidate2_votes_over_time = []
+    non_votes_over_time = []
+    for ep in sorted(eval_data.keys()):
+        ep_votes = eval_data[ep]
+        total_ep_votes = len(ep_votes)
+        candidate1_votes = sum(
+            1 for vote in ep_votes.values() if vote == custom_names[0].split(" ")[0]
+        )
+        candidate2_votes = sum(
+            1 for vote in ep_votes.values() if vote == custom_names[1].split(" ")[0]
+        )
+        candidate1_votes_over_time.append(
+            (candidate1_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
+        )
+        candidate2_votes_over_time.append(
+            (candidate2_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
+        )
+        non_votes_over_time.append(
+            ((total_ep_votes - candidate2_votes - candidate1_votes) / total_ep_votes) * 100
+            if total_ep_votes > 0
+            else 0
+        )
+
+    graphs_data = [
+        {
+            "label": "for " + custom_names[0].split(" ")[0],
+            "data": candidate1_votes_over_time,
+            "color": line_colors[custom_names[0]],
+        },
+        {
+            "label": "for " + custom_names[1].split(" ")[0],
+            "data": candidate2_votes_over_time,
+            "color": line_colors[custom_names[1]],
+        },
+        {
+            "label": "did not vote",
+            "data": non_votes_over_time,
+            "color": line_colors["did not vote"],
+        },
+    ]
+
+    title_label = "Vote Distribution Over Time"
+    yaxis_label = "Vote Percentage"
+    return graphs_data, title_label, yaxis_label
+
+
+# data loading
 def stream_filtered_jsonl(
     content_string: str, selected_name: str, selected_episode: int
 ) -> Generator[dict[Any, Any], None, None]:
@@ -57,26 +116,6 @@ def stream_filtered_jsonl(
         except json.JSONDecodeError as e:
             print(f"Error processing JSONL line: {e!s}")
             continue
-
-
-# def parse_jsonl(selected_name,selected_episode, contents):
-# def parse_jsonl(contents):
-#     if not contents:
-#         print("nothing in contents")
-#     if ',' in contents:
-#         _, content_string = contents.split(',', 1)
-#     else:
-#         content_string = contents
-#     # content_type, content_string = contents.split(",")
-#     # content_string = contents
-#     if not content_string:
-#         print("nothing in content_string")
-#     decoded = base64.b64decode(content_string).decode("utf-8")
-#     for line in decoded.splitlines()[:10]:
-#         print(line)
-#     return [json.loads(line) for line in decoded.splitlines()]
-
-# return [json.loads(line) for line in decoded.strip().split("\n")]
 
 
 def convert_linebreaks(string):
@@ -127,14 +166,16 @@ def compute_positions(graph):
 
 
 # Serialization function to convert complex data structures into JSON-serializable format
-def serialize_data(follow_graph, interactions_by_episode, active_users_by_episode, toots, votes):
+def serialize_data(
+    follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data
+):
     return {
         "nodes": list(follow_graph.nodes),
         "edges": list(follow_graph.edges),
         "interactions_by_episode": interactions_by_episode,
         "active_users_by_episode": {k: list(v) for k, v in active_users_by_episode.items()},
         "toots": toots,
-        "votes": votes,
+        "eval_data": eval_data,
     }
 
 
@@ -150,8 +191,8 @@ def deserialize_data(serialized):
         int(k): set(v) for k, v in serialized["active_users_by_episode"].items()
     }
     toots = serialized["toots"]
-    votes = {int(k): v for k, v in serialized["votes"].items()}
-    return follow_graph, interactions_by_episode, active_users_by_episode, toots, votes
+    eval_data = {int(k): v for k, v in serialized["eval_data"].items()}
+    return follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data
 
 
 def get_target_user(row):
@@ -256,9 +297,9 @@ def load_data(input_var):
 
     eval_df, int_df, edge_df = post_process_output(df)
 
-    # votes
-    votes = (
-        eval_df.loc[eval_df.label == "vote_pref", ["source_user", "response", "episode"]]
+    # eval_data
+    eval_data = (
+        eval_df.loc[eval_df.label == EVAL_LABEL, ["source_user", "response", "episode"]]
         .groupby("episode")
         .apply(lambda x: dict(zip(x.source_user, x.response, strict=False)))
         .to_dict()
@@ -278,7 +319,7 @@ def load_data(input_var):
     # toot_data
     toot_dict = get_toot_dict(int_df.copy())
 
-    return follow_graph, int_dict, active_users_by_episode, toot_dict, votes
+    return follow_graph, int_dict, active_users_by_episode, toot_dict, eval_data
 
 
 # Main entry point
@@ -298,8 +339,8 @@ if __name__ == "__main__":
     # Initialize variables
     if args.output_file:
         # Load the data using the files passed as arguments
-        (follow_graph, interactions_by_episode, active_users_by_episode, toots, votes) = load_data(
-            args.output_file
+        (follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data) = (
+            load_data(args.output_file)
         )
 
         # Compute positions
@@ -309,7 +350,7 @@ if __name__ == "__main__":
 
         # Serialize the initial data
         serialized_initial_data = serialize_data(
-            follow_graph, interactions_by_episode, active_users_by_episode, toots, votes
+            follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data
         )
     else:
         # No initial data provided
@@ -477,9 +518,9 @@ if __name__ == "__main__":
                     # Line graphs container
                     html.Div(
                         [
-                            # Vote distribution line graph
+                            # eval data line graph
                             dcc.Graph(
-                                id="vote-distribution-line",
+                                id="eval-data-line",
                                 config={"displayModeBar": False},
                                 style={
                                     "height": "220px",
@@ -650,16 +691,16 @@ if __name__ == "__main__":
                                                     "text-background-padding": "3px",
                                                 },
                                             },
-                                            # Specific styles for "Bill" and "Bradley" nodes
+                                            # Specific styles for custom nodes
                                             {
-                                                "selector": '[id="Bill Fredrickson"]',
+                                                "selector": f'[id="{custom_names[0]}"]',
                                                 "style": {
                                                     "background-color": "blue",
                                                     "border-color": "#000000",
                                                 },
                                             },
                                             {
-                                                "selector": '[id="Bradley Carter"]',
+                                                "selector": f'[id="{custom_names[1]}"]',
                                                 "style": {
                                                     "background-color": "orange",
                                                     "border-color": "#000000",
@@ -725,11 +766,6 @@ if __name__ == "__main__":
                         step=None,
                         tooltip={"placement": "bottom", "always_visible": True},
                     ),
-                    # dcc.Graph(
-                    #     id="vote-percentages-bar",
-                    #     config={"displayModeBar": False},
-                    #     style={"height": "50px", "margin-top": "20px"},
-                    # ),
                     # After dashboard-upload-section, add:
                     html.Hr(style={"margin": "20px 0"}),  # Separator
                     # JSONL Viewer Section
@@ -837,13 +873,9 @@ if __name__ == "__main__":
         ],
         [
             State("upload-app-logger", "contents"),
-            # State("upload-vote-logger", "contents"),
             State("upload-app-logger", "filename"),
-            # State("upload-vote-logger", "filename"),
             State("upload-app-logger-dashboard", "contents"),
-            # State("upload-vote-logger-dashboard", "contents"),
             State("upload-app-logger-dashboard", "filename"),
-            # State("upload-vote-logger-dashboard", "filename"),
             State("data-store", "data"),
         ],
     )
@@ -876,7 +908,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        votes_new,
+                        eval_data_new,
                     ) = load_data(app_logger_string)
 
                     # Serialize the new data
@@ -885,7 +917,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        votes_new,
+                        eval_data_new,
                     )
                     # *** Add these two lines: parse and store the raw data ***
                     import io
@@ -909,7 +941,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        votes_new,
+                        eval_data_new,
                     ) = load_data(app_logger_string)
 
                     # Serialize the new data
@@ -918,7 +950,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        votes_new,
+                        eval_data_new,
                     )
                     # *** Add these lines to store the raw file data ***
                     import io
@@ -1003,8 +1035,7 @@ if __name__ == "__main__":
             Output("cytoscape-graph", "elements"),
             Output("cytoscape-graph", "layout"),
             Output("cytoscape-graph", "stylesheet"),
-            # Output("vote-percentages-bar", "figure"),
-            Output("vote-distribution-line", "figure"),
+            Output("eval-data-line", "figure"),
             Output("interactions-line-graph", "figure"),
             Output("current-episode", "children"),
             Output("interactions-window", "children"),  # Added Output
@@ -1030,8 +1061,7 @@ if __name__ == "__main__":
                 [],  # elements
                 {"name": "preset", "positions": {}},  # layout
                 [],  # stylesheet
-                # {},  # vote-percentages-bar
-                {},  # vote-distribution-line
+                {},  # eval data line
                 {},  # interactions-line-graph
                 "Episode: N/A",  # current-episode
                 [],  # interactions-window
@@ -1058,7 +1088,7 @@ if __name__ == "__main__":
             )
 
         # Deserialize the data_store.
-        (follow_graph, interactions_by_episode, active_users_by_episode, toots, votes) = (
+        (follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data) = (
             deserialize_data(data_store)
         )
 
@@ -1164,16 +1194,16 @@ if __name__ == "__main__":
                     "color": "#000000",
                 },
             },
-            # Specific styles for "Bill" and "Bradley" nodes
+            # Specific styles for custom nodes
             {
-                "selector": '[id="Bill Fredrickson"]',
+                "selector": f'[id="{custom_names[0]}"]',
                 "style": {
                     "background-color": "blue",
                     "border-color": "#000000",
                 },
             },
             {
-                "selector": '[id="Bradley Carter"]',
+                "selector": f'[id="{custom_names[1]}"]',
                 "style": {
                     "background-color": "orange",
                     "border-color": "#000000",
@@ -1338,121 +1368,41 @@ if __name__ == "__main__":
                 }
             )
 
-        # Update node border colors based on votes
-        episode_votes = votes.get(selected_episode, {})
-        total_votes = len(episode_votes)
-        vote_counts = {"Bill": 0, "Bradley": 0, "None": 0}
-        for node in follow_graph.nodes:
-            if node in episode_votes:
-                vote = episode_votes[node]
-                if vote == "Bill":
-                    color = "#1f77b4"
-                    vote_counts["Bill"] += 1
-                elif vote == "Bradley":
-                    color = "#ff7f0e"
-                    vote_counts["Bradley"] += 1
-                else:
-                    color = "#000000"
-                    vote_counts["None"] += 1
+        # Update node border colors based on eval_data
+        episode_eval_data = eval_data.get(selected_episode, {})
+        total_eval_data = len(episode_eval_data)
 
+        for node in follow_graph.nodes:
+            if node in episode_eval_data:
+                eval_datum = episode_eval_data[node]
+                node_label = node if node in custom_names else "Other"
                 stylesheet.append(
                     {
                         "selector": f'[id="{node}"]',
-                        "style": {"border-color": color},
+                        "style": {"border-color": node_colors[node_label]},
                     }
                 )
 
-        # Calculate vote percentages
-        bill_percentage = (vote_counts["Bill"] / total_votes) * 100 if total_votes > 0 else 0
-        bradley_percentage = (vote_counts["Bradley"] / total_votes) * 100 if total_votes > 0 else 0
+        # Create the line graph showing eval_data over time
+        eval_data_episodes = sorted(eval_data.keys())
 
-        # # Create bar graph for vote percentages
-        # fig = go.Figure()
-        # fig.add_trace(
-        #     go.Bar(
-        #         x=[bill_percentage],
-        #         y=["Support"],
-        #         orientation="h",
-        #         marker=dict(color="#1f77b4"),
-        #         text=f"Bill: {bill_percentage:.1f}%",
-        #         textposition="inside",
-        #     )
-        # )
-        # fig.add_trace(
-        #     go.Bar(
-        #         x=[bradley_percentage],
-        #         y=["Support"],
-        #         orientation="h",
-        #         marker=dict(color="#ff7f0e"),
-        #         text=f"Bradley: {bradley_percentage:.1f}%",
-        #         textposition="inside",
-        #         base=bill_percentage,
-        #     )
-        # )
-        # fig.update_layout(
-        #     xaxis=dict(range=[0, 100], showticklabels=False),
-        #     yaxis=dict(showticklabels=False),
-        #     barmode="stack",
-        #     title=f"Vote Percentages for Episode {selected_episode}",
-        #     showlegend=False,
-        #     height=50,
-        #     margin=dict(l=0, r=0, t=30, b=0),
-        # )
+        eval_graphs_data, title_label, yaxis_label = eval_graph_processing(eval_data)
 
-        # Create the line graph showing vote distribution over time
-        vote_episodes = sorted(votes.keys())
-        Bill_votes_over_time = []
-        Bradley_votes_over_time = []
-        non_votes_over_time = []
-        for ep in vote_episodes:
-            ep_votes = votes[ep]
-            total_ep_votes = len(ep_votes)
-            Bill_votes = sum(1 for vote in ep_votes.values() if vote == "Bill")
-            Bradley_votes = sum(1 for vote in ep_votes.values() if vote == "Bradley")
-
-            Bill_votes_over_time.append(
-                (Bill_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
-            )
-            Bradley_votes_over_time.append(
-                (Bradley_votes / total_ep_votes) * 100 if total_ep_votes > 0 else 0
-            )
-            non_votes_over_time.append(
-                ((total_ep_votes - Bradley_votes - Bill_votes) / total_ep_votes) * 100
-                if total_ep_votes > 0
-                else 0
+        eval_data_line_fig = go.Figure()
+        for graph_data in eval_graphs_data:
+            eval_data_line_fig.add_trace(
+                go.Scatter(
+                    x=eval_data_episodes,
+                    y=graph_data["data"],
+                    mode="lines+markers",
+                    name=graph_data["label"],
+                    line=dict(color=graph_data["color"]),
+                )
             )
 
-        vote_line_fig = go.Figure()
-        vote_line_fig.add_trace(
-            go.Scatter(
-                x=vote_episodes,
-                y=Bill_votes_over_time,
-                mode="lines+markers",
-                name="for Bill",
-                line=dict(color="#1f77b4"),
-            )
-        )
-        vote_line_fig.add_trace(
-            go.Scatter(
-                x=vote_episodes,
-                y=Bradley_votes_over_time,
-                mode="lines+markers",
-                name="for Bradley",
-                line=dict(color="#ff7f0e"),
-            )
-        )
-        vote_line_fig.add_trace(
-            go.Scatter(
-                x=vote_episodes,
-                y=non_votes_over_time,
-                mode="lines+markers",
-                name="did not vote",
-                line=dict(color="#808080"),
-            )
-        )
         max_episode = max(list(interactions_by_episode.keys()))
-        vote_line_fig.update_layout(
-            title={"text": "Vote Distribution Over Time", "font": {"size": 14}},
+        eval_data_line_fig.update_layout(
+            title={"text": title_label, "font": {"size": 14}},
             xaxis={
                 "title": {"text": "Episode", "font": {"size": 10}},
                 "tickfont": {"size": 8},
@@ -1460,7 +1410,7 @@ if __name__ == "__main__":
                 "dtick": 1,
             },
             yaxis={
-                "title": {"text": "Vote Percentage", "font": {"size": 10}},
+                "title": {"text": yaxis_label, "font": {"size": 10}},
                 "tickfont": {"size": 8},
                 "range": [0, 100],
             },
@@ -1640,7 +1590,7 @@ if __name__ == "__main__":
             layout,
             stylesheet,
             # fig,
-            vote_line_fig,
+            eval_data_line_fig,
             interactions_line_fig,
             f"Episode: {selected_episode}",  # Updated episode display
             interactions_content,
