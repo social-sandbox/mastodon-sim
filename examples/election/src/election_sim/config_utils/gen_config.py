@@ -195,62 +195,62 @@ def fetch_and_transform_headlines(upload_file=True, file_dir="cached_headlines.j
 
 
 def gen_eval_config(evals_config_filename, candidates):
-    # a library of types of evaluation questions
-    query_lib = {}
-    # votepref
-    query_lib["vote_pref"] = {}
-    query_lib["vote_pref"]["question_template"] = {
-        "text": "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)",
-    }
-    query_lib["vote_pref"]["interaction_premise_template"] = {
-        "text": "{{playername}} is going to cast a vote for either {candidate1} or {candidate2}\n",
-        "static_labels": ["candidate1", "candidate2"],
-        "dynamic_labels": ["playername"],
-    }
+    # # a library of types of evaluation questions
+    # query_lib = {}
+    # # votepref
+    # query_lib["vote_pref"] = {}
+    # query_lib["vote_pref"]["question_template"] = {
+    #     "text": "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)",
+    # }
+    # query_lib["vote_pref"]["interaction_premise_template"] = {
+    #     "text": "{{playername}} is going to cast a vote for either {candidate1} or {candidate2}\n",
+    #     "static_labels": ["candidate1", "candidate2"],
+    #     "dynamic_labels": ["playername"],
+    # }
 
-    # favorability
-    query_lib["favorability"] = {}
-    query_lib["favorability"]["question_template"] = {
-        "text": "Poll: Return a single numeric value ranging from 1 to 10",
-    }
-    query_lib["favorability"]["interaction_premise_template"] = {
-        "text": "{{playername}} has to rate their opinion on the election candidate: {candidate} on a scale of 1 to 10 - with 1 representing intensive dislike and 10 representing strong favourability.\n",
-        "static_labels": ["candidate"],
-        "dynamic_labels": ["playername"],
-    }
+    # # favorability
+    # query_lib["favorability"] = {}
+    # query_lib["favorability"]["question_template"] = {
+    #     "text": "Poll: Return a single numeric value ranging from 1 to 10",
+    # }
+    # query_lib["favorability"]["interaction_premise_template"] = {
+    #     "text": "{{playername}} has to rate their opinion on the election candidate: {candidate} on a scale of 1 to 10 - with 1 representing intensive dislike and 10 representing strong favourability.\n",
+    #     "static_labels": ["candidate"],
+    #     "dynamic_labels": ["playername"],
+    # }
 
-    # vote_intent
-    query_lib["vote_intent"] = {}
-    query_lib["vote_intent"]["question_template"] = {
-        "text": "Friend: In one word, will you cast a vote? (reply yes, or no.)\n",
-    }
+    # # vote_intent
+    # query_lib["vote_intent"] = {}
+    # query_lib["vote_intent"]["question_template"] = {
+    #     "text": "Friend: In one word, will you cast a vote? (reply yes, or no.)\n",
+    # }
 
     # the data encoding the evaluation questions that will be used
     queries_data = [
         {
-            "query_type": "vote_pref",
+            "query_type": "VotePref",
             "interaction_premise_template": {
                 "candidate1": candidates[0],
                 "candidate2": candidates[1],
             },
         },
         {
-            "query_type": "favorability",
+            "query_type": "Favorability",
             "interaction_premise_template": {
                 "candidate": candidates[0],
             },
         },
         {
-            "query_type": "favorability",
+            "query_type": "Favorability",
             "interaction_premise_template": {
                 "candidate": candidates[1],
             },
         },
-        {"query_type": "vote_intent"},
+        {"query_type": "VoteIntent"},
     ]
 
     evals_config = {}
-    evals_config["query_lib"] = query_lib
+    evals_config["query_lib_path"] = "config_utils.agent_query_lib"
     evals_config["queries_data"] = dict(zip(range(len(queries_data)), queries_data, strict=False))
 
     # write config to output location

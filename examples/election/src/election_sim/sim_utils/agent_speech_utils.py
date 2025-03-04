@@ -1,4 +1,5 @@
-import re
+import importlib
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from concordia.typing import entity
@@ -39,11 +40,15 @@ def write_seed_toot(players, p_name):
             return player_says
 
 
-class agent_query:
-    def __init__(self, query_text, query_data):
+class AgentQuery(ABC):
+    """
+    A parent class for queries
+    """
+
+    def __init__(self, query_data=None):
         self.question_template = ""
         # form generic query from query components
-        for component_name, component in query_text.items():
+        for component_name, component in self.query_text.items():
             if "static_labels" in component:
                 # print(component)
                 assert component["static_labels"] == list(query_data[component_name].keys()), (
@@ -68,29 +73,9 @@ class agent_query:
         )
         return player_says
 
-    def parse_answer(self, player_says):
-        if self.query_data["query_type"] == "vote_pref":
-            c_name1 = self.query_data["interaction_premise_template"]["candidate1"].split()
-            c_name2 = self.query_data["interaction_premise_template"]["candidate2"].split()
-            if (c_name1[0] in player_says) or (c_name1[1] in player_says):
-                return c_name1[0]
-            if (c_name2[0] in player_says) or (c_name2[1] in player_says):
-                return c_name2[0]
-            return "Invalid Answer"
-        if self.query_data["query_type"] == "favorability":
-            pattern = r"\b([1-9]|10)\b"
-            # Search for the pattern in the string
-            match = re.search(pattern, player_says)
-            if match:
-                return match.group()
-            return None
-        if self.query_data["query_type"] == "vote_intent":
-            if "yes" in player_says.lower():
-                return "Yes"
-            if "no" in player_says.lower():
-                return "No"
-            return None
-        return "invalid query type"
+    @abstractmethod
+    def parse_answer(self, player_says) -> str:
+        """Example of a base operation that all children must implement"""
 
     def submit(self, player):
         player_says = self.ask(player)
@@ -108,11 +93,15 @@ def deploy_surveys_to_agent(player, eval_queries):
 
 
 def deploy_surveys(players, evals, eval_event_logger):
-    query_lib = evals["query_lib"]
+    query_lib_path = evals["query_lib_path"]
     queries_data = evals["queries_data"].values()
-    eval_queries = [
-        agent_query(query_lib[query_data["query_type"]], query_data) for query_data in queries_data
-    ]
+    eval_queries = []
+    for query_data in queries_data:
+        QueryClass = getattr(
+            importlib.import_module(query_lib_path), query_data["query_type"]
+        )  # "module.submodule"
+        eval_queries.append(QueryClass(query_data))
+
     with ThreadPoolExecutor() as executor:
         # Parallel surveying
         eval_query_returns_over_players = {

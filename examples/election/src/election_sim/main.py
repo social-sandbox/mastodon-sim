@@ -606,15 +606,20 @@ if __name__ == "__main__":
 
         if survey == "Reddit.Big5":
             os.system(
-                f"python src/election_sim/config_utils/gen_config.py "
-                f"--exp_name {args.voters} "
-                f"--survey {survey} "
-                f"--cfg_name {config_name} "
-                f"--num_agents {N} "
-                f"--reddit_json_path {ROOT_PROJ_PATH}examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json"
-                f" --use_news_agent {args.use_news_agent} --news_file {args.news_file}"  # NA
-                f"--sentence_encoder {args.sentence_encoder}"
-                f"--model {args.model}"
+                " ".join(
+                    [
+                        "python src/election_sim/config_utils/gen_config.py",
+                        f"--exp_name {args.voters}",
+                        f"--survey {survey}",
+                        f"--cfg_name {config_name}",
+                        f"--num_agents {N}",
+                        f"--reddit_json_path {ROOT_PROJ_PATH}examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json",
+                        f"--use_news_agent {args.use_news_agent}",
+                        f"--news_file {args.news_file}",  # NA
+                        f"--sentence_encoder {args.sentence_encoder}",
+                        f"--model {args.model}",
+                    ]
+                )
             )
         else:
             os.system(
