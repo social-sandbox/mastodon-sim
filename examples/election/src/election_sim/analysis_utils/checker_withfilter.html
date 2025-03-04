@@ -50,15 +50,35 @@
             const fileReader = new FileReader();
 
             fileReader.onload = function(e) {
+                // try {
+                //     const lines = e.target.result.trim().split('\n');
+                //     const jsonArray = lines.map(line => JSON.parse(line));
+                //     jsonData[outputId] = jsonArray;
+
+                //     // Create filters for all keys except prompt and output
+                //     createFilters(jsonArray, filtersId, outputId);
+
+                //     // Display the data
+                //     displayFilteredData(outputId);
+                // } catch (error) {
+                //     document.getElementById(outputId).textContent = 'Invalid JSONL: ' + error.message;
+                // }
                 try {
                     const lines = e.target.result.trim().split('\n');
-                    const jsonArray = lines.map(line => JSON.parse(line));
+                    const jsonArray = lines
+                        .filter(line => line.trim())  // Skip empty lines
+                        .map(line => {
+                            try {
+                                return JSON.parse(line.trim());
+                            } catch (error) {
+                                console.log(`Skipping invalid JSON: ${line}`);
+                                return null;
+                            }
+                        })
+                        .filter(item => item !== null);  // Remove failed parses
+
                     jsonData[outputId] = jsonArray;
-
-                    // Create filters for all keys except prompt and output
                     createFilters(jsonArray, filtersId, outputId);
-
-                    // Display the data
                     displayFilteredData(outputId);
                 } catch (error) {
                     document.getElementById(outputId).textContent = 'Invalid JSONL: ' + error.message;

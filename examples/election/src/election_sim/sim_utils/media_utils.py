@@ -49,7 +49,7 @@ class GptLanguageModel(language_model.LanguageModel):
     def _log(self, prompt: str, output: str):  ## Function for logging
         player_name = "not found"
         for test_player_name in self.player_names:
-            if test_player_name in prompt[:100]:
+            if test_player_name in prompt[:150]:
                 player_name = test_player_name
         # if player_name is None:
         # counts=[prompt.count(player_name) for player_name in player_names]

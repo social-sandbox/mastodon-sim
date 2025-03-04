@@ -119,27 +119,62 @@ DEFAULT_CALL_TO_SPEECH = (
 #     {name} should like a toot if they agree with it.
 #     {name} should boost a toot if they strongly agree with it and want people in their timeline to also see it.
 # """)
+
+
+# _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
+#     Based on {name}'s goal and current plan and observations, and being careful not to repeat a previously taken action, what SINGLE specific action on their phone would they likely perform now while on the storhampton.social Mastodon app, and what information would they need to perform it?
+
+#     Here is a list of the kinds of actions to select from, and what they accomplish:
+#     - Posting a toot: {name} wants to tell others something and so posts a toot.
+#     - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
+#     - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
+#     - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
+
+#     Guidelines on how to select an action:
+#     1. Select a single action from the above list. Be precise and specific when describing its properties.
+#     2. NEVER repeat a recently taken action (tagged as [Action done on phone]). The description of the selected action must have novel and distinct motivation and content from the recently taken actions.
+#     3. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs that can easily be converted into an Mastodon API call.
+#     4. For actions that require prior knowledge (e.g., liking or replying to a specific post),include that information as previously observed. Do not fabricate this information. If the action is a post or reply, a direct quote of that post or reply should be included.
+#     5. Use the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage] in {name}'s recent observations above.
+#     6. The action should adhere to {name}'s goal and current plan and observations.
+#     7. Select the suggested action listed below as [Suggested Action]. But deviate if a more suitable option is presented given the engagement {name} receives.
+#     8. Ensure direct responses to other toots are done using the Toot Reply action and not in a new post.
+
+#     It is essential not to repeat, even with different wording, a recently taken action. For reference:
+#     """)
+
 _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
-    Based on {name}'s goal and current plan and observations, and being careful not to repeat a previously taken action, what SINGLE specific action on their phone would they likely perform now while on the storhampton.social Mastodon app, and what information would they need to perform it?
+## Available Actions
+1. Post a toot
+2. Reply to a toot (requires Toot ID)
+3. Boost a toot (requires Toot ID + content)
+4. Like a toot (requires Toot ID)
 
-    Here is a list of the kinds of actions to select from, and what they accomplish:
-    - Posting a toot: {name} wants to tell others something and so posts a toot.
-    - Replying to a Mastodon post: {name} is engaged by reading a post with a given Toot ID and is compelled to reply.
-    - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
-    - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
+## Core Rules
+- Never repeat recent actions
+- Provide specific details (app, Toot IDs)
+- Follow suggested action unless engagement suggests otherwise
+- Base decisions on character's values and goals
+- Use direct replies for responses, not new posts
 
-    Guidelines on how to select an action:
-    1. Select a single action from the above list. Be precise and specific when describing its properties.
-    2. NEVER repeat a recently taken action (tagged as [Action done on phone]). The description of the selected action must have novel and distinct motivation and content from the recently taken actions.
-    3. Provide a detailed description of the exact action, including the app used and important context such as Toot IDs that can easily be converted into an Mastodon API call.
-    4. For actions that require prior knowledge (e.g., liking or replying to a specific post),include that information as previously observed. Do not fabricate this information. If the action is a post or reply, a direct quote of that post or reply should be included.
-    5. Use the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage] in {name}'s recent observations above.
-    6. The action should adhere to {name}'s goal and current plan and observations.
-    7. Select the suggested action listed above as [Suggested Action]. But deviate if a more suitable option is presented given the engagement {name} receives.
-    8. Ensure direct responses to other toots are done using the Toot Reply action and not in a new post.
+## Primary Question and Instructions
+Based on {name}'s goal and the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage], what SINGLE specific action would they take now on the storhampton.social Mastodon app?
 
-    It is essential not to repeat, even with different wording, a recently taken action. For reference:
-    """)
+Think through:
+1. Current motivation and context
+2. Available (not repeat) actions and their impact
+3. Alignment with character values
+4. Specific details needed (IDs, content)
+
+Provide your response with:
+1. Motivation explanation
+2. Specific action details
+3. Required context/content
+
+List of previous actions (tagged as [Action done on phone]) so as not to repeat:
+""")
+
+
 # _PHONE_CALL_TO_ACTION = textwrap.dedent("""\
 # Based on {name}'s current goal, plans and observations, what SINGLE specific action on their phone would they likely perform now while on the storhampton.social Mastodon app, and what information would they need to perform it?
 
@@ -294,7 +329,8 @@ class _PhoneComponent(component.Component):
     def terminate_episode(self) -> bool:
         chain_of_thought = interactive_document.InteractiveDocument(self._model)
         chain_of_thought.statement(
-            f"{self._player.name}'s interactions with phone:\n" + "\n- ".join(self._state)
+            f"Assess {self._player.name}'s interactions with phone so far:\n"
+            + "\n- ".join(self._state)
         )
         did_conclude = chain_of_thought.yes_no_question(
             "Is either of the following statements likely true:"
@@ -335,8 +371,10 @@ class _PhoneComponent(component.Component):
                         name=self._player.name,
                     )
                     call_to_action = (
-                        f"{media_contents!s} Context: Sussinctly describe this image in the form of an impression that it made on {self._player.name.split()[0]} when they viewed it alongside the following text of the toot they just read on the Mastodon app:"
+                        f"{media_contents!s} Context: Sussinctly describe this image in the form of an impression that it made on {self._player.name.split()[0]} when they viewed it alongside the following text of the toot they just read on the Mastodon app: "
+                        + "'"
                         + toot_headline
+                        + "'"
                     )
                     media_desc = self._player.act(
                         action_spec=agent.ActionSpec(
@@ -357,7 +395,7 @@ class _PhoneComponent(component.Component):
                     )
                     media_desc = "Impression of attached image: \n" + media_desc
                     print(media_desc)
-                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])} + {media_desc}, Toot ID: {post['id']}\n "
+                output_now += f"User: {post['account']['display_name']} (@{post['account']['username']})\nContent: {_clean_html(post['content'])}\n{media_desc}\nToot ID: {post['id']}"
 
             self._player.observe(f"[Action done on phone]: Retrieved timeline: \n{output_now}")
             return [f"[Action done on phone]: Retrieved timeline: \n{output_now}"]
@@ -376,10 +414,10 @@ class _PhoneComponent(component.Component):
         # print(check_dup)
         if check_dup:
             self._player.observe(
-                f"The following phone action was not conducted because it has already been taken - {event_statement}"
+                f"[Action done on phone]: The following phone action was not conducted because it has already been taken - {event_statement}"
             )
             return [
-                f"The following phone action was not conducted because it has already been taken - {event_statement}"
+                f"[Action done on phone]: The following phone action was not conducted because it has already been taken - {event_statement}"
             ]
 
         self._state.append(event_statement.strip())
@@ -417,7 +455,7 @@ class _PhoneComponent(component.Component):
             output = []
             for post in timeline:
                 output.append(
-                    f"User: {post['account']['display_name']} (@{post['account']['username']}), Content: {_clean_html(post['content'])}, Toot ID: {post['id']}"
+                    f"\nUser: {post['account']['display_name']} (@{post['account']['username']})\nContent: {_clean_html(post['content'])}\nToot ID: {post['id']}"
                 )
             if len(output) > 0:
                 toot_index = chain_of_thought.multiple_choice_question(

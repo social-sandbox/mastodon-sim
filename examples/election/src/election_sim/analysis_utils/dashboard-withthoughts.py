@@ -1,6 +1,8 @@
 import argparse
 import base64
 import json
+from collections.abc import Generator
+from typing import Any
 
 import dash
 import dash_cytoscape as cyto
@@ -15,12 +17,66 @@ cyto.load_extra_layouts()
 from io import StringIO
 
 
-def parse_jsonl(contents):
-    content_type, content_string = contents.split(",")
-    # content_string = contents
+def stream_filtered_jsonl(
+    content_string: str, selected_name: str, selected_episode: int
+) -> Generator[dict[Any, Any], None, None]:
+    """
+    Stream and filter JSONL content line by line, only yielding matching records.
 
+    Args:
+        content_string: Base64 encoded content string
+        selected_name: Name to filter by
+        selected_episode: Episode index to filter by
+
+    Yields
+    ------
+        Dict: Parsed JSON objects that match the filter criteria
+    """
+    # Handle the data URI format if present
+    if "," in content_string:
+        _, content_string = content_string.split(",", 1)
+
+    if not content_string:
+        print("content string is empty")
+    # Create a text stream from the decoded content
     decoded = base64.b64decode(content_string).decode("utf-8")
-    return [json.loads(line) for line in decoded.strip().split("\n")]
+    stream = StringIO(decoded)
+
+    # Process and filter the stream line by line
+    for line in stream:
+        line = line.strip()
+        if not line:  # Skip empty lines
+            continue
+        try:
+            record = json.loads(line)
+            # Only yield records that match our filters
+            if (selected_name is None or record.get("player_name") == selected_name) and (
+                selected_episode is None or record.get("episode_idx") == selected_episode
+            ):
+                yield record
+        except json.JSONDecodeError as e:
+            print(f"Error processing JSONL line: {e!s}")
+            continue
+
+
+# def parse_jsonl(selected_name,selected_episode, contents):
+# def parse_jsonl(contents):
+#     if not contents:
+#         print("nothing in contents")
+#     if ',' in contents:
+#         _, content_string = contents.split(',', 1)
+#     else:
+#         content_string = contents
+#     # content_type, content_string = contents.split(",")
+#     # content_string = contents
+#     if not content_string:
+#         print("nothing in content_string")
+#     decoded = base64.b64decode(content_string).decode("utf-8")
+#     for line in decoded.splitlines()[:10]:
+#         print(line)
+#     return [json.loads(line) for line in decoded.splitlines()]
+
+# return [json.loads(line) for line in decoded.strip().split("\n")]
 
 
 def convert_linebreaks(string):
@@ -654,6 +710,8 @@ if __name__ == "__main__":
                             "height": "600px",
                             "margin-top": "10px",
                             "margin-bottom": "20px",
+                            "width": "70%",
+                            "margin": "auto",
                         },
                     ),
                     html.Label("Select Episode:"),
@@ -693,6 +751,7 @@ if __name__ == "__main__":
                                 ),
                                 multiple=False,
                                 style={"margin": "20px 0", "textAlign": "center"},
+                                max_size=-1,
                             ),
                             html.H2(
                                 "Within-agent processing for selected agent and episode",
@@ -713,50 +772,35 @@ if __name__ == "__main__":
     )
 
     @app.callback(
-        Output("jsonl-store", "data"), Input("upload-jsonl", "contents"), prevent_initial_call=True
-    )
-    def store_jsonl_data(contents):
-        if contents is None:
-            return None
-        return parse_jsonl(contents)
-
-    @app.callback(
         Output("jsonl-output", "children"),
         [
-            Input("jsonl-store", "data"),
+            Input("upload-jsonl", "contents"),
             Input("name-selector", "value"),
             Input("episode-slider", "value"),
         ],
         prevent_initial_call=True,
     )
-    def update_jsonl_display(data, selected_name, selected_episode):
-        if not data:
-            return html.Div(
-                "Upload the corresponding prompts_and_responses JSONL",
-                style={"textAlign": "center", "color": "#666"},
-            )
+    def process_jsonl_data(contents, selected_name, selected_episode):
+        # print("contents:")
+        # print(contents)
+        """Process JSONL data with streaming and filtering."""
+        if contents is None:
+            print("contents is None")
+            return None
+        if not contents:
+            print("Contents is empty")
 
-        # pull file name from app_logger_filename_initial
-        # add "prompts_and_responses" and load to get data
-        # Filter data based on selected_name and selected_episode
-        filtered_data = [
-            entry
-            for entry in data
-            if (entry.get("player_name") == selected_name if selected_name else True)
-            and (
-                entry.get("episode_idx") == selected_episode
-                if selected_episode is not None
-                else True
-            )
-        ]
+        print("streaming")
+        try:
+            # Stream and filter the data, collecting only matching records
+            return [
+                create_display(record)
+                for record in stream_filtered_jsonl(contents, selected_name, selected_episode)
+            ]
 
-        if not filtered_data:
-            return html.Div(
-                f"No entries found for {selected_name or 'any player'} in episode {selected_episode or 'any'}",
-                style={"textAlign": "center", "color": "#666"},
-            )
-
-        return [create_display(entry) for entry in filtered_data]
+        except Exception as e:
+            print(f"Error processing JSONL: {e!s}")
+            return None
 
     @app.callback(
         [
@@ -930,7 +974,7 @@ if __name__ == "__main__":
 
         # Build a contingency table:
         # Rows: suggested_action, Columns: actual action taken (from the "label" column)
-        contingency = pd.crosstab(dft["suggested_action"], dft["label"])
+        contingency = pd.crosstab(dft["label"], dft["suggested_action"])
 
         # Create the heatmap figure using Plotly
         heatmap_fig = go.Figure(
@@ -945,8 +989,8 @@ if __name__ == "__main__":
 
         heatmap_fig.update_layout(
             title={"text": "Action alignment distribution", "font": {"size": 14}},
-            xaxis_title="Actual Action (label)",
-            yaxis_title="Suggested Action",
+            xaxis_title="Suggested Action",
+            yaxis_title="Chosen Action",
             margin=dict(l=40, r=40, t=40, b=40),
             height=270,
         )
@@ -1451,7 +1495,7 @@ if __name__ == "__main__":
             # ).union(set(active_users_by_episode.get(ep, [])))
 
             # num_active_users = len(active_nodes_in_ep)
-            num_active_users = len(active_users_by_episode[ep]) - 1
+            num_active_users = len(active_users_by_episode[ep]) - 1  # dont count news agent
 
             counts = {interaction: 0 for interaction in interaction_types}
 
@@ -1571,7 +1615,7 @@ if __name__ == "__main__":
                 "title": {"text": "Interactions/ Num. Agents", "font": {"size": 10}},
                 "tickfont": {"size": 8},
             },
-            height=250,
+            height=200,
             margin=dict(l=40, r=40, t=20, b=10),
             showlegend=True,
             legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),

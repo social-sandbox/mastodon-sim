@@ -136,9 +136,12 @@ def clear_mastodon_server(max_num_players):
 
 def select_large_language_model(model_name, log_file, debug_mode):
     if "sonnet" in model_name:
+        GPT_API_KEY = os.getenv("ANTHROPIC_API_KEY")
         model = amazon_bedrock_model.AmazonBedrockLanguageModel(
-            model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"
+            # -            model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"
+            model_id="claude-3-5-sonnet-latest"  # "anthropic.claude-3-5-sonnet-20240620-v1:0"
         )
+
     elif "gpt" in model_name:
         GPT_API_KEY = os.getenv("OPENAI_API_KEY")
         if not GPT_API_KEY:
@@ -592,6 +595,13 @@ if __name__ == "__main__":
         expname = "v11nosurveys"
         expname = "v12addconduct"
         expname = "v13refactor"
+
+        expname = "v13refactor"
+        expname = "v15call2action"
+        expname = "v16call2action"
+        expname = "v17_model4o_test3_noimages"
+        expname = "v18_w_id_context"
+        # expname = "v17_modelsonnet"
         config_name = f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}.json"
 
         if survey == "Reddit.Big5":

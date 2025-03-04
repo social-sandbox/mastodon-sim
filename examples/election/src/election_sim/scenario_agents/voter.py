@@ -23,7 +23,7 @@ ACTION_PROBABILITIES = {
     "print_notifications": 0.00,  # 25,  # Checking notifications
 }
 
-NUM_MEMORIES = 25
+NUM_MEMORIES = 10
 
 
 # define custom component classes
@@ -66,7 +66,7 @@ class VoterAgent(BaseAgent):
         names = [
             [
                 "ElectionInformation",
-                "Critical election information",
+                "CRITICAL ELECTION INFORMATION\n",
             ],  # cls._get_component_name()=ElectionInformation
             [
                 candidates[0] + "RelevantOpinion",
@@ -85,7 +85,7 @@ class VoterAgent(BaseAgent):
                 f"Recent thoughts of candidate {candidates[1]}",
             ],  # cls._get_component_name()=OpinionOnCandidate
         ]
-        pre_act_keys_dict = {name: "\n" + pre_act_key + ":\n" for name, pre_act_key in names}
+        pre_act_keys_dict = {name: pre_act_key for name, pre_act_key in names}
         component_order = [item[0] for item in names]
         dependencies = {
             candidate + "OpinionOnCandidate": {
@@ -148,12 +148,13 @@ class VoterAgent(BaseAgent):
             z[name] = component_constructor(**settings)
 
         # set order: base then custom, but election information first, and action suggester last
-        component_order = (
-            [component_order[0]]
-            + base_component_order[:-1]
-            + component_order[1:]
-            + [base_component_order[-1]]
-        )
+        # component_order = (
+        #     [component_order[0]]
+        #     + base_component_order[:-1]
+        #     + component_order[1:]
+        #     + [base_component_order[-1]]
+        # )
+        component_order = base_component_order[:-1] + component_order + [base_component_order[-1]]
         return z | base_components, component_order
 
     @classmethod

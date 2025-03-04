@@ -81,7 +81,7 @@ class AllActComponent(entity_component.ActingComponent):
         order = self._component_order + tuple(
             sorted(set(contexts.keys()) - set(self._component_order))
         )
-        return "\n".join(contexts[name] for name in order if contexts.get(name, False))
+        return "\n\n".join(contexts[name] for name in order if contexts.get(name, False))
         # return "\n".join(contexts[name] for name in order if contexts[name])
 
     def get_action_attempt(
@@ -91,7 +91,10 @@ class AllActComponent(entity_component.ActingComponent):
     ) -> str:
         prompt = interactive_document.InteractiveDocument(self._model)
         context = self._context_for_action(contexts)
+        # prompt.statement("## Role-playing Information:\n" + context + "\n")
         prompt.statement(context + "\n")
+        # contexts.pop('Instructions')
+        # context = self._context_for_action(contexts)
 
         call_to_action = action_spec.call_to_action.format(
             name=self.get_entity().name,
@@ -105,11 +108,20 @@ class AllActComponent(entity_component.ActingComponent):
                     matches = re.findall(pattern, context, re.DOTALL)
                     # Format the output with numbering
                     numbered_output = "\n".join(
-                        [f"{i + 1}. {match.strip()}" for i, match in enumerate(matches)]
+                        [
+                            f"{i + 1}. [Action done on phone] {match.strip()}"
+                            for i, match in enumerate(matches)
+                        ]
                     )
                     actions_conducted = "Recently taken actions:\n" + numbered_output + "\n"
                     cot_call = (
-                        "Think step-by-step on what single action to take. Choose the action suggested in [Suggested Action], unless doing so goes against the following detailed instructions:\n"
+                        " ".join(
+                            [
+                                "Think step-by-step on what single action {name} should now take,",
+                                "based on the instructions and the information about {name} structured in the CAPITALIZED sections above these instructions. "
+                                "Choose the action suggested in [Suggested Action], unless doing so goes against the following detailed instructions:\n",
+                            ]
+                        ).format(name=self.get_entity().name)
                         + call_to_action
                         + actions_conducted
                     )
@@ -122,7 +134,7 @@ class AllActComponent(entity_component.ActingComponent):
                         # after the end of a directly spoken response, since it normally
                         # puts a space after a quotation mark only in these cases.
                         terminators=('" ', "\n"),
-                        question_label="Action",
+                        question_label="Action Decision",
                     )
                     thoughts = "Current thought on action to take: " + output + "\n"
                     prompt.statement(thoughts)
@@ -144,7 +156,7 @@ class AllActComponent(entity_component.ActingComponent):
                 media_list = ast.literal_eval(media_str.strip())
                 output = self.get_entity().name + " "
                 output += self._model.sample_text(
-                    prompt=context + "\n" + call_to_action,
+                    prompt=context + "\n" + call_to_action,  # order correct?
                     media=media_list,
                 )
             self._log(output, prompt)
@@ -395,24 +407,27 @@ class BaseAgent(ABC):
 
         # labels of base components and common settings
         names = [
-            ["Instructions", "Role playing instructions"],  # cls._get_component_name()=Instructions
-            ["OverarchingGoal", "Overarching Goal"],  # cls._get_component_name()=Constant
-            ["Observation", "Observations"],  # cls._get_component_name()=Observation
+            [
+                "Instructions",
+                "ROLE-PLAYING INSTRUCTIONS\n",
+            ],  # cls._get_component_name()=Instructions
+            ["OverarchingGoal", "OVERARCHING GOAL"],  # cls._get_component_name()=Constant
+            ["Observation", "OBSERVATIONS\n"],  # cls._get_component_name()=Observation
             [
                 "ObservationSummary",
-                "Summary of recent observations",
+                "SUMMARY OF RECENT OBSERVATIONS\n",
             ],  # cls._get_component_name()=ObservationSummary
             [
                 "TimeDisplay",
-                "The current date/time is",
+                "CURRENT DATE AND TIME\n",
             ],  #  cls._get_component_name()=ReportFunction
             [
                 "AllSimilarMemories",
-                "Recalled memories and observations",
+                "RECALLED MEMORIES AND OBSERVATIONS\n",
             ],  # cls._get_component_name()=AllSimilarMemories,
             [
                 "IdentityWithoutPreAct",
-                "Identity characteristics",
+                "IDENTITY CHARACTERISTICS\n" + config.context,
             ],  # cls._get_component_name()=IdentityWithoutPreAct, # does not provide pre-act context
             [
                 "SelfPerception",
@@ -488,7 +503,7 @@ class BaseAgent(ABC):
             # instantiate
             z[name] = component_constructor(**settings)
 
-        # add custom components before action suggester and memory
+        # add custom components
         # n.b. custom components can be interleaved so reassign order
         z, component_order = cls.add_custom_components(
             model, measurements, z, component_order, role_and_setting_config
