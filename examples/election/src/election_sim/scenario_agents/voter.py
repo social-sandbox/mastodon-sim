@@ -42,7 +42,7 @@ class OpinionsOnCandidate(ext_components.question_of_recent_memories.QuestionOfR
 
 
 # derive build class, filling out agent-specific methods
-class VoterAgent(BaseAgent):
+class Agent(BaseAgent):
     @classmethod
     def add_custom_components(
         cls,
