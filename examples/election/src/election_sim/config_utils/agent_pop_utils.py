@@ -4,6 +4,21 @@ import sys
 
 import pandas as pd
 
+#     if trait_type == "Schwartz":
+#         # Schwartz trait scores typically vary between 1 and 10
+#         candidate_trait_scores = {
+#             "Conformity": [7, 3],
+#             "Tradition": [8, 1],
+#             "Benevolence": [4, 5],
+#             "Universalism": [3, 8],
+#             "Self-Direction": [6, 3],
+#             "Stimulation": [5, 5],
+#             "Hedonism": [1, 4],
+#             "Achievement": [5, 3],
+#             "Power": [8, 1],
+#             "Security": [8, 2],
+#         }
+
 
 def read_reddit_agents(json_file_path):
     """Reads the Reddit-based JSON file containing agent data."""
