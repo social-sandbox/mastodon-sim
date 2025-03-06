@@ -4,7 +4,6 @@ import datetime
 import json
 import os
 import random
-import sys
 import time
 import warnings
 from functools import partial
@@ -37,22 +36,17 @@ parser.add_argument(
     "--outdir", type=str, default="output/", help="name of directory where output will be written"
 )
 parser.add_argument(
-    "--config",
-    type=str,
-    default=None,
-    help="config from which to optionally load experiment settings",
-)
-parser.add_argument(
-    "--evals",
-    type=str,
-    default=None,
-    help="config from which to optionally load evals",
-)
-parser.add_argument(
     "--server",
     type=str,
     default="None",  # www.social-sandbox.com, www.socialsandbox2.com
     help="config from which to optionally load experiment settings",
+)
+
+parser.add_argument(
+    "--persona_file",
+    type=str,
+    default="reddit_agents.json",
+    help="data from which to pull persona information from",
 )
 
 parser.add_argument(
@@ -110,6 +104,11 @@ random.seed(SEED)
 
 # move into run directory and load functions
 from agent_utils.online_gamemaster import SimpleGameRunner
+from scenario_agents.exogenenous_agent import (
+    ScheduledPostAgent,
+    get_post_times_news_agent,
+    post_seed_toots_news_agents,
+)
 from sim_utils.agent_speech_utils import (
     deploy_surveys,
     write_seed_toot,
@@ -119,7 +118,7 @@ from sim_utils.concordia_utils import (
     init_concordia_objects,
     make_profiles,
 )
-from sim_utils.misc_sim_utils import event_logger, post_analysis
+from sim_utils.misc_sim_utils import event_logger
 
 os.chdir("examples/election/")
 
@@ -161,7 +160,6 @@ def get_sentance_encoder(model_name):
     return embedder
 
 
-# NA - add news agent while setting up the mastodon app
 def add_news_agent_to_mastodon_app(
     news_agent, action_logger, players, mastodon_apps, app_description
 ):
@@ -313,54 +311,6 @@ def post_seed_toots(agent_data, players, mastodon_apps):
             future.result()  # This will raise any exceptions that occurred in the thread, if any
 
 
-# NA write post seed toots function for the news agent
-def post_seed_toots_news_agents(news_agent, mastodon_apps):
-    # Parallelize the loop using ThreadPoolExecutor
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        # Submit tasks for each news agent
-        futures = [
-            executor.submit(
-                lambda agent=n_agent: (
-                    mastodon_apps[n_agent["name"]].post_toot(
-                        n_agent["mastodon_username"], status=n_agent["seed_toot"]
-                    )
-                    if n_agent["seed_toot"] and n_agent["seed_toot"] != "-"
-                    else None
-                )
-            )
-            for n_agent in news_agent
-        ]
-
-        # Optionally, wait for all tasks to complete
-        for future in concurrent.futures.as_completed(futures):
-            future.result()  # This will raise any exceptions that occurred in the thread, if any
-
-
-# NA getting post times for the news agent
-def get_post_times_news_agent(news_agent):
-    news_agent_datetimes = {}
-    for agent in news_agent:
-        # Ensure the agent has the required keys
-        name = agent.get("name", "Unnamed Agent")
-        post_schedule = agent.get("toot_posting_schedule", [])
-
-        try:
-            # Generate datetime objects for each time in the schedule
-            news_agent_datetimes[name] = [
-                datetime.datetime.now().replace(
-                    hour=int(post_time.split(":")[0]),
-                    minute=int(post_time.split(":")[1].split()[0]),
-                    second=0,
-                    microsecond=0,
-                )
-                for post_time in post_schedule
-            ]
-        except ValueError as e:
-            raise ValueError(f"Error processing agent '{name}': {e}")
-
-    return news_agent_datetimes
-
-
 def get_active_players(player_roles):
     active_players = []
     for player_role in player_roles:
@@ -371,50 +321,6 @@ def get_active_players(player_roles):
     return active_players
 
 
-# NA - object to represent a scheduled news agents that can post toots on a schedule
-class ScheduledPostAgent:
-    def __init__(self, name, mastodon_username, mastodon_app, post_schedule, posts):
-        self.name = name
-        self.mastodon_username = mastodon_username
-        self.mastodon_app = mastodon_app
-        self.post_schedule = post_schedule
-        self.posts = posts
-        self.used_posts = set()
-        self.current_post_index = 0
-
-    def check_and_post(self, current_time):
-        """Check if should post based on current time and post if needed"""
-        for scheduled_time in self.post_schedule:
-            if (
-                scheduled_time.hour == current_time.hour
-                and scheduled_time.minute == current_time.minute
-            ):
-                post = self.generate_post()
-                media = [ROOT_PROJ_PATH + img_filepath for img_filepath in self.posts[post]]
-                if len(media) > 0:
-                    self.mastodon_app.post_toot(
-                        self.mastodon_username, status=post, media_links=media
-                    )
-                else:
-                    self.mastodon_app.post_toot(self.mastodon_username, status=post)
-                return True
-        return False
-
-    def generate_post(self):
-        # Get next unused post
-        while self.current_post_index < len(self.posts):
-            post = list(self.posts.keys())[self.current_post_index]
-            self.current_post_index += 1
-            if post not in self.used_posts:
-                self.used_posts.add(post)
-                return post
-
-        # Reset if we've gone through all posts
-        self.current_index = 0
-        self.used_posts.clear()
-        return self.posts[0]  # Start over with first post
-
-
 def run_sim(
     model,
     embedder,
@@ -422,10 +328,9 @@ def run_sim(
     agent_map_data,
     shared_memories,
     app_description,
-    news_agent,  # NA news agent is None when it's not used in the simulation
     custom_call_to_action,
     setting_info,
-    eval_config,
+    probe_config,
     episode_length,
     output_rootname,
 ):
@@ -445,6 +350,12 @@ def run_sim(
         game_master_memory,
     ) = init_concordia_objects(model, embedder, shared_memories, clock)
 
+    news_agents = []
+    for agent in agent_data:
+        if agent["role"]["name"] == "exogeneous":
+            news_agents.append(agent)
+            agent_data.remove(agent)
+
     profiles = make_profiles(agent_data)  # profile=(player_config,role)
     roles = [profile[1] for profile in profiles]
     players = []
@@ -460,7 +371,7 @@ def run_sim(
     for player in players:
         game_master_memory.add(f"{player.name} is at their private home.")
 
-    action_event_logger = event_logger("action", output_rootname)
+    action_event_logger = event_logger("action", output_rootname + "_event_output.jsonl")
     action_event_logger.episode_idx = -1
 
     role_parameters = setting_info["details"]["role_parameters"]
@@ -499,18 +410,18 @@ def run_sim(
     post_seed_toots(agent_data, players, mastodon_apps)
 
     # initialize
-    eval_event_logger = event_logger("eval", output_rootname)
+    eval_event_logger = event_logger("eval", output_rootname + "_event_output.jsonl")
     eval_event_logger.episode_idx = -1
 
-    # NA - add news agent to the simulation
-    if news_agent is not None:
+    # add news agent to the simulation
+    if news_agents:
         add_news_agent_to_mastodon_app(
-            news_agent, action_event_logger, players, mastodon_apps, app_description
+            news_agents, action_event_logger, players, mastodon_apps, app_description
         )
-        post_seed_toots_news_agents(news_agent, mastodon_apps)
+        post_seed_toots_news_agents(news_agents, mastodon_apps)
         scheduled_news_agents = []
-        news_agent_datetimes = get_post_times_news_agent(news_agent)
-        for n_agent in news_agent:
+        news_agent_datetimes = get_post_times_news_agent(news_agents)
+        for n_agent in news_agents:
             scheduled_news_agents.append(
                 ScheduledPostAgent(
                     name=n_agent["name"],
@@ -537,7 +448,7 @@ def run_sim(
         # json_data = save_to_json(player)
         # with open(file_path, "w") as file:
         #     file.write(json.dumps(json_data, indent=4))
-        deploy_surveys(players, eval_config, eval_event_logger)
+        deploy_surveys(players, probe_config, eval_event_logger)
         print("complete")
         start_timex = time.time()
         active_player_names = get_active_players(roles)
@@ -550,8 +461,7 @@ def run_sim(
         if len(active_player_names) == 0:
             clock.advance()
         else:
-            # NA - check and post news before each step
-            if news_agent is not None:
+            if news_agents is not None:
                 for n_agent in scheduled_news_agents:
                     n_agent.check_and_post(clock.now())
 
@@ -565,114 +475,73 @@ def run_sim(
                     f"Episode with {len(active_player_names)} finished - took {end_timex - start_timex}\n"
                 )
 
-    post_analysis(env, model, players, memories, output_rootname)
+    # post_analysis(env, model, players, memories, output_rootname)
 
     #################################################################
 
 
 if __name__ == "__main__":
-    if args.config is not None:
-        print(f"using config:{args.config}")
-        config_name = args.config
-    else:
-        # generate config using automation script
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
-        # there are 3 experiments:
-        # voters = "independent"
-        # voters = "bias"
-        # voters = "malicious"
-        # N = 100
-        N = 20
-        # survey = "None.Big5"
-        # survey = "Costa_et_al_JPersAssess_2021.Schwartz"
-        survey = "Reddit.Big5"
-        expname = "v2maincall2act"
-        expname = "v4maincall2act"
-        expname = "v5dupprompt"
-        expname = "v6termprompt"
-        expname = "v7activerates"
-        expname = "v8betterc2a"
-        expname = "v9prevactcomp"
-        expname = "v11nosurveys"
-        expname = "v12addconduct"
-        expname = "v13refactor"
+    N = 20
+    persona_type = "Reddit.Big5"
+    expname = "exp1"
 
-        expname = "v13refactor"
-        expname = "v15call2action"
-        expname = "v16call2action"
-        expname = "v17_model4o_test3_noimages"
-        expname = "v18_w_id_context"
-        # expname = "v17_modelsonnet"
-        config_name = f"N{N}_T{args.T}_{survey.split('.')[0]}_{survey.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}.json"
-
-        if survey == "Reddit.Big5":
-            os.system(
-                " ".join(
-                    [
-                        "python src/election_sim/config_utils/gen_config.py",
-                        f"--exp_name {args.voters}",
-                        f"--survey {survey}",
-                        f"--cfg_name {config_name}",
-                        f"--num_agents {N}",
-                        f"--reddit_json_path {ROOT_PROJ_PATH}examples/election/src/election_sim/sim_utils/reddit_personas/reddit_agents.json",
-                        f"--use_news_agent {args.use_news_agent}",
-                        f"--news_file {args.news_file}",  # NA
-                        f"--sentence_encoder {args.sentence_encoder}",
-                        f"--model {args.model}",
-                    ]
-                )
-            )
-        else:
-            os.system(
-                f"python examples/election/src/election_sim/config_utils/gen_config.py --exp_name {args.voters} --survey {survey} --cfg_name {config_name}  --num_agents {N}"
-                + f" --use_news_agent {args.use_news_agent} --news_file {args.news_file} --sentence_encoder {args.sentence_encoder} --model {args.model}"  # NA
-            )
+    config_name = (
+        args.outdir
+        + f"N{N}_T{args.T}_{persona_type.split('.')[0]}_{persona_type.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}"
+    )
+    # if os.path.exists(config_name+"_agents.json"):
+    #     sys.exit("output files for this setting already exist!")
+    cmd = " ".join(
+        [
+            "python src/election_sim/config_utils/gen_config.py",
+            f"--exp_name {args.voters}",
+            f"--persona_type {persona_type}",
+            f"--cfg_name {config_name}",
+            f"--num_agents {N}",
+            f"--persona_json_path {ROOT_PROJ_PATH}examples/election/src/election_sim/sim_utils/personas/{args.persona_file}",
+            f"--use_news_agent {args.use_news_agent}",
+            f"--news_file {args.news_file}",  # NA
+            f"--sentence_encoder {args.sentence_encoder}",
+            f"--model {args.model}",
+        ]
+    )
+    print(cmd)
+    os.system(cmd)
 
     # load configuration
-    with open(config_name) as file:
-        config_data = json.load(file)
+    config_data = {}
+    config_suffixes = ["agents", "settings", "setting", "probes"]
+    for config_key in config_suffixes:
+        with open(config_name + "_" + config_key + ".json") as file:
+            config_data[config_key] = json.load(file)
+    assert config_name == config_data["settings"]["output_rootname"], (
+        "storage name of loaded config doesn't match!"
+    )
 
     model = select_large_language_model(
-        config_data["model"], args.outdir + config_name + "prompts_and_responses.jsonl", True
+        config_data["settings"]["model"], config_name + "prompts_and_responses.jsonl", True
     )
-    embedder = get_sentance_encoder(config_data["sentence_encoder"])
-
-    with open(config_data["evals_config_filename"]) as file:
-        eval_config_data = json.load(file)
+    embedder = get_sentance_encoder(config_data["settings"]["sentence_encoder"])
 
     print([agent["name"] for agent in config_data["agents"]])
 
-    # rootname  for all output files (note that if config is loaded, this overwrites the location)
-    config_data["output_rootname"] = args.outdir + config_data["agent_config_filename"]
-
-    # Add sim parameters to config for saving
-    config_data.update(vars(args))
-
-    # write config file by default in outdir
-    if not os.path.exists(args.outdir):
-        os.makedirs(args.outdir)
-    elif os.path.exists(config_data["output_rootname"]):
-        sys.exit("output files for this setting already exist!")
-    with open(config_data["output_rootname"], "w") as outfile:
-        json.dump(config_data, outfile, indent=4)
-    with open(
-        config_data["output_rootname"].split(".")[0]
-        + "_"
-        + config_data["evals_config_filename"]
-        + ".json",
-        "w",
-    ) as outfile:
-        json.dump(eval_config_data, outfile, indent=4)
+    # Add sim parameters to settings config and rewrite to file
+    config_data["settings"].update(vars(args))
+    with open(config_name + "_" + "settings" + ".json", "w") as outfile:
+        json.dump(config_data["settings"], outfile)
 
     if USE_MASTODON_SERVER:
-        clear_mastodon_server(len(config_data["agents"]) + int(len(args.use_news_agent) > 0))
+        clear_mastodon_server(len(config_data["agents"]))
 
     # simulation parameter inputs
     episode_length = args.T
     shared_memories = (
-        config_data["shared_memories_template"]
-        + [config_data["setting_info"]["description"]]
-        + [config_data["mastodon_usage_instructions"]]
+        config_data["setting"]["shared_memories_template"]
+        + [config_data["setting"]["setting_info"]["description"]]
+        + [config_data["setting"]["mastodon_usage_instructions"]]
     )
 
     run_sim(
@@ -681,12 +550,10 @@ if __name__ == "__main__":
         config_data["agents"],
         config_data["role_to_agent"],
         shared_memories,
-        config_data["mastodon_usage_instructions"],
-        # NA add the news agent, if not used in the simulation, it will be None
-        config_data["news_agents"],
-        config_data["custom_call_to_action"],
-        config_data["setting_info"],
-        eval_config_data,
+        config_data["setting"]["mastodon_usage_instructions"],
+        config_data["setting"]["custom_call_to_action"],
+        config_data["setting"]["setting_info"],
+        config_data["probes"],
         episode_length,
-        config_data["output_rootname"].split(".")[0] + "_output.jsonl",
+        config_data["settings"]["output_rootname"],
     )
