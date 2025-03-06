@@ -636,6 +636,11 @@ if __name__ == "__main__":
 
     config_data["agent_config_filename"] = args.cfg_name
     config_data["evals_config_filename"] = "election_sentiment_eval_config"
+    config_data["role_to_agent"] = {
+        "active_voter": "voter",
+        "candidate": "candidate",
+        "malicious": "malicious",
+    }
 
     candidate_names = [candidate["name"] for partisan_type, candidate in candidate_info.items()]
     gen_eval_config(config_data["evals_config_filename"], candidate_names)

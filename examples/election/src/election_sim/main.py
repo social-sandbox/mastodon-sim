@@ -109,12 +109,12 @@ SEED = args.seed
 random.seed(SEED)
 
 # move into run directory and load functions
+from agent_utils.online_gamemaster import SimpleGameRunner
 from sim_utils.agent_speech_utils import (
     deploy_surveys,
     write_seed_toot,
 )
 from sim_utils.concordia_utils import (
-    SimpleGameRunner,
     build_agent_with_memories,
     init_concordia_objects,
     make_profiles,
@@ -419,6 +419,7 @@ def run_sim(
     model,
     embedder,
     agent_data,
+    agent_map_data,
     shared_memories,
     app_description,
     news_agent,  # NA news agent is None when it's not used in the simulation
@@ -448,7 +449,7 @@ def run_sim(
     roles = [profile[1] for profile in profiles]
     players = []
     memories = {}
-    obj_args = (formative_memory_factory, model, clock, time_step, setting_info)
+    obj_args = (formative_memory_factory, model, clock, time_step, setting_info, agent_map_data)
     build_agent_with_memories_part = partial(build_agent_with_memories, obj_args)
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(profiles)) as pool:
         for agent_obj in pool.map(build_agent_with_memories_part, profiles):
@@ -678,6 +679,7 @@ if __name__ == "__main__":
         model,
         embedder,
         config_data["agents"],
+        config_data["role_to_agent"],
         shared_memories,
         config_data["mastodon_usage_instructions"],
         # NA add the news agent, if not used in the simulation, it will be None

@@ -38,7 +38,7 @@ class PublicOpinionOpponent(ext_components.question_of_recent_memories.QuestionO
 
 
 # derive build class, filling out agent-specific methods
-class MaliciousAgent(BaseAgent):
+class Agent(BaseAgent):
     @classmethod
     def add_custom_components(
         cls,
