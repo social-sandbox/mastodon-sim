@@ -18,31 +18,6 @@ from concordia.agents import entity_agent_with_logging
 from concordia.typing import entity_component
 
 
-class AgentLoader:
-    def __init__(self):
-        self.agent_classes = {}  # Stores agent classes
-
-    def load_agent_class(self, key, module_name):
-        """
-        Dynamically loads an Agent class from a module inside 'scenario_agents' package.
-        Example: module_name = 'candidate' will load scenario_agents.candidate.Agent
-        """
-        try:
-            full_module_name = f"scenario_agents.{module_name}"
-            module = importlib.import_module(full_module_name)
-
-            # Ensure the module has an 'Agent' class
-            if not hasattr(module, "Agent"):
-                raise AttributeError(f"No 'Agent' class found in '{full_module_name}'.")
-
-            # Store the class (not an instance yet)
-            self.agent_classes[key] = module.Agent
-            print(f"Successfully loaded class '{key}' from '{full_module_name}'.")
-
-        except Exception as e:
-            print(f"Error loading agent class '{key}': {e}")
-
-
 def save_to_json(
     agent: entity_agent_with_logging.EntityAgentWithLogging,
 ) -> str:
@@ -143,11 +118,7 @@ def make_profiles(agent_data):
 
 def build_agent_with_memories(obj_args, profile_item):
     (profile, role) = profile_item
-    (formative_memory_factory, model, clock, time_step, setting_info, map_data) = obj_args
-    loader = AgentLoader()
-    # Load classes
-    for key, module in map_data.items():
-        loader.load_agent_class(key, module)
+    (formative_memory_factory, model, clock, time_step, setting_info) = obj_args
     mem = formative_memory_factory.make_memories(profile)
 
     role_and_setting_config = {
@@ -156,7 +127,12 @@ def build_agent_with_memories(obj_args, profile_item):
         "setting_details": setting_info["details"],
         "setting_description": setting_info["description"],
     }
-    agent = loader.agent_classes[role["name"]].build(
+
+    module = importlib.import_module("scenario_agents." + role["name"])
+    if not hasattr(module, "Agent"):
+        raise AttributeError("No 'Agent' class found.")
+
+    agent = module.Agent.build(
         config=profile,
         model=model,
         clock=clock,
