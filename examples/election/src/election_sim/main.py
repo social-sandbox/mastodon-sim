@@ -325,7 +325,6 @@ def run_sim(
     model,
     embedder,
     agent_data,
-    agent_map_data,
     shared_memories,
     app_description,
     custom_call_to_action,
@@ -360,7 +359,7 @@ def run_sim(
     roles = [profile[1] for profile in profiles]
     players = []
     memories = {}
-    obj_args = (formative_memory_factory, model, clock, time_step, setting_info, agent_map_data)
+    obj_args = (formative_memory_factory, model, clock, time_step, setting_info)
     build_agent_with_memories_part = partial(build_agent_with_memories, obj_args)
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(profiles)) as pool:
         for agent_obj in pool.map(build_agent_with_memories_part, profiles):
@@ -548,7 +547,6 @@ if __name__ == "__main__":
         model,
         embedder,
         config_data["agents"],
-        config_data["role_to_agent"],
         shared_memories,
         config_data["setting"]["mastodon_usage_instructions"],
         config_data["setting"]["custom_call_to_action"],

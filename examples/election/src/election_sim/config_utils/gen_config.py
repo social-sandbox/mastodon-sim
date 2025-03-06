@@ -310,7 +310,7 @@ if __name__ == "__main__":
     else:
         news_agent_configs = []
 
-    roles.append("active_voter")
+    roles.append("voter")
     with open(args.persona_json_path) as f:
         persona_rows = json.load(f)
     voter_configs = []
@@ -321,7 +321,7 @@ if __name__ == "__main__":
         agent["context"] = row["context"]
         agent["party"] = ""  # row.get("Political_Identity", "")
         agent["seed_toot"] = ""
-        agent["role"] = {"name": "active_voter"}
+        agent["role"] = {"name": "voter"}
         agent["goal"] = "Their goal is have a good day and vote in the election."
         voter_configs.append(agent)
 
@@ -331,9 +331,11 @@ if __name__ == "__main__":
     if experiment_name == "independent":
         pass
     elif experiment_name == "bias":
-        active_voter_context = (
-            "doesn't care about the environment, only about having a stable job."  # bias for Bill
-        )
+        for agent in voter_configs:
+            agent["context"] = (
+                agent["context"]
+                + "doesn't care about the environment, only about having a stable job."
+            )
     elif experiment_name == "malicious":
         # overwrites the subset of config of an active voter selected by name (so name must be in)
         roles.append("malicious")
@@ -435,7 +437,7 @@ if __name__ == "__main__":
                 "active_rates_per_episode": {
                     "malicious": 0.9,
                     "candidate": 0.7,
-                    "active_voter": 0.5,
+                    "voter": 0.5,
                     "exogeneous": 1,
                 },
                 "initial_follow_prob": get_follership_connection_stats(roles),
