@@ -1,22 +1,13 @@
-import os
-import sys
+import importlib
+import json
 
+from concordia.agents import entity_agent_with_logging
 from concordia.associative_memory import (
     associative_memory,
     blank_memories,
     formative_memories,
     importance_function,
 )
-
-project_root = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "examples/election/")
-)
-sys.path.insert(0, project_root)
-
-import importlib
-import json
-
-from concordia.agents import entity_agent_with_logging
 from concordia.typing import entity_component
 
 
@@ -130,7 +121,7 @@ def build_agent_with_memories(obj_args, profile_item):
         "setting_description": setting_info["description"],
     }
 
-    module = importlib.import_module("scenario_agents." + role["name"])
+    module = importlib.import_module("sim_setting.agent_lib." + role["class"])
     if not hasattr(module, "Agent"):
         raise AttributeError("No 'Agent' class found.")
 

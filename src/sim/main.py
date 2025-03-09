@@ -1,9 +1,11 @@
 import argparse
 import concurrent.futures
 import datetime
+import importlib
 import json
 import os
 import random
+import sys
 import time
 import warnings
 from functools import partial
@@ -33,9 +35,9 @@ parser.add_argument("--seed", type=int, default=1, help="seed used for python's 
 parser.add_argument("--T", type=int, default=1, help="number of episodes")  # 48
 parser.add_argument("--voters", type=str, default="independent", help="voter setting")
 parser.add_argument(
-    "--dir",
+    "--sim_setting",
     type=str,
-    default="examples/election/",
+    default="election",
     help="name of directory where output will be written",
 )
 parser.add_argument(
@@ -105,7 +107,7 @@ ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
 SEED = args.seed
 random.seed(SEED)
 
-# move into run directory and load functions
+# load sim functions
 from agent_utils.exogenenous_agent import (
     ScheduledPostAgent,
     get_post_times_news_agent,
@@ -122,6 +124,8 @@ from sim_utils.concordia_utils import (
     make_profiles,
 )
 from sim_utils.misc_sim_utils import event_logger
+
+# add examples folder module as environment variable
 
 
 def clear_mastodon_server(max_num_players):
@@ -481,7 +485,14 @@ def run_sim(
 
 
 if __name__ == "__main__":
-    outdir = args.dir + "output/"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    examples_package = project_root + "/examples/" + args.sim_setting
+    parent_dir = os.path.dirname(examples_package)
+    sys.path.insert(0, parent_dir)
+    package = importlib.import_module(args.sim_setting)
+    sys.modules["sim_setting"] = package
+
+    outdir = examples_package + "/output/"
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -497,12 +508,12 @@ if __name__ == "__main__":
     #     sys.exit("output files for this setting already exist!")
     cmd = " ".join(
         [
-            f"python {args.dir}config_utils/gen_config.py",
+            f"python examples/{args.sim_setting}/config_utils/gen_config.py",
             f"--exp_name {args.voters}",
             f"--persona_type {persona_type}",
             f"--cfg_name {config_name}",
             f"--num_agents {N}",
-            f"--persona_json_path {ROOT_PROJ_PATH}examples/election/input/personas/{args.persona_file}",
+            f"--persona_json_path {ROOT_PROJ_PATH}examples/{args.sim_setting}/input/personas/{args.persona_file}",
             f"--use_news_agent {args.use_news_agent}",
             f"--news_file {args.news_file}",  # NA
             f"--sentence_encoder {args.sentence_encoder}",
@@ -521,13 +532,13 @@ if __name__ == "__main__":
     assert config_name == config_data["settings"]["output_rootname"], (
         "storage name of loaded config doesn't match!" + config_data["settings"]["output_rootname"]
     )
+    print([agent["name"] for agent in config_data["agents"]])
 
+    # load language models
     model = select_large_language_model(
         config_data["settings"]["model"], config_name + "prompts_and_responses.jsonl", True
     )
     embedder = get_sentance_encoder(config_data["settings"]["sentence_encoder"])
-
-    print([agent["name"] for agent in config_data["agents"]])
 
     # Add sim parameters to settings config and rewrite to file
     config_data["settings"].update(vars(args))

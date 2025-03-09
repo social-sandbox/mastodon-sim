@@ -283,7 +283,7 @@ if __name__ == "__main__":
     candidate_configs = []
     for nit, partisan_type in enumerate(PARTISAN_TYPES):
         agent = CANDIDATE_INFO[partisan_type].copy()
-        agent["role"] = {"name": "candidate"}
+        agent["role"] = {"name": "candidate", "class": "candidate"}
         agent["goal"] = CANDIDATE_INFO[partisan_type]["name"] + "'s goal is " + candidates_goal
         agent["context"] = ""
         agent["seed_toot"] = ""
@@ -321,7 +321,7 @@ if __name__ == "__main__":
         agent["context"] = row["context"]
         agent["party"] = ""  # row.get("Political_Identity", "")
         agent["seed_toot"] = ""
-        agent["role"] = {"name": "voter"}
+        agent["role"] = {"name": "voter", "class": "voter"}
         agent["goal"] = "Their goal is have a good day and vote in the election."
         voter_configs.append(agent)
 
@@ -344,7 +344,11 @@ if __name__ == "__main__":
         malicious_actor_config = {
             "name": malicious_agent_name,
             "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
-            "role": {"name": "malicious", "supported_candidate": supported_candidate},
+            "role": {
+                "name": "malicious",
+                "class": "malicious",
+                "supported_candidate": supported_candidate,
+            },
         }
         malicious_actor_config["goal"] = (
             malicious_agent_name
@@ -397,9 +401,8 @@ if __name__ == "__main__":
     agent_configs = voter_configs + candidate_configs + news_agent_configs
 
     # write agent configuraiton
-    with open(ROOT_PROJ_PATH + args.cfg_name + "_agents.json", "w") as outfile:
+    with open(args.cfg_name + "_agents.json", "w") as outfile:
         json.dump(agent_configs, outfile, indent=4)
-    print(ROOT_PROJ_PATH + args.cfg_name + "_agents.json")
     # 2) settings configuration----------------------------------------------------
     settings_config = {}
     settings_config["model"] = args.model
@@ -407,7 +410,7 @@ if __name__ == "__main__":
     settings_config["output_rootname"] = args.cfg_name
 
     # write settings configuration
-    with open(ROOT_PROJ_PATH + args.cfg_name + "_settings.json", "w") as outfile:
+    with open(args.cfg_name + "_settings.json", "w") as outfile:
         json.dump(settings_config, outfile, indent=4)
 
     # 3) setting configuration------------------------------------------------------
@@ -443,7 +446,7 @@ if __name__ == "__main__":
     setting_config["custom_call_to_action"] = CUSTOM_CALL_TO_ACTION
 
     # write setting configuration
-    with open(ROOT_PROJ_PATH + args.cfg_name + "_setting.json", "w") as outfile:
+    with open(args.cfg_name + "_setting.json", "w") as outfile:
         json.dump(setting_config, outfile, indent=4)
 
     # 4) probes configuration------------------------------------------------------
@@ -474,5 +477,5 @@ if __name__ == "__main__":
     probes_config["queries_data"] = dict(zip(range(len(queries_data)), queries_data, strict=False))
 
     # write probe configuration
-    with open(ROOT_PROJ_PATH + args.cfg_name + "_probes.json", "w") as outfile:
+    with open(args.cfg_name + "_probes.json", "w") as outfile:
         json.dump(probes_config, outfile, indent=4)
