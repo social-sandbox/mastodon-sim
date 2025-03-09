@@ -93,7 +93,7 @@ def deploy_surveys_to_agent(player, eval_queries):
 
 
 def deploy_surveys(players, evals, eval_event_logger):
-    query_lib_path = evals["query_lib_path"]
+    query_lib_path = "sim_setting." + evals["query_lib_path"]
     queries_data = evals["queries_data"].values()
     eval_queries = []
     for query_data in queries_data:
