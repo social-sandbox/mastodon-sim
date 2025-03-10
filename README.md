@@ -1,11 +1,100 @@
-News_agent branch 
+News_agent branch
 [![CI](https://github.com/social-sandbox/mastodon-sim/actions/workflows/test.yml/badge.svg)](https://github.com/social-sandbox/mastodon-sim/actions/workflows/test.yml)
 [![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/social-sandbox/mastodon-sim)
 
 # Mastodon Social Simulation
 
-Generative Agent simulation of a Mastodon social network. Paper: [http://arxiv.org/abs/2410.13915](http://arxiv.org/abs/2410.13915).
+Generative Agent simulation of a Mastodon social network.
+- 2024 NeurIPS Workshop Paper: [http://arxiv.org/abs/2410.13915](http://arxiv.org/abs/2410.13915).
+- 2025 demo paper (in review)
 
+## File structure
+Overview
+- `mastodon-sim/src/sim` has multi-LLM-agent simulation code
+- `mastodon-sim/src/mastodon_sim` has social media code
+- `mastodon-sim/examples/election` has code that configures an election simulation as an example
+
+`mastodon-sim/src/sim/main.py` runs the simulation configured in `mastodon-sim/examples/election/config_utils/gen_config.py`
+
+Detailed structure:
+<pre>
+mastodon-sim
+├── examples
+│   └── election
+│       ├── config_utils
+│       │   ├── agent_query_lib.py
+│       │   └── gen_config.py
+│       ├── input
+│       │   ├── news_data
+│       │   │   ├── news_agent_utils.py
+│       │   │   ├── news_processing.py
+│       │   │   └── write_newsfile_from_filesheadlines.py
+│       │   └── personas
+│       │       ├── Post-processing_Cleaning.py
+│       │       ├── Pre-processing_Cleaning.py
+│       │       ├── Pre-scraping_Extraction.py
+│       │       ├── Ranking_Interaction.py
+│       │       ├── Reddit_Persona_Generation.py
+│       │       └── Top-k_Extraction.py
+│       ├── notebooks
+│       │   ├── basic_output_processing.ipynb
+│       │   ├── basic_sim.ipynb
+│       │   └── run_simulations.ipynb
+│       └── agent_lib
+│           ├── candidate.py
+│           ├── malicious.py
+│           └── voter.py
+└── src
+    ├── mastodon_sim
+    │   ├── concordia
+    │   │   └── components
+    │   │       ├── apps.py
+    │   │       ├── logging.py
+    │   │       ├── scene.py
+    │   │       └── triggering.py
+    │   ├── mastodon_ops
+    │   │   ├── block.py
+    │   │   ├── boost.py
+    │   │   ├── create_app.py
+    │   │   ├── create_env_file.py
+    │   │   ├── delete_posts.py
+    │   │   ├── env_utils.py
+    │   │   ├── follow.py
+    │   │   ├── get_account_id.py
+    │   │   ├── get_client.py
+    │   │   ├── like.py
+    │   │   ├── login.py
+    │   │   ├── mute.py
+    │   │   ├── new_app.py
+    │   │   ├── notifications.py
+    │   │   ├── post_status.py
+    │   │   ├── read_bio.py
+    │   │   ├── reset_users.py
+    │   │   ├── timeline.py
+    │   │   ├── toot.py
+    │   │   ├── unblock.py
+    │   │   ├── unfollow.py
+    │   │   ├── unmute.py
+    │   │   └── update_bio.py
+    │   └── mastodon_utils
+    │       ├── account_ids.py
+    │       ├── create_app.py
+    │       ├── get_users_from_env.py
+    │       └── graphs.py
+    └── sim
+        ├── main.py
+        ├── agent_utils
+        │   ├── base_agent.py
+        │   ├── exogenenous_agent.py
+        │   └── online_gamemaster.py
+        ├── analysis_utils
+        │   └── dashboard.py
+        └── sim_utils
+            ├── agent_speech_utils.py
+            ├── concordia_utils.py
+            ├── media_utils.py
+            └── misc_sim_utils.py
+</pre>
 <!--
 ## Hidden Section
 
