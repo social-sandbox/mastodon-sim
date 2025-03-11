@@ -51,7 +51,6 @@ def check_env() -> None:
 
     # List of expected environment variables
     expected_vars = [
-        "ABS_PROJ_PATH",
         "API_BASE_URL",
         "EMAIL_PREFIX",
         "MASTODON_CLIENT_ID",

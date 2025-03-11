@@ -3,77 +3,8 @@
 import argparse
 import datetime
 import json
-import os
-import sys
+from pathlib import Path
 from typing import Any
-
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=os.getcwd())
-ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
-if ROOT_PROJ_PATH is None:
-    sys.exit("No add absolute path found as environment variable.")
-
-# add path to election_sim source module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-
-parser = argparse.ArgumentParser(description="config")
-parser.add_argument(
-    "--exp_name",
-    type=str,
-    default="independent",
-    help="experiment name (one of independent, bias, or malicious",
-)
-parser.add_argument(
-    "--cfg_name",
-    type=str,
-    default="",
-    help="name of config file to write to",
-)
-parser.add_argument(
-    "--persona_type",
-    type=str,
-    default="Reddit.Big5",
-    help="x.y format: x is the persona information source and y is the associated trait type",
-)
-parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
-parser.add_argument(
-    "--use_news_agent",
-    type=str,
-    default="without_images",
-    help="use news agent in the simulation 'with_images', else without",
-)
-parser.add_argument(
-    "--news_file",
-    type=str,
-    default="v1_news_no_bias",
-    help="news headlines to use in the simulation",
-)
-
-parser.add_argument(
-    "--persona_json_path",
-    type=str,
-    default=None,
-    help="Path to persona JSON file for agent data (if you want to load from JSON).",
-)
-
-parser.add_argument(
-    "--sentence_encoder",
-    type=str,
-    default="sentence-transformers/all-mpnet-base-v2",
-    help="select sentence embedding model",
-)
-
-parser.add_argument(
-    "--model",
-    type=str,
-    default="gpt-4o-mini",
-    help="select language model to run sim",
-)
-
-args = parser.parse_args()
-
 
 # general instructions
 CUSTOM_CALL_TO_ACTION = """
@@ -180,7 +111,7 @@ QUERY_LIB_PATH = "config_utils.agent_query_lib"
 
 def get_follership_connection_stats(roles):
     # initial follower network statistics
-    fully_connected_targets = ["candidates", "exogeneous"]
+    fully_connected_targets = ["candidates", "exogenous"]
     p_from_to: dict[str, dict[str, float]] = {}
     for role_i in roles:
         p_from_to[role_i] = {}
@@ -230,7 +161,7 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
     news_agent_configs = []
     for i, news_type in enumerate(news_types):
         agent = news_info[news_type].copy()
-        agent["role"] = {"name": "exogeneous"}
+        agent["role"] = {"name": "exogenous", "class": "exogenous_agent"}
         agent["goal"] = (
             f"to provide {news_info[news_type]['coverage']} to the users of Storhampton.social."
         )
@@ -240,9 +171,15 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
         )
 
         if news is not None:
+            proj_root_dir = str(Path(__file__).resolve().parents[2]) + "/"
+            print(
+                "loading images from: " + proj_root_dir + "examples/election/input/news_data/img/"
+            )
             agent["posts"] = {
-                k: [img for img in v] if include_images else [] for k, v in news.items()
+                k: [proj_root_dir + img for img in v] if include_images else []
+                for k, v in news.items()
             }
+
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
 
         news_agent_configs.append(agent)
@@ -267,10 +204,66 @@ def generate_news_agent_toot_post_times(agent):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="config")
+    parser.add_argument(
+        "--exp_name",
+        type=str,
+        default="independent",
+        help="experiment name (one of independent, bias, or malicious",
+    )
+    parser.add_argument(
+        "--cfg_name",
+        type=str,
+        default="",
+        help="name of config file to write to",
+    )
+    parser.add_argument(
+        "--persona_type",
+        type=str,
+        default="Reddit.Big5",
+        help="x.y format: x is the persona information source and y is the associated trait type",
+    )
+    parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
+    parser.add_argument(
+        "--use_news_agent",
+        type=str,
+        default="without_images",
+        help="use news agent in the simulation 'with_images', else without",
+    )
+    parser.add_argument(
+        "--news_file",
+        type=str,
+        default="v1_news_no_bias",
+        help="news headlines to use in the simulation",
+    )
+
+    parser.add_argument(
+        "--persona_json_path",
+        type=str,
+        default=None,
+        help="Path to persona JSON file for agent data (if you want to load from JSON).",
+    )
+
+    parser.add_argument(
+        "--sentence_encoder",
+        type=str,
+        default="sentence-transformers/all-mpnet-base-v2",
+        help="select sentence embedding model",
+    )
+
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gpt-4o-mini",
+        help="select language model to run sim",
+    )
+
+    args = parser.parse_args()
+
     # 1) agent configurations---------------------------------------------
     # Bring together for base setting by role
     roles = []
-
+    # ----------------
     roles.append("candidate")
     candidates = []
     for partisan_type in PARTISAN_TYPES:
@@ -288,11 +281,10 @@ if __name__ == "__main__":
         agent["context"] = ""
         agent["seed_toot"] = ""
         candidate_configs.append(agent)
-
+    # ----------------
     if args.use_news_agent:
-        roles.append("exogeneous")
-        root_name = ROOT_PROJ_PATH + "examples/election/input/news_data/"
-        with open(root_name + args.news_file + ".json") as f:
+        roles.append("exogenous")
+        with open("examples/election/input/news_data/" + args.news_file + ".json") as f:
             news = json.load(f)
         print("headlines:")
         for headline in news.keys():
@@ -309,9 +301,9 @@ if __name__ == "__main__":
         )
     else:
         news_agent_configs = []
-
+    # ----------------
     roles.append("voter")
-    with open(args.persona_json_path) as f:
+    with open("examples/election/input/personas/" + args.persona_json_path) as f:
         persona_rows = json.load(f)
     voter_configs = []
     for row in persona_rows[: args.num_agents - len(candidate_configs)]:
@@ -437,7 +429,7 @@ if __name__ == "__main__":
                     "malicious": 0.9,
                     "candidate": 0.7,
                     "voter": 0.5,
-                    "exogeneous": 1,
+                    "exogenous": 1,
                 },
                 "initial_follow_prob": get_follership_connection_stats(roles),
             },
