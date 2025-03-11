@@ -1,18 +1,9 @@
 import concurrent.futures
 import datetime
-import os
-import sys
-
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=os.getcwd())
-ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
-if ROOT_PROJ_PATH is None:
-    sys.exit("No add absolute path found as environment variable.")
 
 
 # NA - object to represent a scheduled news agents that can post toots on a schedule
-class ScheduledPostAgent:
+class Agent:
     def __init__(self, name, mastodon_username, mastodon_app, post_schedule, posts):
         self.name = name
         self.mastodon_username = mastodon_username
@@ -30,7 +21,9 @@ class ScheduledPostAgent:
                 and scheduled_time.minute == current_time.minute
             ):
                 post = self.generate_post()
-                media = [ROOT_PROJ_PATH + img_filepath for img_filepath in self.posts[post]]
+
+                media = [img_filepath for img_filepath in self.posts[post]]
+
                 if len(media) > 0:
                     self.mastodon_app.post_toot(
                         self.mastodon_username, status=post, media_links=media

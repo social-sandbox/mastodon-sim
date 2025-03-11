@@ -1,4 +1,3 @@
-import argparse
 import concurrent.futures
 import datetime
 import importlib
@@ -9,111 +8,29 @@ import sys
 import time
 import warnings
 from functools import partial
+from pathlib import Path
 
+import hydra
 from dotenv import load_dotenv
+from omegaconf import DictConfig, OmegaConf
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
 
-# assumes current working directory: mastodon-sim/
+# assumes current working directory is project root: mastodon-sim/
 from concordia import __file__ as concordia_location
 
 print(f"importing Concordia from: {concordia_location}")
-from concordia.clocks import game_clock
-from concordia.typing.entity import ActionSpec, OutputType
-from sim_utils import media_utils
-
-from mastodon_sim.concordia import apps
-from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
-from mastodon_sim.mastodon_utils import get_users_from_env
-
-# parse input arguments
-parser = argparse.ArgumentParser(description="Experiment parameters")
-
-parser.add_argument("--seed", type=int, default=1, help="seed used for python's random module")
-parser.add_argument("--T", type=int, default=1, help="number of episodes")  # 48
-parser.add_argument("--voters", type=str, default="independent", help="voter setting")
-parser.add_argument(
-    "--sim_setting",
-    type=str,
-    default="election",
-    help="name of directory where output will be written",
-)
-parser.add_argument(
-    "--server",
-    type=str,
-    default="None",  # www.social-sandbox.com, www.socialsandbox2.com
-    help="config from which to optionally load experiment settings",
-)
-
-parser.add_argument(
-    "--persona_file",
-    type=str,
-    default="reddit_agents.json",
-    help="data from which to pull persona information from",
-)
-
-parser.add_argument(
-    "--use_news_agent",
-    type=str,
-    default="with_images",
-    help="use news agent in the simulation 'with_images', else without",
-)  # NA
-parser.add_argument(
-    "--news_file",
-    type=str,
-    default="v1_news_no_bias",
-    help="news headlines and image locations for the news agent.",
-)  # NA
-
-parser.add_argument(
-    "--sentence_encoder",
-    type=str,
-    default="sentence-transformers/all-mpnet-base-v2",
-    help="select sentence embedding model",
-)  # NA
-
-parser.add_argument(
-    "--model",
-    type=str,
-    default="gpt-4o-mini",
-    help="select language model to run sim",
-)  # NA
-
-args = parser.parse_args()
-
-
-# #batch job info
-# try:
-#     job_id = int(os.getenv('SLURM_ARRAY_TASK_ID'))
-# except:
-#     job_id = -1
-#     print("Not running on a cluster")
-
-# set global variables
-USE_MASTODON_SERVER = (
-    False if args.server == "None" else True
-)  # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
-if USE_MASTODON_SERVER:
-    check_env()
-else:
-    input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
-
-# get absolute path to project (run this file from project directory)
-load_dotenv(dotenv_path=os.getcwd())
-ROOT_PROJ_PATH = os.getenv("ABS_PROJ_PATH")
-
-SEED = args.seed
-random.seed(SEED)
-
 # load sim functions
-from agent_utils.exogenenous_agent import (
-    ScheduledPostAgent,
+from agent_utils.exogenous_agent import (
     get_post_times_news_agent,
     post_seed_toots_news_agents,
 )
 from agent_utils.online_gamemaster import SimpleGameRunner
+from concordia.clocks import game_clock
+from concordia.typing.entity import ActionSpec, OutputType
+from sim_utils import media_utils
 from sim_utils.agent_speech_utils import (
     deploy_surveys,
     write_seed_toot,
@@ -125,7 +42,9 @@ from sim_utils.concordia_utils import (
 )
 from sim_utils.misc_sim_utils import event_logger
 
-# add examples folder module as environment variable
+from mastodon_sim.concordia import apps
+from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
+from mastodon_sim.mastodon_utils import get_users_from_env
 
 
 def clear_mastodon_server(max_num_players):
@@ -166,13 +85,13 @@ def get_sentance_encoder(model_name):
 
 
 def add_news_agent_to_mastodon_app(
-    news_agent, action_logger, players, mastodon_apps, app_description
+    news_agent, action_logger, players, mastodon_apps, app_description, use_server
 ):
     user_mapping = mastodon_apps[players[0].name].get_user_mapping()
     for i, n_agent in enumerate(news_agent):
         mastodon_apps[n_agent["name"]] = apps.MastodonSocialNetworkApp(
             action_logger=action_logger,
-            perform_operations=USE_MASTODON_SERVER,
+            perform_operations=use_server,
             app_description=app_description,
         )
         # We still need to give the news agent a phone to be able to post toots #TODO we are not sure if we need to do this
@@ -213,7 +132,7 @@ def add_news_agent_to_mastodon_app(
 
 
 def set_up_mastodon_app_usage(
-    player_roles, role_parameters, action_logger, app_description
+    player_roles, role_parameters, action_logger, app_description, use_server
 ):  # , output_rootname):
     # apps.set_app_output_write_path(output_rootname)
 
@@ -227,7 +146,7 @@ def set_up_mastodon_app_usage(
     mastodon_apps = {
         name: apps.MastodonSocialNetworkApp(
             action_logger=action_logger,
-            perform_operations=USE_MASTODON_SERVER,
+            perform_operations=use_server,
             app_description=app_description,
         )
         for name in names
@@ -337,6 +256,7 @@ def run_sim(
     probe_config,
     episode_length,
     output_rootname,
+    use_server,
 ):
     time_step = datetime.timedelta(minutes=30)
     today = datetime.date.today()
@@ -356,7 +276,7 @@ def run_sim(
 
     news_agents = []
     for agent in agent_data:
-        if agent["role"]["name"] == "exogeneous":
+        if agent["role"]["name"] == "exogenous":
             news_agents.append(agent)
             agent_data.remove(agent)
 
@@ -380,7 +300,7 @@ def run_sim(
 
     role_parameters = setting_info["details"]["role_parameters"]
     mastodon_apps, phones, roles = set_up_mastodon_app_usage(
-        roles, role_parameters, action_event_logger, app_description
+        roles, role_parameters, action_event_logger, app_description, use_server
     )
 
     action_spec = ActionSpec(
@@ -420,14 +340,21 @@ def run_sim(
     # add news agent to the simulation
     if news_agents:
         add_news_agent_to_mastodon_app(
-            news_agents, action_event_logger, players, mastodon_apps, app_description
+            news_agents, action_event_logger, players, mastodon_apps, app_description, use_server
         )
         post_seed_toots_news_agents(news_agents, mastodon_apps)
         scheduled_news_agents = []
         news_agent_datetimes = get_post_times_news_agent(news_agents)
+        news_agent_module = importlib.import_module(
+            "agent_utils." + news_agents[0]["role"]["class"]
+        )
+        if not hasattr(news_agent_module, "Agent"):
+            raise AttributeError("No 'Agent' class found.")
         for n_agent in news_agents:
+            for post_text in n_agent["posts"]:
+                n_agent["posts"][post_text] = n_agent["posts"][post_text]
             scheduled_news_agents.append(
-                ScheduledPostAgent(
+                news_agent_module.Agent(
                     name=n_agent["name"],
                     mastodon_username=n_agent["mastodon_username"],
                     mastodon_app=mastodon_apps[n_agent["name"]],
@@ -484,72 +411,98 @@ def run_sim(
     #################################################################
 
 
-if __name__ == "__main__":
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    examples_package = project_root + "/examples/" + args.sim_setting
-    parent_dir = os.path.dirname(examples_package)
-    sys.path.insert(0, parent_dir)
-    package = importlib.import_module(args.sim_setting)
-    sys.modules["sim_setting"] = package
+def generate_output_configs(config_name, cfg, over_write=True):
+    config_keys = ["agents", "settings", "setting", "probes"]
+    config_locations = {
+        config_key: config_name + "_" + config_key + ".json" for config_key in config_keys
+    }
 
-    outdir = examples_package + "/output/"
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
-    N = 20
-    persona_type = "Reddit.Big5"
-    expname = "exp1"
-
-    config_name = (
-        outdir
-        + f"N{N}_T{args.T}_{persona_type.split('.')[0]}_{persona_type.split('.')[1]}_{args.voters}_{args.news_file}_{args.use_news_agent}_{expname}"
-    )
-    # if os.path.exists(config_name+"_agents.json"):
-    #     sys.exit("output files for this setting already exist!")
-    cmd = " ".join(
-        [
-            f"python examples/{args.sim_setting}/config_utils/gen_config.py",
-            f"--exp_name {args.voters}",
-            f"--persona_type {persona_type}",
-            f"--cfg_name {config_name}",
-            f"--num_agents {N}",
-            f"--persona_json_path {ROOT_PROJ_PATH}examples/{args.sim_setting}/input/personas/{args.persona_file}",
-            f"--use_news_agent {args.use_news_agent}",
-            f"--news_file {args.news_file}",  # NA
-            f"--sentence_encoder {args.sentence_encoder}",
-            f"--model {args.model}",
-        ]
-    )
-    print(cmd)
-    os.system(cmd)
+    if not all(os.path.exists(loc) for loc in config_locations) or over_write:
+        cmd = " ".join(
+            [
+                f"python examples/{cfg.sim_setting}/gen_config.py",
+                f"--exp_name {cfg.exp_name}",
+                f"--persona_type {cfg.persona_type}",
+                f"--cfg_name {config_name}",
+                f"--num_agents {cfg.num_agents}",
+                f"--persona_json_path {cfg.persona_file}",
+                f"--use_news_agent {cfg.use_news_agent}",
+                f"--news_file {cfg.news_file}",
+                f"--sentence_encoder {cfg.sentence_encoder}",
+                f"--model {cfg.model}",
+            ]
+        )
+        print("generating configs...")
+        os.system(cmd)
 
     # load configuration
     config_data = {}
-    config_suffixes = ["agents", "settings", "setting", "probes"]
-    for config_key in config_suffixes:
-        with open(config_name + "_" + config_key + ".json") as file:
-            config_data[config_key] = json.load(file)
+    for config_key, config_location in config_locations.items():
+        if os.path.exists(config_location):
+            print("loading " + config_key + " config")
+            with open(config_location) as file:
+                config_data[config_key] = json.load(file)
+        else:
+            sys.exit("config file does not exist")
+
     assert config_name == config_data["settings"]["output_rootname"], (
         "storage name of loaded config doesn't match!" + config_data["settings"]["output_rootname"]
     )
     print([agent["name"] for agent in config_data["agents"]])
 
-    # load language models
-    model = select_large_language_model(
-        config_data["settings"]["model"], config_name + "prompts_and_responses.jsonl", True
-    )
-    embedder = get_sentance_encoder(config_data["settings"]["sentence_encoder"])
-
     # Add sim parameters to settings config and rewrite to file
-    config_data["settings"].update(vars(args))
+    config_data["settings"].update(OmegaConf.to_container(cfg, resolve=True))
     with open(config_name + "_" + "settings" + ".json", "w") as outfile:
         json.dump(config_data["settings"], outfile)
 
-    if USE_MASTODON_SERVER:
+    return config_data
+
+
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def main(cfg: DictConfig):
+    # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
+    if cfg.use_server:
+        check_env()
+    else:
+        input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
+
+    # get absolute path to project (run this file from project directory)
+    project_root = (
+        Path(__file__).resolve().parents[2]
+    )  # Go up two levels to get to root (src/sim/main.py)
+    print("project root: " + str(project_root))
+    load_dotenv(dotenv_path=project_root)
+
+    SEED = cfg.seed
+    random.seed(SEED)
+
+    # add example module to system path
+    examples_package = project_root / "examples" / cfg.sim_setting
+    sys.path.insert(0, str(examples_package.parents[0]))
+    package = importlib.import_module(cfg.sim_setting)
+    sys.modules["sim_setting"] = package
+
+    # make output storage directory
+    outdir = examples_package / "output"
+    outdir.mkdir(exist_ok=True)
+
+    # generate, save, and load ouput configs
+    config_name = str(
+        outdir
+        / f"N{cfg.num_agents}_T{cfg.num_episodes}_{cfg.persona_type.split('.')[0]}_{cfg.persona_type.split('.')[1]}_{cfg.exp_name}_{cfg.news_file}_{cfg.use_news_agent}_{cfg.run_name}"
+    )
+    config_data = generate_output_configs(config_name, cfg)
+
+    # load language models
+    model = select_large_language_model(
+        config_data["settings"]["model"], config_name + "_prompts_and_responses.jsonl", True
+    )
+    embedder = get_sentance_encoder(config_data["settings"]["sentence_encoder"])
+
+    if cfg.use_server:
         clear_mastodon_server(len(config_data["agents"]))
 
     # simulation parameter inputs
-    episode_length = args.T
     shared_memories = (
         config_data["setting"]["shared_memories_template"]
         + [config_data["setting"]["setting_info"]["description"]]
@@ -565,6 +518,11 @@ if __name__ == "__main__":
         config_data["setting"]["custom_call_to_action"],
         config_data["setting"]["setting_info"],
         config_data["probes"],
-        episode_length,
+        cfg.num_episodes,
         config_data["settings"]["output_rootname"],
+        cfg.use_server,
     )
+
+
+if __name__ == "__main__":
+    main()
