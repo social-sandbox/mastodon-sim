@@ -1,10 +1,7 @@
 """A script for generating sim config files"""
 
-import argparse
 import datetime
 import json
-from pathlib import Path
-from typing import Any
 
 # general instructions
 CUSTOM_CALL_TO_ACTION = """
@@ -106,13 +103,13 @@ SOCIAL_MEDIA_USAGE_INSTRUCTIONS = "\n".join(
 
 BASE_FOLLOWERSHIP_CONNECTION_PROBABILITY = 0.4
 
-QUERY_LIB_PATH = "config_utils.agent_query_lib"
+QUERY_LIB_MODULE = "config_utils.agent_query_lib"
 
 
-def get_follership_connection_stats(roles):
+def get_followership_connection_stats(roles):
     # initial follower network statistics
     fully_connected_targets = ["candidates", "exogenous"]
-    p_from_to: dict[str, dict[str, float]] = {}
+    p_from_to = {}
     for role_i in roles:
         p_from_to[role_i] = {}
         for role_j in roles:
@@ -171,13 +168,8 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
         )
 
         if news is not None:
-            proj_root_dir = str(Path(__file__).resolve().parents[2]) + "/"
-            print(
-                "loading images from: " + proj_root_dir + "examples/election/input/news_data/img/"
-            )
             agent["posts"] = {
-                k: [proj_root_dir + img for img in v] if include_images else []
-                for k, v in news.items()
+                k: [img for img in v] if include_images else [] for k, v in news.items()
             }
 
         agent["toot_posting_schedule"] = generate_news_agent_toot_post_times(agent)
@@ -203,65 +195,18 @@ def generate_news_agent_toot_post_times(agent):
     # return [str(i) + ":00 AM" for i in range(8, 12)] + [str(i) + ":00 PM" for i in range(1, agent[''])]
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="config")
-    parser.add_argument(
-        "--exp_name",
-        type=str,
-        default="independent",
-        help="experiment name (one of independent, bias, or malicious",
-    )
-    parser.add_argument(
-        "--cfg_name",
-        type=str,
-        default="",
-        help="name of config file to write to",
-    )
-    parser.add_argument(
-        "--persona_type",
-        type=str,
-        default="Reddit.Big5",
-        help="x.y format: x is the persona information source and y is the associated trait type",
-    )
-    parser.add_argument("--num_agents", type=int, default=20, help="number of agents")
-    parser.add_argument(
-        "--use_news_agent",
-        type=str,
-        default="without_images",
-        help="use news agent in the simulation 'with_images', else without",
-    )
-    parser.add_argument(
-        "--news_file",
-        type=str,
-        default="v1_news_no_bias",
-        help="news headlines to use in the simulation",
-    )
-
-    parser.add_argument(
-        "--persona_json_path",
-        type=str,
-        default=None,
-        help="Path to persona JSON file for agent data (if you want to load from JSON).",
-    )
-
-    parser.add_argument(
-        "--sentence_encoder",
-        type=str,
-        default="sentence-transformers/all-mpnet-base-v2",
-        help="select sentence embedding model",
-    )
-
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="gpt-4o-mini",
-        help="select language model to run sim",
-    )
-
-    args = parser.parse_args()
-
+def generate_output_configs(cfg):
+    use_news_agent = cfg["use_news_agent"]
+    num_agents = cfg["num_agents"]
+    persona_type = cfg["persona_type"]
+    experiment_name = "independent"
     # 1) agent configurations---------------------------------------------
-    # Bring together for base setting by role
+    agents = {}
+    agents["inputs"] = {}
+    agents["inputs"]["persona_file"] = "reddit_agents.json"
+    agents["inputs"]["news_file"] = "v1_news_no_bias"
+    agents["directory"] = []
+    # Bring agents together for base setting by role
     roles = []
     # ----------------
     roles.append("candidate")
@@ -282,14 +227,16 @@ if __name__ == "__main__":
         agent["seed_toot"] = ""
         candidate_configs.append(agent)
     # ----------------
-    if args.use_news_agent:
+    if use_news_agent:
         roles.append("exogenous")
-        with open("examples/election/input/news_data/" + args.news_file + ".json") as f:
+        with open(
+            "examples/election/input/news_data/" + agents["inputs"]["news_file"] + ".json"
+        ) as f:
             news = json.load(f)
         print("headlines:")
         for headline in news.keys():
             print(headline)
-        include_images = args.use_news_agent == "with_images"
+        include_images = use_news_agent == "with_images"
         print(
             "Including images with the above headlines"
             if include_images
@@ -303,10 +250,10 @@ if __name__ == "__main__":
         news_agent_configs = []
     # ----------------
     roles.append("voter")
-    with open("examples/election/input/personas/" + args.persona_json_path) as f:
+    with open("examples/election/input/personas/" + agents["inputs"]["persona_file"]) as f:
         persona_rows = json.load(f)
     voter_configs = []
-    for row in persona_rows[: args.num_agents - len(candidate_configs)]:
+    for row in persona_rows[: num_agents - len(candidate_configs)]:
         agent = {}
         agent["name"] = row["Name"]
         agent["gender"] = row["Sex"].lower()
@@ -319,7 +266,6 @@ if __name__ == "__main__":
 
     # add custom setting-specific agent features
     malicious_actor_config = None
-    experiment_name = args.exp_name
     if experiment_name == "independent":
         pass
     elif experiment_name == "bias":
@@ -354,7 +300,7 @@ if __name__ == "__main__":
                 ]
             )
         )
-        assert supported_candidate in [cfg["name"] for cfg in candidate_configs], (
+        assert supported_candidate in [canconf["name"] for canconf in candidate_configs], (
             "choose valid candidate name"
         )
         for agent in voter_configs:
@@ -362,7 +308,7 @@ if __name__ == "__main__":
                 agent.update(malicious_actor_config)
 
     # add big5 trait information
-    if args.persona_type.split(".")[1] == "Big5":
+    if persona_type.split(".")[1] == "Big5":
         candidate_trait_scores = {
             "openness": [3, 9],
             "conscientiousness": [8, 7],
@@ -378,7 +324,7 @@ if __name__ == "__main__":
                     strict=False,
                 )
             )
-        for rit, row in enumerate(persona_rows[: args.num_agents - len(candidate_configs)]):
+        for rit, row in enumerate(persona_rows[: num_agents - len(candidate_configs)]):
             voter_configs[rit]["traits"] = {
                 "openness": row["Big5_traits"].get("Openness", 5),
                 "conscientiousness": row["Big5_traits"].get("Conscientiousness", 5),
@@ -390,35 +336,27 @@ if __name__ == "__main__":
         print("Choose valid trait type")
 
     # combine all agent configurations in one list
-    agent_configs = voter_configs + candidate_configs + news_agent_configs
+    agents["directory"] = voter_configs + candidate_configs + news_agent_configs
 
-    # write agent configuraiton
-    with open(args.cfg_name + "_agents.json", "w") as outfile:
-        json.dump(agent_configs, outfile, indent=4)
-    # 2) settings configuration----------------------------------------------------
-    settings_config = {}
-    settings_config["model"] = args.model
-    settings_config["sentence_encoder"] = args.sentence_encoder
-    settings_config["output_rootname"] = args.cfg_name
-
-    # write settings configuration
-    with open(args.cfg_name + "_settings.json", "w") as outfile:
-        json.dump(settings_config, outfile, indent=4)
-
-    # 3) setting configuration------------------------------------------------------
-    setting_config: dict[str, object] = {}
-    setting_config["shared_memories_template"] = (
+    # 2) setting configuration------------------------------------------------------
+    soc_sys_context = {}
+    soc_sys_context["sim_setting"] = (
+        "election"  # name of setting (setting specific code in examples/{sim_setting})
+    )
+    soc_sys_context["exp_name"] = experiment_name  # name of experiment
+    soc_sys_context["custom_call_to_action"] = CUSTOM_CALL_TO_ACTION
+    soc_sys_context["shared_memories_template"] = (
         (
             SHARED_MEMORIES_TEMPLATE
             + [
                 f"Voters in Storhampton are actively getting the latest local news from {news_info['local']['name']} social media account."
             ]
         )
-        if args.use_news_agent
+        if use_news_agent
         else SHARED_MEMORIES_TEMPLATE
     )
-    setting_config["mastodon_usage_instructions"] = SOCIAL_MEDIA_USAGE_INSTRUCTIONS
-    setting_config["setting_info"] = {
+    soc_sys_context["social_media_usage_instructions"] = SOCIAL_MEDIA_USAGE_INSTRUCTIONS
+    soc_sys_context["setting_info"] = {
         "description": "\n".join(
             [CANDIDATE_INFO[p]["policy_proposals"] for p in list(CANDIDATE_INFO.keys())]
         ),
@@ -431,19 +369,14 @@ if __name__ == "__main__":
                     "voter": 0.5,
                     "exogenous": 1,
                 },
-                "initial_follow_prob": get_follership_connection_stats(roles),
+                "initial_follow_prob": get_followership_connection_stats(roles),
             },
         },
     }
-    setting_config["custom_call_to_action"] = CUSTOM_CALL_TO_ACTION
 
-    # write setting configuration
-    with open(args.cfg_name + "_setting.json", "w") as outfile:
-        json.dump(setting_config, outfile, indent=4)
-
-    # 4) probes configuration------------------------------------------------------
-    probes_config: dict[str, Any] = {}
-    queries_data: list[dict] = [
+    # 3) probes configuration------------------------------------------------------
+    probes = {}
+    queries_data = [
         {
             "query_type": "VotePref",
             "interaction_premise_template": {
@@ -465,9 +398,7 @@ if __name__ == "__main__":
         },
         {"query_type": "VoteIntent"},
     ]
-    probes_config["query_lib_path"] = QUERY_LIB_PATH
-    probes_config["queries_data"] = dict(zip(range(len(queries_data)), queries_data, strict=False))
+    probes["query_lib_module"] = QUERY_LIB_MODULE
+    probes["queries_data"] = dict(zip(range(len(queries_data)), queries_data, strict=False))
 
-    # write probe configuration
-    with open(args.cfg_name + "_probes.json", "w") as outfile:
-        json.dump(probes_config, outfile, indent=4)
+    return soc_sys_context, probes, agents

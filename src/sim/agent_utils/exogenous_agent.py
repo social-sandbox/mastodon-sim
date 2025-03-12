@@ -2,8 +2,11 @@ import concurrent.futures
 import datetime
 
 
-# NA - object to represent a scheduled news agents that can post toots on a schedule
 class Agent:
+    """
+    An agent class for an exogenous (i.e. fixed/external to the sim) posting schedule and content
+    """
+
     def __init__(self, name, mastodon_username, mastodon_app, post_schedule, posts):
         self.name = name
         self.mastodon_username = mastodon_username
