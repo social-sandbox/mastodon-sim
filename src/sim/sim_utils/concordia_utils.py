@@ -52,15 +52,6 @@ def save_to_json(
 
 
 def init_concordia_objects(model, embedder, shared_memories, clock):
-    # shared_context = model.sample_text(  # TODO: deprecated?
-    #     "Summarize the following passage in a concise and insightful fashion. "
-    #     + "Make sure to include information about Mastodon:\n"
-    #     + "\n".join(shared_memories)
-    #     + "\nSummary:",
-    #     max_tokens=2048,
-    # )
-    # print(shared_context)
-
     importance_model = importance_function.ConstantImportanceModel()
     importance_model_gm = importance_function.ConstantImportanceModel()
 

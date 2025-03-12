@@ -1,7 +1,7 @@
 import concurrent.futures
 import datetime
 import importlib
-import json
+import logging
 import os
 import random
 import sys
@@ -10,9 +10,9 @@ import warnings
 from functools import partial
 from pathlib import Path
 
-import hydra
+import yaml
 from dotenv import load_dotenv
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
@@ -22,6 +22,7 @@ with warnings.catch_warnings():
 from concordia import __file__ as concordia_location
 
 print(f"importing Concordia from: {concordia_location}")
+
 # load sim functions
 from agent_utils.exogenous_agent import (
     get_post_times_news_agent,
@@ -45,6 +46,15 @@ from sim_utils.misc_sim_utils import event_logger
 from mastodon_sim.concordia import apps
 from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
 from mastodon_sim.mastodon_utils import get_users_from_env
+
+# Go up two levels to get to root (src/sim/main.py)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+print("project root: " + str(PROJECT_ROOT))
+os.chdir(PROJECT_ROOT)
+
+SIM_EXAMPLE = "election"
+sys.path.insert(0, str(PROJECT_ROOT / "examples" / SIM_EXAMPLE))
+from gen_config import generate_output_configs
 
 
 def clear_mastodon_server(max_num_players):
@@ -166,14 +176,14 @@ def set_up_mastodon_app_usage(
         for player_j in player_roles:
             followee = player_j["player_name"]
             prob = role_prob_matrix[player_i["name"]][player_j["name"]]
-            if follower != followee:
-                # With a 20% chance, create mutual follow relationships.
-                if random.random() < 0.2:
-                    follow_pairs.add((follower, followee))
-                    follow_pairs.add((followee, follower))
-                # Otherwise, with a 15% chance, create a one-direction follow.
-                elif random.random() < prob:
-                    follow_pairs.add((follower, followee))
+            # if follower != followee:
+            #     # With a 20% chance, create mutual follow relationships.
+            #     if random.random() < 0.2:
+            #         follow_pairs.add((follower, followee))
+            #         follow_pairs.add((followee, follower))
+            #     # Otherwise, with a create a one-direction follow according to stored probability.
+            if random.random() < prob:
+                follow_pairs.add((follower, followee))
 
     # Optionally, print or inspect the pre-generated relationships.
     # print("Pre-generated follow pairs:")
@@ -280,7 +290,7 @@ def run_sim(
             news_agents.append(agent)
             agent_data.remove(agent)
 
-    profiles = make_profiles(agent_data)  # profile=(player_config,role)
+    profiles = make_profiles(agent_data)  # profile format: (player_config,role)
     roles = [profile[1] for profile in profiles]
     players = []
     memories = {}
@@ -352,7 +362,9 @@ def run_sim(
             raise AttributeError("No 'Agent' class found.")
         for n_agent in news_agents:
             for post_text in n_agent["posts"]:
-                n_agent["posts"][post_text] = n_agent["posts"][post_text]
+                n_agent["posts"][post_text] = [
+                    str(PROJECT_ROOT) + "/" + path for path in n_agent["posts"][post_text]
+                ]
             scheduled_news_agents.append(
                 news_agent_module.Agent(
                     name=n_agent["name"],
@@ -411,118 +423,131 @@ def run_sim(
     #################################################################
 
 
-def generate_output_configs(config_name, cfg, over_write=True):
-    config_keys = ["agents", "settings", "setting", "probes"]
-    config_locations = {
-        config_key: config_name + "_" + config_key + ".json" for config_key in config_keys
-    }
-
-    if not all(os.path.exists(loc) for loc in config_locations) or over_write:
-        cmd = " ".join(
-            [
-                f"python examples/{cfg.sim_setting}/gen_config.py",
-                f"--exp_name {cfg.exp_name}",
-                f"--persona_type {cfg.persona_type}",
-                f"--cfg_name {config_name}",
-                f"--num_agents {cfg.num_agents}",
-                f"--persona_json_path {cfg.persona_file}",
-                f"--use_news_agent {cfg.use_news_agent}",
-                f"--news_file {cfg.news_file}",
-                f"--sentence_encoder {cfg.sentence_encoder}",
-                f"--model {cfg.model}",
-            ]
-        )
-        print("generating configs...")
-        os.system(cmd)
-
-    # load configuration
-    config_data = {}
-    for config_key, config_location in config_locations.items():
-        if os.path.exists(config_location):
-            print("loading " + config_key + " config")
-            with open(config_location) as file:
-                config_data[config_key] = json.load(file)
-        else:
-            sys.exit("config file does not exist")
-
-    assert config_name == config_data["settings"]["output_rootname"], (
-        "storage name of loaded config doesn't match!" + config_data["settings"]["output_rootname"]
+def generate_default_settings():
+    default_sim_settings = {}
+    default_sim_settings["seed"] = 1  # seed used for python's random module"
+    default_sim_settings["num_agents"] = 20  # number of agents
+    default_sim_settings["num_episodes"] = 1  # number of episodes
+    default_sim_settings["use_server"] = (
+        True  # server (e.g. www.social-sandbox.com, www.socialsandbox2.com)
     )
-    print([agent["name"] for agent in config_data["agents"]])
+    default_sim_settings["use_news_agent"] = (
+        "with_images"  # use news agent in the simulation 'with_images', else without
+    )
+    default_sim_settings["sentence_encoder"] = (
+        "sentence-transformers/all-mpnet-base-v2"  # select sentence embedding model
+    )
+    default_sim_settings["model"] = "gpt-4o-mini"  # select language model to run sim
+    default_sim_settings["persona_type"] = "Reddit.Big5"  # persona
+    default_sim_settings["run_name"] = "run1"  # experiment label
 
-    # Add sim parameters to settings config and rewrite to file
-    config_data["settings"].update(OmegaConf.to_container(cfg, resolve=True))
-    with open(config_name + "_" + "settings" + ".json", "w") as outfile:
-        json.dump(config_data["settings"], outfile)
-
-    return config_data
+    with open("conf/sim/default.yaml", "w") as outfile:
+        yaml.dump(default_sim_settings, outfile, default_flow_style=False)
+    return default_sim_settings
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg: DictConfig):
+def generate_config(cfg):
+    soc_sys_settings, probes, agents = generate_output_configs(cfg)
+
+    # make output storage directory
+    outdir = Path(f"examples/{SIM_EXAMPLE}/output")
+    outdir.mkdir(exist_ok=True)
+    config_name = f"N{cfg['num_agents']}_T{cfg['num_episodes']}_{cfg['persona_type'].split('.')[0]}_{cfg['persona_type'].split('.')[1]}_{soc_sys_settings['exp_name']}_{agents['inputs']['news_file']}_{cfg['use_news_agent']}_{cfg['run_name']}"
+    cfg["output_rootname"] = str(outdir / config_name)
+    data_config = {
+        "soc_sys_settings": soc_sys_settings,
+        "probes": probes,
+        "agents": agents,
+        "sim": cfg,
+    }
+    with open(cfg["output_rootname"] + ".yaml", "w") as outfile:
+        yaml.dump(data_config, outfile, default_flow_style=False)
+
+    return cfg["output_rootname"]
+    # for name, cfgg in data_config.items():
+    #     print("writing "+name)
+    #     with open(output_rootname+'_'+name+".yaml", 'w') as outfile:
+    #         yaml.dump({name:cfgg}, outfile, default_flow_style=False)
+    # name = "sim"
+    # with open(output_rootname+'_'+name+".yaml", 'w') as outfile:
+    #     yaml.dump({name:cfg}, outfile, default_flow_style=False)
+
+    # config = {}
+    # config['defaults'] = ["_self_",{'sim': "default"}] + [
+    #     config_name+"_"+name for name in data_config
+    # ]
+    # config['hydra'] = {}
+    # config['hydra']['searchpath'] = [
+    #     str(outdir.resolve()),
+    # ]
+
+    # with open("conf/" + SIM_EXAMPLE + ".yaml", 'w') as outfile:
+    #     yaml.dump(config, outfile, default_flow_style=False)
+
+
+def load_config(path):
+    conf = OmegaConf.load(path + ".yaml")
+    return conf
+
+
+def configure_logging():
+    # supress verbose printing of hydra's api logging so only warnings (or greater issues) are printed
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+# @hydra.main(version_base=None, config_path="../../conf", config_name=SIM_EXAMPLE)
+def main(cfg):  #: DictConfig):
+    configure_logging()
+
     # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
-    if cfg.use_server:
+    if cfg.sim.use_server:
         check_env()
     else:
         input("Sim will not use the Mastodon server. Confirm by pressing any key to continue.")
 
-    # get absolute path to project (run this file from project directory)
-    project_root = (
-        Path(__file__).resolve().parents[2]
-    )  # Go up two levels to get to root (src/sim/main.py)
-    print("project root: " + str(project_root))
-    load_dotenv(dotenv_path=project_root)
+    load_dotenv(PROJECT_ROOT)
 
-    SEED = cfg.seed
+    SEED = cfg.sim.seed
     random.seed(SEED)
 
-    # add example module to system path
-    examples_package = project_root / "examples" / cfg.sim_setting
-    sys.path.insert(0, str(examples_package.parents[0]))
-    package = importlib.import_module(cfg.sim_setting)
+    # add example module to system modules as "sim_setting"
+    sys.path.insert(0, str(PROJECT_ROOT / "examples"))
+    package = importlib.import_module(SIM_EXAMPLE)
     sys.modules["sim_setting"] = package
-
-    # make output storage directory
-    outdir = examples_package / "output"
-    outdir.mkdir(exist_ok=True)
-
-    # generate, save, and load ouput configs
-    config_name = str(
-        outdir
-        / f"N{cfg.num_agents}_T{cfg.num_episodes}_{cfg.persona_type.split('.')[0]}_{cfg.persona_type.split('.')[1]}_{cfg.exp_name}_{cfg.news_file}_{cfg.use_news_agent}_{cfg.run_name}"
-    )
-    config_data = generate_output_configs(config_name, cfg)
 
     # load language models
     model = select_large_language_model(
-        config_data["settings"]["model"], config_name + "_prompts_and_responses.jsonl", True
+        cfg.sim.model, cfg.sim.output_rootname + "_prompts_and_responses.jsonl", True
     )
-    embedder = get_sentance_encoder(config_data["settings"]["sentence_encoder"])
+    embedder = get_sentance_encoder(cfg.sim.sentence_encoder)
 
-    if cfg.use_server:
-        clear_mastodon_server(len(config_data["agents"]))
+    if cfg.sim.use_server:
+        clear_mastodon_server(len(cfg.agents.directory))
 
     # simulation parameter inputs
     shared_memories = (
-        config_data["setting"]["shared_memories_template"]
-        + [config_data["setting"]["setting_info"]["description"]]
-        + [config_data["setting"]["mastodon_usage_instructions"]]
+        cfg.soc_sys_settings.shared_memories_template
+        + [cfg.soc_sys_settings.setting_info.description]
+        + [cfg.soc_sys_settings.social_media_usage_instructions]
     )
 
     run_sim(
         model,
         embedder,
-        config_data["agents"],
+        OmegaConf.to_container(cfg.agents.directory, resolve=True),
         shared_memories,
-        config_data["setting"]["mastodon_usage_instructions"],
-        config_data["setting"]["custom_call_to_action"],
-        config_data["setting"]["setting_info"],
-        config_data["probes"],
-        cfg.num_episodes,
-        config_data["settings"]["output_rootname"],
-        cfg.use_server,
+        cfg.soc_sys_settings.social_media_usage_instructions,
+        cfg.soc_sys_settings.custom_call_to_action,
+        cfg.soc_sys_settings.setting_info,
+        cfg.probes,
+        cfg.sim.num_episodes,
+        cfg.sim.output_rootname,
+        cfg.sim.use_server,
     )
 
 
 if __name__ == "__main__":
-    main()
+    cfgg = generate_default_settings()
+    output_rootname = generate_config(cfgg)
+    cfg = load_config(output_rootname)
+    main(cfg)

@@ -84,21 +84,18 @@ class AgentQuery(ABC):
         return eval_query_return
 
 
-# Define the function that writes logs for a player
-
-
 def deploy_surveys_to_agent(player, eval_queries):
     eval_query_returns = [eval_query.submit(player) for eval_query in eval_queries]
     return eval_query_returns
 
 
 def deploy_surveys(players, evals, eval_event_logger):
-    query_lib_path = "sim_setting." + evals["query_lib_path"]
+    query_lib_module = "sim_setting." + evals["query_lib_module"]
     queries_data = evals["queries_data"].values()
     eval_queries = []
     for query_data in queries_data:
         QueryClass = getattr(
-            importlib.import_module(query_lib_path), query_data["query_type"]
+            importlib.import_module(query_lib_module), query_data["query_type"]
         )  # "module.submodule"
         eval_queries.append(QueryClass(query_data))
 
