@@ -18,19 +18,15 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
 
-# assumes current working directory is project root: mastodon-sim/
 from concordia import __file__ as concordia_location
 
 print(f"importing Concordia from: {concordia_location}")
 
-# load sim functions
-from agent_utils.exogenous_agent import (
-    get_post_times_news_agent,
-    post_seed_toots_news_agents,
-)
-from agent_utils.online_gamemaster import SimpleGameRunner
+# concordia functions
 from concordia.clocks import game_clock
 from concordia.typing.entity import ActionSpec, OutputType
+
+# sim functions
 from sim_utils import media_utils
 from sim_utils.agent_speech_utils import (
     deploy_surveys,
@@ -38,27 +34,30 @@ from sim_utils.agent_speech_utils import (
 )
 from sim_utils.concordia_utils import (
     build_agent_with_memories,
-    init_concordia_objects,
+    generate_concordia_memory_objects,
     make_profiles,
 )
 from sim_utils.misc_sim_utils import event_logger
 
+# mastodon_sim functions
 from mastodon_sim.concordia import apps
 from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
 from mastodon_sim.mastodon_utils import get_users_from_env
 
-# Go up two levels to get to root (src/sim/main.py)
+# Go up two levels to set current working directory to project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 print("project root: " + str(PROJECT_ROOT))
 os.chdir(PROJECT_ROOT)
 
 SIM_EXAMPLE = "election"
 sys.path.insert(0, str(PROJECT_ROOT / "examples" / SIM_EXAMPLE))
+
+# example functions
 from gen_config import generate_output_configs
 
 
-def clear_mastodon_server(max_num_players):
-    users = get_users_from_env()[: max_num_players + 1]
+def clear_mastodon_server(max_num_agents):
+    users = get_users_from_env()[: max_num_agents + 1]
     reset_users(users, skip_confirm=True, parallel=True)
     if len(get_public_timeline(limit=None)):
         print("All posts not cleared. Running reset operation again...")
@@ -94,75 +93,65 @@ def get_sentance_encoder(model_name):
     return embedder
 
 
-def add_news_agent_to_mastodon_app(
-    news_agent, action_logger, players, mastodon_apps, app_description, use_server
-):
-    user_mapping = mastodon_apps[players[0].name].get_user_mapping()
-    for i, n_agent in enumerate(news_agent):
-        mastodon_apps[n_agent["name"]] = apps.MastodonSocialNetworkApp(
-            action_logger=action_logger,
-            perform_operations=use_server,
-            app_description=app_description,
-        )
-        # We still need to give the news agent a phone to be able to post toots #TODO we are not sure if we need to do this
-        # phones[n_agent["name"]] = apps.Phone(n_agent["name"], apps=[mastodon_apps[n_agent["name"].split()[0]]])
-        user_mapping[n_agent["mastodon_username"]] = f"user{len(players) + 1 + i:04d}"
-        # set a mapping of display name to user name for news agent
-        mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
-        update_bio(
-            user_mapping[n_agent["mastodon_username"]],
-            display_name=n_agent["mastodon_username"],
-            bio="Providing news reports from across Storhampton",
-        )
-        for p in players:
-            mastodon_apps[p.name].set_user_mapping(user_mapping)
-        # set followership network for the news agent
-        agent_names = [player.name for player in players]
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for follower in agent_names:
-                print(follower)
-                # Ensure every user, follows the news agent
-                if (
-                    follower != n_agent["name"]
-                ):  # this actually never possible because news agent is not in players but I added as just in case argument
-                    futures.append(
-                        executor.submit(
-                            mastodon_apps[follower].follow_user,
-                            follower,
-                            n_agent["mastodon_username"],
-                        )
-                    )
-            # Optionally, wait for all tasks to complete
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    future.result()  # This will raise any exceptions that occurred during execution, if any
-                except Exception as e:
-                    print(f"Ignoring already-following error: {e}")
+# def add_news_agent_to_mastodon_app(
+#     news_agent, action_logger, agents, mastodon_apps, app_description, use_server
+# ):
+#     user_mapping = mastodon_apps[agents[0].name].get_user_mapping()
+#     for i, n_agent in enumerate(news_agent):
+#         mastodon_apps[n_agent["name"]] = apps.MastodonSocialNetworkApp(
+#             action_logger=action_logger,
+#             perform_operations=use_server,
+#             app_description=app_description,
+#         )
+#         user_mapping[n_agent["mastodon_username"]] = f"user{len(agents) + 1 + i:04d}"
+#         # set a mapping of display name to user name for news agent
+#         mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
+#         update_bio(
+#             user_mapping[n_agent["mastodon_username"]],
+#             display_name=n_agent["mastodon_username"],
+#             bio="Providing news reports from across Storhampton",
+#         )
+#         for p in agents:
+#             mastodon_apps[p.name].set_user_mapping(user_mapping)
+#         # set followership network for the news agent
+#         agent_names = [agent.name for agent in agents]
+#         with concurrent.futures.ThreadPoolExecutor() as executor:
+#             futures = []
+#             for follower in agent_names:
+#                 print(follower)
+#                 # Ensure every user, follows the news agent
+#                 if (
+#                     follower != n_agent["name"]
+#                 ):  # this actually never possible because news agent is not in agents but I added as just in case argument
+#                     futures.append(
+#                         executor.submit(
+#                             mastodon_apps[follower].follow_user,
+#                             follower,
+#                             n_agent["mastodon_username"],
+#                         )
+#                     )
+#             # Optionally, wait for all tasks to complete
+#             for future in concurrent.futures.as_completed(futures):
+#                 try:
+#                     future.result()  # This will raise any exceptions that occurred during execution, if any
+#                 except Exception as e:
+#                     print(f"Ignoring already-following error: {e}")
 
 
-def set_up_mastodon_app_usage(
-    player_roles, role_parameters, action_logger, app_description, use_server
-):  # , output_rootname):
-    # apps.set_app_output_write_path(output_rootname)
-
-    names = []
-    for player_role in player_roles:
-        names.append(player_role["player_name"])
-        player_role["activity_rate"] = role_parameters["active_rates_per_episode"][
-            player_role["name"]
-        ]
+def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_description, use_server):
+    active_rates = {}
+    for agent_name, role in roles.items():
+        active_rates[agent_name] = role_parameters["active_rates_per_episode"][role]
 
     mastodon_apps = {
-        name: apps.MastodonSocialNetworkApp(
+        agent_name: apps.MastodonSocialNetworkApp(
             action_logger=action_logger,
             perform_operations=use_server,
             app_description=app_description,
         )
-        for name in names
+        for agent_name in roles
     }
-    phones = {name: apps.Phone(name, apps=[mastodon_apps[name]]) for name in names}
-    user_mapping = {name.split()[0]: f"user{i + 1:04d}" for i, name in enumerate(names)}
+    user_mapping = {agent_name.split()[0]: f"user{i + 1:04d}" for i, agent_name in enumerate(roles)}
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
@@ -171,11 +160,10 @@ def set_up_mastodon_app_usage(
     follow_pairs = set()
     # Now, generate additional follow relationships between agents.
     role_prob_matrix = role_parameters["initial_follow_prob"]
-    for player_i in player_roles:
-        follower = player_i["player_name"]
-        for player_j in player_roles:
-            followee = player_j["player_name"]
-            prob = role_prob_matrix[player_i["name"]][player_j["name"]]
+    agent_roles = []
+    for agent_i, role_i in roles.items():
+        for agent_j, role_j in roles.items():
+            prob = role_prob_matrix[role_i][role_j]
             # if follower != followee:
             #     # With a 20% chance, create mutual follow relationships.
             #     if random.random() < 0.2:
@@ -183,12 +171,7 @@ def set_up_mastodon_app_usage(
             #         follow_pairs.add((followee, follower))
             #     # Otherwise, with a create a one-direction follow according to stored probability.
             if random.random() < prob:
-                follow_pairs.add((follower, followee))
-
-    # Optionally, print or inspect the pre-generated relationships.
-    # print("Pre-generated follow pairs:")
-    # for pair in follow_pairs:
-    #     print(pair)
+                follow_pairs.add((agent_i, agent_j))
 
     # Execute the follow operations concurrently.
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -207,37 +190,41 @@ def set_up_mastodon_app_usage(
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(update_bio, user_mapping[name], display_name=name, bio="")
-            for name in user_mapping
+            executor.submit(
+                update_bio, user_mapping[agent_name], display_name=agent_name, bio=""
+            )  # update with generated bios?
+            for agent_name in user_mapping
         ]
     # Optionally, wait for all tasks to complete
     for future in concurrent.futures.as_completed(futures):
         future.result()  # This will raise any exceptions that occurred during execution, if any
 
-    return mastodon_apps, phones, player_roles
+    phones = {
+        agent_name: apps.Phone(agent_name, apps=[mastodon_apps[agent_name]])
+        for agent_name, role in roles.items()
+        if role != "exogenous"
+    }
+
+    return mastodon_apps, phones, active_rates
 
 
-def post_seed_toots(agent_data, players, mastodon_apps):
+def post_seed_toots(agents, mastodon_apps):
     # Parallelize the loop using ThreadPoolExecutor
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit tasks for each agent
         futures = [
             executor.submit(
                 lambda agent=agent: (
-                    None
-                    if agent["seed_toot"] == "-"
-                    else (
-                        mastodon_apps[agent["name"]].post_toot(
-                            agent["name"], status=agent["seed_toot"]
-                        )
-                        if agent["seed_toot"]
-                        else mastodon_apps[agent["name"]].post_toot(
-                            agent["name"], status=write_seed_toot(players, agent["name"])
-                        )
+                    mastodon_apps[agent._agent_name].post_toot(
+                        agent._agent_name, status=agent.seed_toot
+                    )
+                    if hasattr(agent, "seed_toot")
+                    else mastodon_apps[agent._agent_name].post_toot(
+                        agent._agent_name, status=write_seed_toot(agent)
                     )
                 )
             )
-            for agent in agent_data
+            for agent in agents
         ]
 
         # Optionally, wait for all tasks to complete
@@ -245,28 +232,29 @@ def post_seed_toots(agent_data, players, mastodon_apps):
             future.result()  # This will raise any exceptions that occurred in the thread, if any
 
 
-def get_active_players(player_roles):
-    active_players = []
-    for player_role in player_roles:
-        if (
-            random.random() < player_role["activity_rate"]
-        ):  # active_rate could be a agent engagement component that could be based on a time-varying rate process updated at each episode according to response about how engaged agent is feeling
-            active_players.append(player_role["player_name"])
-    return active_players
+def get_active_agents(active_rates):
+    # random model of realworld agent lives (so that going online every delta is a poisson point process)
+    # (active_rate could be a agent engagement component that could be based on a time-varying rate process updated at each episode according to response about how engaged agent is feeling)
+    active_agents = []
+    for agent_name, rate in active_rates.items():
+        if random.random() < rate:
+            active_agents.append(agent_name)
+    return active_agents
 
 
 def run_sim(
     model,
     embedder,
-    agent_data,
-    shared_memories,
+    agent_settings,
+    gamemaster_settings,
     app_description,
     custom_call_to_action,
     setting_info,
     probe_config,
-    episode_length,
+    num_episodes,
     output_rootname,
     use_server,
+    output_post_analysis=False,
 ):
     time_step = datetime.timedelta(minutes=30)
     today = datetime.date.today()
@@ -276,42 +264,55 @@ def run_sim(
         start=SETUP_TIME, step_sizes=[time_step, datetime.timedelta(seconds=10)]
     )
 
+    # build agent models
+    agent_data = agent_settings["directory"]
+    get_idx = lambda name: [ait for ait, agentt in enumerate(agent_data) if agentt["name"] == name][
+        0
+    ]
+
+    profiles, roles = make_profiles(agent_data)  # profile format: (agent_config,role)
+    role_parameters = setting_info["details"]["role_parameters"]
+
     (
         importance_model,
         importance_model_gm,
         blank_memory_factory,
         formative_memory_factory,
-        game_master_memory,
-    ) = init_concordia_objects(model, embedder, shared_memories, clock)
-
-    news_agents = []
-    for agent in agent_data:
-        if agent["role"]["name"] == "exogenous":
-            news_agents.append(agent)
-            agent_data.remove(agent)
-
-    profiles = make_profiles(agent_data)  # profile format: (player_config,role)
-    roles = [profile[1] for profile in profiles]
-    players = []
-    memories = {}
-    obj_args = (formative_memory_factory, model, clock, time_step, setting_info)
-    build_agent_with_memories_part = partial(build_agent_with_memories, obj_args)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(profiles)) as pool:
-        for agent_obj in pool.map(build_agent_with_memories_part, profiles):
-            agent, mem = agent_obj
-            players.append(agent)
-            memories[agent.name] = mem
-
-    for player in players:
-        game_master_memory.add(f"{player.name} is at their private home.")
+        gamemaster_memory,
+    ) = generate_concordia_memory_objects(
+        model,
+        embedder,
+        agent_settings["shared_memories"],
+        gamemaster_settings["gamemaster_memories"],
+        clock,
+    )
 
     action_event_logger = event_logger("action", output_rootname + "_event_output.jsonl")
     action_event_logger.episode_idx = -1
-
-    role_parameters = setting_info["details"]["role_parameters"]
-    mastodon_apps, phones, roles = set_up_mastodon_app_usage(
+    mastodon_apps, phones, active_rates = set_up_mastodon_app_usage(
         roles, role_parameters, action_event_logger, app_description, use_server
     )
+
+    agents = []
+    memories = {}
+    obj_args = (formative_memory_factory, model, clock, time_step, setting_info, mastodon_apps)
+    build_agent_with_memories_part = partial(build_agent_with_memories, obj_args)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(profiles)) as pool:
+        for agent_obj in pool.map(build_agent_with_memories_part, profiles.values()):
+            agent, mem = agent_obj
+            agents.append(agent)
+            memories[agent._agent_name] = mem
+    for agent in agents:
+        if roles[agent._agent_name] == "exogenous":
+            agent.seed_toot = agent_data[get_idx(agent._agent_name)]["seed_toot"]
+            for post_text in agent.posts:
+                agent.posts[post_text] = [
+                    str(PROJECT_ROOT) + "/" + path for path in agent.posts[post_text]
+                ]
+        else:
+            for observation in agent_settings["initial_observations"]:
+                agent.observe(observation.format(name=agent._agent_name))
+    post_seed_toots(agents, mastodon_apps)
 
     action_spec = ActionSpec(
         call_to_action=custom_call_to_action,
@@ -320,12 +321,16 @@ def run_sim(
     )
 
     # Experimental version (custom call to action and thought chains)
-    env = SimpleGameRunner(
+    gamemaster_module = importlib.import_module(
+        "agent_utils." + gamemaster_settings["online_gamemaster"]
+    )
+    env = gamemaster_module.GameMaster(
         model=model,
-        memory=game_master_memory,
+        memory=gamemaster_memory,
         phones=phones,
         clock=clock,
-        players=players,
+        agents=agents,
+        roles=roles,
         action_spec=action_spec,
         memory_factory=blank_memory_factory,
         embedder=embedder,
@@ -333,92 +338,53 @@ def run_sim(
         importance_model_gm=importance_model_gm,
     )
 
-    # Seed Sim Content
-    print(clock.now())
-    for player in players:
-        player.observe(f"{player.name} is at home, they have just woken up.")
-        player.observe(f"{player.name} remembers they want to update their Mastodon bio.")
-        player.observe(
-            f"{player.name} remembers they want to read their Mastodon feed to catch up on news"
-        )
-    post_seed_toots(agent_data, players, mastodon_apps)
-
     # initialize
     eval_event_logger = event_logger("eval", output_rootname + "_event_output.jsonl")
     eval_event_logger.episode_idx = -1
 
-    # add news agent to the simulation
-    if news_agents:
-        add_news_agent_to_mastodon_app(
-            news_agents, action_event_logger, players, mastodon_apps, app_description, use_server
-        )
-        post_seed_toots_news_agents(news_agents, mastodon_apps)
-        scheduled_news_agents = []
-        news_agent_datetimes = get_post_times_news_agent(news_agents)
-        news_agent_module = importlib.import_module(
-            "agent_utils." + news_agents[0]["role"]["class"]
-        )
-        if not hasattr(news_agent_module, "Agent"):
-            raise AttributeError("No 'Agent' class found.")
-        for n_agent in news_agents:
-            for post_text in n_agent["posts"]:
-                n_agent["posts"][post_text] = [
-                    str(PROJECT_ROOT) + "/" + path for path in n_agent["posts"][post_text]
-                ]
-            scheduled_news_agents.append(
-                news_agent_module.Agent(
-                    name=n_agent["name"],
-                    mastodon_username=n_agent["mastodon_username"],
-                    mastodon_app=mastodon_apps[n_agent["name"]],
-                    post_schedule=news_agent_datetimes[n_agent["name"]],
-                    posts=n_agent["posts"],
-                )
-            )
-
     # main loop
     start_time = time.time()  # Start timing
-    model.player_names = [player.name for player in players]
-    for i in range(episode_length):
+    model.agent_names = [
+        agent._agent_name for agent in agents
+    ]  # needed for tagging names to thoughts
+    for i in range(num_episodes):
         print(f"Episode: {i}. Deploying survey...", end="")
         eval_event_logger.episode_idx = i
         action_event_logger.episode_idx = i
         model.meta_data["episode_idx"] = i
-        # for player in players:
-        #     player_dir = os.path.join("output/player_checkpoints", player.name)
-        #     os.makedirs(player_dir, exist_ok=True)
-        #     file_path = os.path.join(player_dir, f"Episode_{i}.json")
-        # Get JSON data from player
-        # json_data = save_to_json(player)
+        # for agent in agents:
+        #     agent_dir = os.path.join("output/agent_checkpoints", agent._agent_name)
+        #     os.makedirs(agent_dir, exist_ok=True)
+        #     file_path = os.path.join(agent_dir, f"Episode_{i}.json")
+        # Get JSON data from agent
+        # json_data = save_to_json(agent)
         # with open(file_path, "w") as file:
         #     file.write(json.dumps(json_data, indent=4))
-        deploy_surveys(players, probe_config, eval_event_logger)
+        deploy_surveys(
+            [agent for agent in agents if roles[agent._agent_name] != "exogenous"],
+            probe_config,
+            eval_event_logger,
+        )
         print("complete")
-        start_timex = time.time()
-        active_player_names = get_active_players(roles)
-        # players_datetimes, clock, post_rate_of_per_step_topup
-        # )
-        # print(
-        #     f"{time.time() - start_timex} elapsed. Players added to the list:",
-        #     [player.name for player in active_players],
-        # )
-        if len(active_player_names) == 0:
+
+        active_agent_names = get_active_agents(active_rates)
+
+        if len(active_agent_names) == 0:
             clock.advance()
         else:
-            if news_agents is not None:
-                for n_agent in scheduled_news_agents:
-                    n_agent.check_and_post(clock.now())
+            start_timex = time.time()
 
-            env.step(active_players=active_player_names)
+            env.step(active_agents=active_agent_names)
             end_timex = time.time()
             with open(
                 output_rootname + "time_logger.txt",
                 "a",
             ) as f:
                 f.write(
-                    f"Episode with {len(active_player_names)} finished - took {end_timex - start_timex}\n"
+                    f"Episode with {len(active_agent_names)} finished - took {end_timex - start_timex}\n"
                 )
-
-    # post_analysis(env, model, players, memories, output_rootname)
+    if output_post_analysis:
+        post_analysis(env, model, agents, memories, output_rootname)
 
     #################################################################
 
@@ -440,7 +406,11 @@ def generate_default_settings():
     default_sim_settings["model"] = "gpt-4o-mini"  # select language model to run sim
     default_sim_settings["persona_type"] = "Reddit.Big5"  # persona
     default_sim_settings["run_name"] = "run1"  # experiment label
-
+    default_sim_settings["platform"] = "Mastodon"
+    default_sim_settings["gamemasters"] = {
+        "online_gamemaster": "app_side_only_gamemaster",
+        "reallife_gamemaster": None,
+    }
     with open("conf/sim/default.yaml", "w") as outfile:
         yaml.dump(default_sim_settings, outfile, default_flow_style=False)
     return default_sim_settings
@@ -524,18 +494,28 @@ def main(cfg):  #: DictConfig):
     if cfg.sim.use_server:
         clear_mastodon_server(len(cfg.agents.directory))
 
-    # simulation parameter inputs
-    shared_memories = (
-        cfg.soc_sys_settings.shared_memories_template
-        + [cfg.soc_sys_settings.setting_info.description]
-        + [cfg.soc_sys_settings.social_media_usage_instructions]
-    )
+    # gamemaster
+    gamemaster_settings = {
+        "online_gamemaster": cfg.sim.gamemasters.online_gamemaster,
+        "gamemaster_memories": cfg.soc_sys_settings.gamemaster_memories,
+    }
+
+    # agents
+    agent_settings = {
+        "directory": OmegaConf.to_container(cfg.agents.directory, resolve=True),
+        "shared_memories": (
+            cfg.soc_sys_settings.shared_agent_memories_template
+            + [cfg.soc_sys_settings.setting_info.description]
+            + [cfg.soc_sys_settings.social_media_usage_instructions]
+        ),
+        "initial_observations": cfg.agents.initial_observations,
+    }
 
     run_sim(
         model,
         embedder,
-        OmegaConf.to_container(cfg.agents.directory, resolve=True),
-        shared_memories,
+        agent_settings,
+        gamemaster_settings,
         cfg.soc_sys_settings.social_media_usage_instructions,
         cfg.soc_sys_settings.custom_call_to_action,
         cfg.soc_sys_settings.setting_info,

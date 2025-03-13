@@ -43,18 +43,18 @@ class GptLanguageModel(language_model.LanguageModel):
         self._client = openai.OpenAI(api_key=self._api_key)
         self._log_file = log_file
         self.debug = debug
-        self.meta_data = {"episode_idx": -1, "player_name": ""}
-        self.player_names: list[str] = []
+        self.meta_data = {"episode_idx": -1, "agent_name": ""}
+        self.agent_names: list[str] = []
 
     def _log(self, prompt: str, output: str):  ## Function for logging
-        player_name = "not found"
-        for test_player_name in self.player_names:
-            if test_player_name in prompt[:150]:
-                player_name = test_player_name
-        # if player_name is None:
-        # counts=[prompt.count(player_name) for player_name in player_names]
-        # player_name = self.player_names[counts.index(max(counts))]
-        self.meta_data["player_name"] = player_name
+        agent_name = "not found"
+        for test_agent_name in self.agent_names:
+            if test_agent_name in prompt[:150]:
+                agent_name = test_agent_name
+        # if agent_name is None:
+        # counts=[prompt.count(agent_name) for agent_name in agent_names]
+        # agent_name = self.agent_names[counts.index(max(counts))]
+        self.meta_data["agent_name"] = agent_name
         log_entry = {"prompt": prompt, "output": output} | self.meta_data
         try:
             with open(self._log_file, "a") as f:  # Use "a" mode (append)

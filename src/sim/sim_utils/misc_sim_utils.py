@@ -43,7 +43,7 @@ def read_token_data(file_path):
         return {"prompt_tokens": 0, "completion_tokens": 0}
 
 
-def post_analysis(env, model, players, memories, output_rootname):
+def post_analysis(env, model, agents, memories, output_rootname):
     all_gm_memories = env.memory.retrieve_recent(k=10000, add_time=True)
 
     detailed_story = "\n".join(all_gm_memories)
@@ -59,12 +59,12 @@ def post_analysis(env, model, players, memories, output_rootname):
     )
     print(episode_summary)
 
-    # Summarise the perspective of each player
-    player_logs = []
-    player_log_names = []
-    for player in players:
-        name = player.name
-        detailed_story = "\n".join(memories[player.name].retrieve_recent(k=1000, add_time=True))
+    # Summarise the perspective of each agent
+    agent_logs = []
+    agent_log_names = []
+    for agent in agents:
+        name = agent.name
+        detailed_story = "\n".join(memories[agent.name].retrieve_recent(k=1000, add_time=True))
         summary = ""
         summary = model.sample_text(
             f"Sequence of events that happened to {name}:\n{detailed_story}"
@@ -73,18 +73,18 @@ def post_analysis(env, model, players, memories, output_rootname):
             terminators=(),
         )
 
-        all_player_mem = memories[player.name].retrieve_recent(k=1000, add_time=True)
-        all_player_mem = ["Summary:", summary, "Memories:", *all_player_mem]
-        player_html = html_lib.PythonObjectToHTMLConverter(all_player_mem).convert()
-        player_logs.append(player_html)
-        player_log_names.append(f"{name}")
+        all_agent_mem = memories[agent.name].retrieve_recent(k=1000, add_time=True)
+        all_agent_mem = ["Summary:", summary, "Memories:", *all_agent_mem]
+        agent_html = html_lib.PythonObjectToHTMLConverter(all_agent_mem).convert()
+        agent_logs.append(agent_html)
+        agent_log_names.append(f"{name}")
 
     # ## Build and display HTML log of the experiment
     gm_mem_html = html_lib.PythonObjectToHTMLConverter(all_gm_memories).convert()
 
     tabbed_html = html_lib.combine_html_pages(
-        [gm_mem_html, *player_logs],
-        ["GM", *player_log_names],
+        [gm_mem_html, *agent_logs],
+        ["GM", *agent_log_names],
         summary=episode_summary,
         title="Mastodon experiment",
     )

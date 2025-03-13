@@ -11,9 +11,9 @@ class VotePref(AgentQuery):
                 "text": "Voting Machine: In one word, name the candidate you want to vote for (you must spell it correctly!)",
             },
             "interaction_premise_template": {
-                "text": "{{playername}} is going to cast a vote for either {candidate1} or {candidate2}\n",
+                "text": "{{agentname}} is going to cast a vote for either {candidate1} or {candidate2}\n",
                 "static_labels": ["candidate1", "candidate2"],
-                "dynamic_labels": ["playername"],
+                "dynamic_labels": ["agentname"],
             },
         }
         # query_data = {
@@ -26,12 +26,12 @@ class VotePref(AgentQuery):
         self.query_data_cls = query_data
         super().__init__(query_data)
 
-    def parse_answer(self, player_says):
+    def parse_answer(self, agent_says):
         c_name1 = self.query_data_cls["interaction_premise_template"]["candidate1"].split()
         c_name2 = self.query_data_cls["interaction_premise_template"]["candidate2"].split()
-        if (c_name1[0] in player_says) or (c_name1[1] in player_says):
+        if (c_name1[0] in agent_says) or (c_name1[1] in agent_says):
             return c_name1[0]
-        if (c_name2[0] in player_says) or (c_name2[1] in player_says):
+        if (c_name2[0] in agent_says) or (c_name2[1] in agent_says):
             return c_name2[0]
         return "Invalid Answer"
 
@@ -44,9 +44,9 @@ class Favorability(AgentQuery):
                 "text": "Poll: Return a single numeric value ranging from 1 to 10",
             },
             "interaction_premise_template": {
-                "text": "{{playername}} has to rate their opinion on the election candidate: {candidate} on a scale of 1 to 10 - with 1 representing intensive dislike and 10 representing strong favourability.\n",
+                "text": "{{agentname}} has to rate their opinion on the election candidate: {candidate} on a scale of 1 to 10 - with 1 representing intensive dislike and 10 representing strong favourability.\n",
                 "static_labels": ["candidate"],
-                "dynamic_labels": ["playername"],
+                "dynamic_labels": ["agentname"],
             },
         }
         # query_data = {
@@ -58,10 +58,10 @@ class Favorability(AgentQuery):
         # self.query_data_cls = query_data
         super().__init__(query_data)
 
-    def parse_answer(self, player_says):
+    def parse_answer(self, agent_says):
         pattern = r"\b([1-9]|10)\b"
         # Search for the pattern in the string
-        match = re.search(pattern, player_says)
+        match = re.search(pattern, agent_says)
         if match:
             return match.group()
         return None
@@ -81,9 +81,9 @@ class VoteIntent(AgentQuery):
         # self.query_data = query_data
         super().__init__(query_data)
 
-    def parse_answer(self, player_says):
-        if "yes" in player_says.lower():
+    def parse_answer(self, agent_says):
+        if "yes" in agent_says.lower():
             return "Yes"
-        if "no" in player_says.lower():
+        if "no" in agent_says.lower():
             return "No"
         return None
