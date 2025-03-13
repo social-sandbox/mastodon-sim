@@ -1,3 +1,4 @@
+import argparse
 import concurrent.futures
 import datetime
 import importlib
@@ -37,7 +38,7 @@ from sim_utils.concordia_utils import (
     generate_concordia_memory_objects,
     make_profiles,
 )
-from sim_utils.misc_sim_utils import event_logger
+from sim_utils.misc_sim_utils import event_logger, post_analysis, rebuild_from_saved_checkpoint
 
 # mastodon_sim functions
 from mastodon_sim.concordia import apps
@@ -93,51 +94,6 @@ def get_sentance_encoder(model_name):
     return embedder
 
 
-# def add_news_agent_to_mastodon_app(
-#     news_agent, action_logger, agents, mastodon_apps, app_description, use_server
-# ):
-#     user_mapping = mastodon_apps[agents[0].name].get_user_mapping()
-#     for i, n_agent in enumerate(news_agent):
-#         mastodon_apps[n_agent["name"]] = apps.MastodonSocialNetworkApp(
-#             action_logger=action_logger,
-#             perform_operations=use_server,
-#             app_description=app_description,
-#         )
-#         user_mapping[n_agent["mastodon_username"]] = f"user{len(agents) + 1 + i:04d}"
-#         # set a mapping of display name to user name for news agent
-#         mastodon_apps[n_agent["name"]].set_user_mapping(user_mapping)  # e.g., "storhampton_gazette"
-#         update_bio(
-#             user_mapping[n_agent["mastodon_username"]],
-#             display_name=n_agent["mastodon_username"],
-#             bio="Providing news reports from across Storhampton",
-#         )
-#         for p in agents:
-#             mastodon_apps[p.name].set_user_mapping(user_mapping)
-#         # set followership network for the news agent
-#         agent_names = [agent.name for agent in agents]
-#         with concurrent.futures.ThreadPoolExecutor() as executor:
-#             futures = []
-#             for follower in agent_names:
-#                 print(follower)
-#                 # Ensure every user, follows the news agent
-#                 if (
-#                     follower != n_agent["name"]
-#                 ):  # this actually never possible because news agent is not in agents but I added as just in case argument
-#                     futures.append(
-#                         executor.submit(
-#                             mastodon_apps[follower].follow_user,
-#                             follower,
-#                             n_agent["mastodon_username"],
-#                         )
-#                     )
-#             # Optionally, wait for all tasks to complete
-#             for future in concurrent.futures.as_completed(futures):
-#                 try:
-#                     future.result()  # This will raise any exceptions that occurred during execution, if any
-#                 except Exception as e:
-#                     print(f"Ignoring already-following error: {e}")
-
-
 def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_description, use_server):
     active_rates = {}
     for agent_name, role in roles.items():
@@ -155,8 +111,7 @@ def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_descrip
     for p in mastodon_apps:
         mastodon_apps[p].set_user_mapping(user_mapping)
 
-    # initiailize initial social network
-    # Pre-generate unique follow relationships
+    # initiailize initial social network. Pre-generate unique follow relationships
     follow_pairs = set()
     # Now, generate additional follow relationships between agents.
     role_prob_matrix = role_parameters["initial_follow_prob"]
@@ -164,12 +119,13 @@ def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_descrip
     for agent_i, role_i in roles.items():
         for agent_j, role_j in roles.items():
             prob = role_prob_matrix[role_i][role_j]
-            # if follower != followee:
-            #     # With a 20% chance, create mutual follow relationships.
-            #     if random.random() < 0.2:
-            #         follow_pairs.add((follower, followee))
-            #         follow_pairs.add((followee, follower))
-            #     # Otherwise, with a create a one-direction follow according to stored probability.
+            if False:
+                if follower != followee:
+                    # With a 20% chance, create mutual follow relationships.
+                    if random.random() < 0.2:
+                        follow_pairs.add((follower, followee))
+                        follow_pairs.add((followee, follower))
+            # Otherwise, with a create a one-direction follow according to stored probability.
             if random.random() < prob:
                 follow_pairs.add((agent_i, agent_j))
 
@@ -255,6 +211,8 @@ def run_sim(
     output_rootname,
     use_server,
     output_post_analysis=False,
+    save_checkpoints=False,
+    load_from_checkpoint_path="",
 ):
     time_step = datetime.timedelta(minutes=30)
     today = datetime.date.today()
@@ -294,14 +252,14 @@ def run_sim(
     )
 
     agents = []
-    memories = {}
-    obj_args = (formative_memory_factory, model, clock, time_step, setting_info, mastodon_apps)
+    local_post_analyze_data = {}
+    obj_args = (formative_memory_factory, model, clock, time_step, setting_info)
     build_agent_with_memories_part = partial(build_agent_with_memories, obj_args)
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(profiles)) as pool:
         for agent_obj in pool.map(build_agent_with_memories_part, profiles.values()):
-            agent, mem = agent_obj
+            agent, data = agent_obj
             agents.append(agent)
-            memories[agent._agent_name] = mem
+            local_post_analyze_data[agent._agent_name] = data
     for agent in agents:
         if roles[agent._agent_name] == "exogenous":
             agent.seed_toot = agent_data[get_idx(agent._agent_name)]["seed_toot"]
@@ -342,24 +300,36 @@ def run_sim(
     eval_event_logger = event_logger("eval", output_rootname + "_event_output.jsonl")
     eval_event_logger.episode_idx = -1
 
+    if load_from_checkpoint_path:
+        (agents, clock) = rebuild_from_saved_checkpoint(
+            load_from_checkpoint_path, agents, roles, config, model, memory, clock, embedder
+        )
+
     # main loop
     start_time = time.time()  # Start timing
     model.agent_names = [
         agent._agent_name for agent in agents
     ]  # needed for tagging names to thoughts
     for i in range(num_episodes):
+        # save chaeckpoints
+        if save_checkpoints:
+            for agent_input, agent in zip(agent_data, agents, strict=False):
+                agent_dir = os.path.join(output_rootname + "agent_checkpoints", agent._agent_name)
+                os.makedirs(agent_dir, exist_ok=True)
+                file_path = os.path.join(agent_dir, f"Episode_{i}.json")
+                module_path = (
+                    "sim_setting." + agent_input["role_dict"]["module_path"]
+                    if agent_input["role_dict"]["name"] != "exogeneous"
+                    else "agent_utils.exogenous_agent"
+                )
+                json_data = importlib.import_module(module_path).save_agent_to_json(agent)
+                with open(file_path, "w") as file:
+                    file.write(json.dumps(json_data, indent=4))
+
         print(f"Episode: {i}. Deploying survey...", end="")
         eval_event_logger.episode_idx = i
         action_event_logger.episode_idx = i
         model.meta_data["episode_idx"] = i
-        # for agent in agents:
-        #     agent_dir = os.path.join("output/agent_checkpoints", agent._agent_name)
-        #     os.makedirs(agent_dir, exist_ok=True)
-        #     file_path = os.path.join(agent_dir, f"Episode_{i}.json")
-        # Get JSON data from agent
-        # json_data = save_to_json(agent)
-        # with open(file_path, "w") as file:
-        #     file.write(json.dumps(json_data, indent=4))
         deploy_surveys(
             [agent for agent in agents if roles[agent._agent_name] != "exogenous"],
             probe_config,
@@ -373,18 +343,17 @@ def run_sim(
             clock.advance()
         else:
             start_timex = time.time()
-
             env.step(active_agents=active_agent_names)
             end_timex = time.time()
             with open(
-                output_rootname + "time_logger.txt",
+                output_rootname + "_time_logger.txt",
                 "a",
             ) as f:
                 f.write(
                     f"Episode with {len(active_agent_names)} finished - took {end_timex - start_timex}\n"
                 )
     if output_post_analysis:
-        post_analysis(env, model, agents, memories, output_rootname)
+        post_analysis(env, model, agents, roles, local_post_analyze_data, output_rootname)
 
     #################################################################
 
@@ -395,7 +364,7 @@ def generate_default_settings():
     default_sim_settings["num_agents"] = 20  # number of agents
     default_sim_settings["num_episodes"] = 1  # number of episodes
     default_sim_settings["use_server"] = (
-        True  # server (e.g. www.social-sandbox.com, www.socialsandbox2.com)
+        False  # server (e.g. www.social-sandbox.com, www.socialsandbox2.com)
     )
     default_sim_settings["use_news_agent"] = (
         "with_images"  # use news agent in the simulation 'with_images', else without
@@ -430,29 +399,30 @@ def generate_config(cfg):
         "agents": agents,
         "sim": cfg,
     }
-    with open(cfg["output_rootname"] + ".yaml", "w") as outfile:
-        yaml.dump(data_config, outfile, default_flow_style=False)
 
-    return cfg["output_rootname"]
-    # for name, cfgg in data_config.items():
-    #     print("writing "+name)
-    #     with open(output_rootname+'_'+name+".yaml", 'w') as outfile:
-    #         yaml.dump({name:cfgg}, outfile, default_flow_style=False)
-    # name = "sim"
-    # with open(output_rootname+'_'+name+".yaml", 'w') as outfile:
-    #     yaml.dump({name:cfg}, outfile, default_flow_style=False)
+    if False:
+        # pull out when hydra config solution is implemented
+        for name, cfgg in data_config.items():
+            print("writing " + name)
+            with open(output_rootname + "_" + name + ".yaml", "w") as outfile:
+                yaml.dump({name: cfgg}, outfile, default_flow_style=False)
+        name = "sim"
+        with open(output_rootname + "_" + name + ".yaml", "w") as outfile:
+            yaml.dump({name: cfg}, outfile, default_flow_style=False)
 
-    # config = {}
-    # config['defaults'] = ["_self_",{'sim': "default"}] + [
-    #     config_name+"_"+name for name in data_config
-    # ]
-    # config['hydra'] = {}
-    # config['hydra']['searchpath'] = [
-    #     str(outdir.resolve()),
-    # ]
+        config = {}
+        config["defaults"] = ["_self_", {"sim": "default"}] + [
+            config_name + "_" + name for name in data_config
+        ]
+        config["hydra"] = {}
+        config["hydra"]["searchpath"] = [
+            str(outdir.resolve()),
+        ]
 
-    # with open("conf/" + SIM_EXAMPLE + ".yaml", 'w') as outfile:
-    #     yaml.dump(config, outfile, default_flow_style=False)
+        with open("conf/" + SIM_EXAMPLE + ".yaml", "w") as outfile:
+            yaml.dump(config, outfile, default_flow_style=False)
+
+    return data_config
 
 
 def load_config(path):
@@ -523,11 +493,30 @@ def main(cfg):  #: DictConfig):
         cfg.sim.num_episodes,
         cfg.sim.output_rootname,
         cfg.sim.use_server,
+        load_from_checkpoint_path=cfg.load_path,
     )
 
 
 if __name__ == "__main__":
-    cfgg = generate_default_settings()
-    output_rootname = generate_config(cfgg)
-    cfg = load_config(output_rootname)
-    main(cfg)
+    # parse input arguments
+    parser = argparse.ArgumentParser(description="input arguments")
+    parser.add_argument("--load_path", type=str, default="", help="path to saved checkpoint folder")
+    args = parser.parse_args()
+
+    if args.load_path:
+        # load saved config
+        with open(args.load_path) as stream:
+            try:
+                data_config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+        data_config["load_path"] = args.load_path
+    else:
+        cfgg = generate_default_settings()
+        data_config = generate_config(cfgg)
+        with open(data_config["sim"]["output_rootname"] + ".yaml", "w") as outfile:
+            yaml.dump(data_config, outfile, default_flow_style=False)
+        data_config = load_config(data_config["sim"]["output_rootname"])
+        data_config["load_path"] = ""
+
+    main(data_config)

@@ -445,27 +445,33 @@ class MastodonSocialNetworkApp(PhoneApp):
 
         return bio_message
 
-    # @app_action
-    # def read_profile(self, current_user: str, target_user: str) -> tuple[str, str]:
-    #     """Read a user's profile on Mastodon social network."""
-    #     current_user = current_user.split()[0]
-    #     target_user = target_user.split()[0]
+    @app_action
+    def read_profile(self, current_user_full: str, target_user_full: str) -> tuple[str, str]:
+        """Read a user's profile on Mastodon social network."""
+        current_user = current_user_full.split()[0]
+        target_user = target_user_full.split()[0]
 
-    #     current_username = self._get_username(current_user)
-    #     target_username = self._get_username(target_user)
-    #     self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
-    #     if self.perform_operations:
-    #         display_name, bio = self._mastodon_ops.read_bio(current_username, target_username)
-    #     else:
-    #         display_name, bio = "Mock Name", "Mock Bio"
-    #         self._print(
-    #             "Skipping real Mastodon API call since perform_operations is set to False",
-    #             color="light_grey",
-    #         )
-    #     self._print(f"Profile: {display_name} - {bio}", emoji="📄")
-    #     with open("/scratch/ss14247/misinfo_simulator/mastodon-sim/notebooks/write_path+ "app_logger.txt".txt", "a") as f:
-    #         f.write(f"{current_user} read profile of user: {target_user}\n")
-    #     return display_name, bio
+        current_username = self._get_username(current_user)
+        target_username = self._get_username(target_user)
+        self._print(f"@{current_username} reading profile of @{target_username}", emoji="👀")
+        if self.perform_operations:
+            display_name, bio = self._mastodon_ops.read_bio(current_username, target_username)
+        else:
+            display_name, bio = "Mock Name", "Mock Bio"
+            self._print(
+                "Skipping real Mastodon API call since perform_operations is set to False",
+                color="light_grey",
+            )
+        self._print(f"Profile: {display_name} - {bio}", emoji="📄")
+
+        self.action_logger.log(
+            {
+                "source_user": current_user_full,
+                "label": "read_profile",
+                "data": {"target_user": target_user_full, "bio": bio},
+            }
+        )
+        return display_name, bio
 
     @app_action
     def follow_user(self, current_user: str, target_user: str) -> str:

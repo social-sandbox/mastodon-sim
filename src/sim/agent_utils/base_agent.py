@@ -1,5 +1,6 @@
 import ast
 import datetime
+import json
 import random
 import re
 from collections.abc import Callable, Sequence
@@ -91,10 +92,7 @@ class AllActComponent(entity_component.ActingComponent):
     ) -> str:
         prompt = interactive_document.InteractiveDocument(self._model)
         context = self._context_for_action(contexts)
-        # prompt.statement("## Role-playing Information:\n" + context + "\n")
         prompt.statement(context + "\n")
-        # contexts.pop('Instructions')
-        # context = self._context_for_action(contexts)
 
         call_to_action = action_spec.call_to_action.format(
             name=self.get_entity().name,
@@ -338,16 +336,12 @@ class ActionSuggester(action_spec_ignored.ActionSpecIgnored):
             self._action_probs = state["action_probabilities"]
             self._last_suggestion = None  # Reset suggestion when probabilities change
 
-    # def name(self) -> str:
-    #     """Get the component's name."""
-    #     return "Likely Mastodon Action"
-
 
 # -------base_agent_model.py----
 from abc import ABC, abstractmethod
 
 
-class BaseAgent(ABC):
+class BaseAgentBuilder(ABC):
     """Base class that provides function inheritance without instantiation"""
 
     @classmethod
@@ -376,7 +370,7 @@ class BaseAgent(ABC):
         memory: associative_memory.AssociativeMemory,
         clock: game_clock.MultiIntervalClock,
         update_time_interval: datetime.timedelta | None = None,
-        role_and_setting_config: dict[str, Any] = {},
+        input_data: dict[str, Any] = {},
     ) -> entity_agent_with_logging.EntityAgentWithLogging:
         """Build an agent.
 
@@ -399,7 +393,7 @@ class BaseAgent(ABC):
 
         # parse settings
         agent_name = config.name
-        assert agent_name == role_and_setting_config["agent_name"], "agent names not same!"
+        assert agent_name == input_data["agent_name"], "agent names not same!"
         goal = config.goal
 
         raw_memory = legacy_associative_memory.AssociativeMemoryBank(memory)
@@ -506,7 +500,7 @@ class BaseAgent(ABC):
         # add custom components
         # n.b. custom components can be interleaved so reassign order
         z, component_order = cls.add_custom_components(
-            model, measurements, z, component_order, role_and_setting_config
+            model, measurements, z, component_order, input_data
         )
 
         # last component is the memory
@@ -534,45 +528,44 @@ class BaseAgent(ABC):
         return agent
 
 
-def save_to_json(
-    #     agent: entity_agent_with_logging.EntityAgentWithLogging,
+def save_agent_to_json(
+    agent: entity_agent_with_logging.EntityAgentWithLogging,
 ) -> str:
-    #     """Saves an agent to JSON data.
+    """Saves an agent to JSON data.
 
-    #     This function saves the agent's state to a JSON string, which can be loaded
-    #     afterwards with `rebuild_from_json`. The JSON data
-    #     includes the state of the agent's context components, act component, memory,
-    #     agent name and the initial config. The clock, model and embedder are not
-    #     saved and will have to be provided when the agent is rebuilt. The agent must
-    #     be in the `READY` phase to be saved.
+    This function saves the agent's state to a JSON string, which can be loaded
+    afterwards with `rebuild_from_json`. The JSON data
+    includes the state of the agent's context components, act component, memory,
+    agent name and the initial config. The clock, model and embedder are not
+    saved and will have to be provided when the agent is rebuilt. The agent must
+    be in the `READY` phase to be saved.
 
-    #     Args:
-    #       agent: The agent to save.
+    Args:
+        agent: The agent to save.
 
-    #     Returns
-    #     -------
-    #       A JSON string representing the agent's state.
+    Returns
+    -------
+        A JSON string representing the agent's state.
 
-    #     Raises
-    #     ------
-    #       ValueError: If the agent is not in the READY phase.
-    #     """
-    #     if agent.get_phase() != entity_component.Phase.READY:
-    #         raise ValueError("The agent must be in the `READY` phase to be saved.")
+    Raises
+    ------
+        ValueError: If the agent is not in the READY phase.
+    """
+    if agent.get_phase() != entity_component.Phase.READY:
+        raise ValueError("The agent must be in the `READY` phase to be saved.")
 
-    #     data = {
-    #         component_name: agent.get_component(component_name).get_state()
-    #         for component_name in agent.get_all_context_components()
-    #     }
+    data = {
+        component_name: agent.get_component(component_name).get_state()
+        for component_name in agent.get_all_context_components()
+    }
 
-    #     data["act_component"] = agent.get_act_component().get_state()
+    data["act_component"] = agent.get_act_component().get_state()
 
-    #     config = agent.get_config()
-    #     if config is not None:
-    #         data["agent_config"] = config.to_dict()
+    config = agent.get_config()
+    if config is not None:
+        data["agent_config"] = config.to_dict()
 
-    #     return json.dumps(data)
-    return ""
+    return json.dumps(data)
 
 
 def rebuild_from_json(
@@ -583,35 +576,40 @@ def rebuild_from_json(
     clock: game_clock.MultiIntervalClock,
     embedder: Callable[[str], np.ndarray],
     update_time_interval: datetime.timedelta | None = None,
-    role_and_setting_config: dict[str, Any] = {},
+    input_data: dict[str, Any] = {},
     memory_importance: Callable[[str], float] | None = None,
 ) -> entity_agent_with_logging.EntityAgentWithLogging:
-    #     """Rebuilds an agent from JSON data."""
-    #     data = json.loads(json_data)
+    """Rebuilds an agent from JSON data."""
+    data = json.loads(json_data)
 
-    #     new_agent_memory = associative_memory.AssociativeMemory(
-    #         sentence_embedder=embedder,
-    #         importance=memory_importance,
-    #         clock=clock.now,
-    #         clock_step_size=clock.get_step_size(),
-    #     )
+    new_agent_memory = associative_memory.AssociativeMemory(
+        sentence_embedder=embedder,
+        importance=memory_importance,
+        clock=clock.now,
+        clock_step_size=clock.get_step_size(),
+    )
 
-    #     if "agent_config" not in data:
-    #         raise ValueError("The JSON data does not contain the agent config.")
-    #     agent_config = formative_memories.AgentConfig.from_dict(data.pop("agent_config"))
+    if "agent_config" not in data:
+        raise ValueError("The JSON data does not contain the agent config.")
+    agent_config = formative_memories.AgentConfig.from_dict(data.pop("agent_config"))
 
-    #     agent = build_agent(
-    #         config=agent_config,
-    #         model=model,
-    #         memory=new_agent_memory,
-    #         clock=clock,
-    #     )
+    # agent = build_agent(
+    #     config=agent_config,
+    #     model=model,
+    #     memory=new_agent_memory,
+    #     clock=clock,
+    # )
+    measurements = measurements_lib.Measurements()
 
-    #     for component_name in agent.get_all_context_components():
-    #         agent.get_component(component_name).set_state(data.pop(component_name))
+    agent = entity_agent_with_logging.EntityAgentWithLogging(
+        agent_name=config.name,
+        component_logging=measurements,
+    )
 
-    #     agent.get_act_component().set_state(data.pop("act_component"))
+    for component_name in agent.get_all_context_components():
+        agent.get_component(component_name).set_state(data.pop(component_name))
 
-    #     assert not data, f"Unused data {sorted(data)}"
-    #     return agent
-    return None
+    agent.get_act_component().set_state(data.pop("act_component"))
+
+    assert not data, f"Unused data {sorted(data)}"
+    return agent

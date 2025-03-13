@@ -82,9 +82,9 @@ SHARED_MEMORIES_TEMPLATE = (
     ]
 )
 
-SOCIAL_MEDIA_USAGE_INSTRUCTIONS = "\n".join(
+SOCIAL_MEDIA_USAGE_INSTRUCTIONS = " ".join(
     [
-        "MastodonSocialNetworkApp is a social media application",
+        "MastodonSocialNetworkApp is a social media application.",
         "To share content on Mastodon, users write a 'toot' (equivalent to a tweet or post).",
         "Toots can be up to 500 characters long.",
         "A user's home timeline shows toots from people they follow and boosted (reblogged) content.",
@@ -158,7 +158,7 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
     news_agent_configs = []
     for i, news_type in enumerate(news_types):
         agent = news_info[news_type].copy()
-        agent["role_dict"] = {"name": "exogenous", "class": "exogenous_agent"}
+        agent["role_dict"] = {"name": "exogenous"}
         agent["goal"] = None
         agent["bio"] = (
             f"Providing {news_info[news_type]['coverage']} to the users of Storhampton.social."  # currently not used since read_bio not one of available actions
@@ -181,8 +181,6 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
 
 
 def generate_news_agent_toot_post_times(agent):
-    # if agent["schedule"] == "morning and evening":
-    #     return ["8:00 AM", "6:00 PM"]
     num_posts = len(agent["posts"])
 
     if agent["schedule"] == "hourly":
@@ -193,7 +191,6 @@ def generate_news_agent_toot_post_times(agent):
         datetimes = (start_date + datetime.timedelta(minutes=30 * it) for it in range(num_posts))
         formatted_times = [td.strftime("%H:%M %p") for td in datetimes]
     return formatted_times
-    # return [str(i) + ":00 AM" for i in range(8, 12)] + [str(i) + ":00 PM" for i in range(1, agent[''])]
 
 
 def generate_output_configs(cfg):
@@ -222,7 +219,7 @@ def generate_output_configs(cfg):
     candidate_configs = []
     for nit, partisan_type in enumerate(PARTISAN_TYPES):
         agent = CANDIDATE_INFO[partisan_type].copy()
-        agent["role_dict"] = {"name": "candidate", "class": "candidate"}
+        agent["role_dict"] = {"name": "candidate", "module_path": "agent_lib.candidate"}
         agent["goal"] = CANDIDATE_INFO[partisan_type]["name"] + "'s goal is " + candidates_goal
         agent["context"] = ""
         agent["seed_toot"] = ""
@@ -261,7 +258,7 @@ def generate_output_configs(cfg):
         agent["context"] = row["context"]
         agent["party"] = ""  # row.get("Political_Identity", "")
         agent["seed_toot"] = ""
-        agent["role_dict"] = {"name": "voter", "class": "voter"}
+        agent["role_dict"] = {"name": "voter", "module_path": "agent_lib.voter"}
         agent["goal"] = "Their goal is have a good day and vote in the election."
         voter_configs.append(agent)
 
@@ -285,7 +282,7 @@ def generate_output_configs(cfg):
             "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
             "role_dict": {
                 "name": "malicious",
-                "class": "malicious",
+                "module_path": "agent_lib.malicious",
                 "supported_candidate": supported_candidate,
             },
         }

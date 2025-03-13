@@ -1,6 +1,6 @@
 from inspect import signature
 
-from agent_utils.base_agent import BaseAgent
+from agent_utils.base_agent import BaseAgentBuilder
 from concordia.components import agent as ext_components
 
 # Default probabilities for different Mastodon operations
@@ -41,7 +41,7 @@ class OpinionsOnCandidate(ext_components.question_of_recent_memories.QuestionOfR
 
 
 # derive build class, filling out agent-specific methods
-class Agent(BaseAgent):
+class AgentBuilder(BaseAgentBuilder):
     @classmethod
     def add_custom_components(
         cls,
@@ -138,21 +138,11 @@ class Agent(BaseAgent):
                 settings["components"] = dependencies[name]
             if "model" in signature(component_constructor.__init__).parameters.keys():
                 settings["model"] = model
-            # try: #if component_constructor.__bases__ is not None:
             if "model" in signature(component_constructor.__bases__[0].__init__).parameters.keys():
                 settings["model"] = model
-            # except:
-            #     pass
-            # instantiate
             z[name] = component_constructor(**settings)
 
         # set order: base then custom, but election information first, and action suggester last
-        # component_order = (
-        #     [component_order[0]]
-        #     + base_component_order[:-1]
-        #     + component_order[1:]
-        #     + [base_component_order[-1]]
-        # )
         component_order = base_component_order[:-1] + component_order + [base_component_order[-1]]
         return z | base_components, component_order
 
