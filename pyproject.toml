@@ -74,6 +74,7 @@ cruft = ">=2.15.0"
 ipykernel = ">=6.29.4"
 ipywidgets = ">=8.1.2"
 pdoc = ">=14.4.0"
+types-pyyaml = "^6.0.12.20241230"
 
 [tool.coverage.report]  # https://coverage.readthedocs.io/en/latest/config.html#report
 precision = 1
