@@ -63,6 +63,11 @@ jobs:
          poetry run pre-commit install
          poetry run pre-commit run --all-files
 
+     - name: Fix NumPy compatibility
+       run: |
+         poetry run pip uninstall -y numpy pandas
+         poetry run pip install numpy==2.2.2 pandas==2.0.3  # Use your chosen versions
+
      - name: Run tests
        run: poetry run pytest
        env:
