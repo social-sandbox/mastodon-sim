@@ -16,7 +16,7 @@ from plotly.subplots import make_subplots
 cyto.load_extra_layouts()
 from io import StringIO
 
-# Example-specific code
+# ---------------------Example-specific code
 EVAL_LABEL = "VotePref"
 custom_names = ["Bill Fredrickson", "Bradley Carter"]
 line_colors = {
@@ -27,7 +27,7 @@ line_colors = {
 node_colors = {"Bill Fredrickson": "#1f77b4", "Bradley Carter": "#ff7f0e", "Other": "#808080"}
 
 
-def eval_graph_processing(eval_data):
+def eval_plot_preprocessing(eval_data):
     candidate1_votes_over_time = []
     candidate2_votes_over_time = []
     non_votes_over_time = []
@@ -73,6 +73,9 @@ def eval_graph_processing(eval_data):
     title_label = "Vote Distribution Over Time"
     yaxis_label = "Vote Percentage"
     return graphs_data, title_label, yaxis_label
+
+
+# -------------------------------------------------------------
 
 
 # data loading
@@ -817,8 +820,6 @@ if __name__ == "__main__":
         prevent_initial_call=True,
     )
     def process_jsonl_data(contents, selected_name, selected_episode):
-        # print("contents:")
-        # print(contents)
         """Process JSONL data with streaming and filtering."""
         if contents is None:
             print("contents is None")
@@ -1386,7 +1387,7 @@ if __name__ == "__main__":
         # Create the line graph showing eval_data over time
         eval_data_episodes = sorted(eval_data.keys())
 
-        eval_graphs_data, title_label, yaxis_label = eval_graph_processing(eval_data)
+        eval_graphs_data, title_label, yaxis_label = eval_plot_preprocessing(eval_data)
 
         eval_data_line_fig = go.Figure()
         for graph_data in eval_graphs_data:
@@ -1418,13 +1419,6 @@ if __name__ == "__main__":
             margin=dict(l=40, r=40, t=20, b=10),
             legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
         )
-        # # Update both y-axes
-        # interactions_line_fig.update_yaxes(
-        #     title_text="Action Rate of Active Users",
-        #     range=y_axis_range,
-        #     showgrid=True,
-        #     gridcolor="lightgray",
-        # )
 
         # Create the line graph showing interactions over time
         interaction_types = ["liked", "boosted", "replied", "posted"]
@@ -1436,15 +1430,6 @@ if __name__ == "__main__":
         # int_episodes = list(active_users_by_episode.keys())
         int_episodes = sorted(interactions_by_episode.keys())
         for ep in int_episodes:
-            # Initialize counts
-            # active_nodes_in_ep = set()
-            # active_nodes_in_ep = {
-            #     interaction["source"] for interaction in interactions_by_episode.get(ep, [])
-            # }.union(
-            #     {interaction["target"] for interaction in interactions_by_episode.get(ep, [])}
-            # ).union(set(active_users_by_episode.get(ep, [])))
-
-            # num_active_users = len(active_nodes_in_ep)
             num_active_users = len(active_users_by_episode[ep]) - 1  # dont count news agent
 
             counts = {interaction: 0 for interaction in interaction_types}
@@ -1454,9 +1439,6 @@ if __name__ == "__main__":
                 action = interaction["action"]
                 if action in counts:
                     counts[action] += 1
-
-            # Count posts
-            # counts["posted"] = len(active_users_by_episode.get(ep, []))
 
             # Append counts to the respective lists
             for interaction in interaction_types:

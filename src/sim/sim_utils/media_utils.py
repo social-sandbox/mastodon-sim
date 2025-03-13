@@ -51,9 +51,6 @@ class GptLanguageModel(language_model.LanguageModel):
         for test_agent_name in self.agent_names:
             if test_agent_name in prompt[:150]:
                 agent_name = test_agent_name
-        # if agent_name is None:
-        # counts=[prompt.count(agent_name) for agent_name in agent_names]
-        # agent_name = self.agent_names[counts.index(max(counts))]
         self.meta_data["agent_name"] = agent_name
         log_entry = {"prompt": prompt, "output": output} | self.meta_data
         try:

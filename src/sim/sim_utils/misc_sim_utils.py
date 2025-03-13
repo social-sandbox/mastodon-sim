@@ -5,6 +5,16 @@ from concordia.utils import html as html_lib
 from IPython import display
 
 file_lock = threading.Lock()
+import datetime
+from collections.abc import Callable
+
+import numpy as np
+from concordia.associative_memory import (
+    associative_memory,
+    formative_memories,
+)
+from concordia.clocks import game_clock
+from concordia.language_model import language_model
 
 
 def write_item(out_item, output_filename):
@@ -43,7 +53,12 @@ def read_token_data(file_path):
         return {"prompt_tokens": 0, "completion_tokens": 0}
 
 
-def post_analysis(env, model, agents, memories, output_rootname):
+def post_analysis(env, model, agents, roles, store_data, output_rootname):
+    memories = {}
+    for agent in agents:
+        if roles[agent_agent_name]:
+            memories[agent._agent_name] = store_data[agent._agent_name]
+
     all_gm_memories = env.memory.retrieve_recent(k=10000, add_time=True)
 
     detailed_story = "\n".join(all_gm_memories)
@@ -94,3 +109,40 @@ def post_analysis(env, model, agents, memories, output_rootname):
         f.write(tabbed_html)
 
     display.HTML(tabbed_html)
+
+
+def rebuild_from_saved_checkpoint(
+    load_from_checkpoint_path: str,
+    agents,
+    roles,
+    config: formative_memories.AgentConfig,
+    model: language_model.LanguageModel,
+    memory: associative_memory.AssociativeMemory,
+    clock: game_clock.MultiIntervalClock,
+    embedder: Callable[[str], np.ndarray],
+    update_time_interval: datetime.timedelta | None = None,
+    memory_importance: Callable[[str], float] | None = None,
+):
+    # new_agents = []
+    # for it, agent_input, agent in enumerate(zip(agent_data, agents, strict=False)):
+    #     agent_json_path = agent_json_paths[it]
+    #     module_path = (
+    #         "sim_setting." + agent_input["role_dict"]["module_path"]
+    #         if agent_input["role_dict"]["name"] != "exogeneous"
+    #         else "agent_utils.exogenous_agent"
+    #     )
+    #     json_data = agent_json_path
+    #     new_agent = module_path.rebuild_from_json(
+    #         json_data,
+    #         config,
+    #         model,
+    #         memory,
+    #         clock,
+    #         embedder,
+    #     )
+    #     new_agents.append(new_agent)
+    # clock = None
+    # model = None
+
+    # return agents, clock, model
+    return None

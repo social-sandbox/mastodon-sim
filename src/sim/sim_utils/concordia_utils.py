@@ -1,54 +1,11 @@
 import importlib
-import json
 
-from concordia.agents import entity_agent_with_logging
 from concordia.associative_memory import (
     associative_memory,
     blank_memories,
     formative_memories,
     importance_function,
 )
-from concordia.typing import entity_component
-
-
-def save_to_json(
-    agent: entity_agent_with_logging.EntityAgentWithLogging,
-) -> str:
-    """Saves an agent to JSON data.
-
-    This function saves the agent's state to a JSON string, which can be loaded
-    afterwards with `rebuild_from_json`. The JSON data
-    includes the state of the agent's context components, act component, memory,
-    agent name and the initial config. The clock, model and embedder are not
-    saved and will have to be provided when the agent is rebuilt. The agent must
-    be in the `READY` phase to be saved.
-
-    Args:
-      agent: The agent to save.
-
-    Returns
-    -------
-      A JSON string representing the agent's state.
-
-    Raises
-    ------
-      ValueError: If the agent is not in the READY phase.
-    """
-    if agent.get_phase() != entity_component.Phase.READY:
-        raise ValueError("The agent must be in the `READY` phase to be saved.")
-
-    data = {
-        component_name: agent.get_component(component_name).get_state()
-        for component_name in agent.get_all_context_components()
-    }
-
-    data["act_component"] = agent.get_act_component().get_state()
-
-    config = agent.get_config()
-    if config is not None:
-        data["agent_config"] = config.to_dict()
-
-    return json.dumps(data)
 
 
 def generate_concordia_memory_objects(
@@ -112,36 +69,30 @@ def make_profiles(agent_data):
 def build_agent_with_memories(obj_args, profile_item):
     profile_cfg = profile_item["cfg"]
     role_dict = profile_item["role_dict"]
-    (formative_memory_factory, model, clock, time_step, setting_info, mastodon_apps) = obj_args
+    (formative_memory_factory, model, clock, time_step, setting_info) = obj_args
 
-    if role_dict["name"] != "exogenous":
-        mem = formative_memory_factory.make_memories(profile_cfg)
-
-        role_and_setting_config = {
-            "role_details": role_dict,
-            "agent_name": role_dict["agent_name"],
+    # for non-exogenous agents
+    if role_dict["name"] == "exogenous":
+        module_path = "agent_utils.exogenous_agent"
+        input_args = {"posts": profile_cfg, "name": role_dict["agent_name"]}
+        store_for_local_post_analysis = None
+    else:
+        setting_data = {
             "setting_details": setting_info["details"],
             "setting_description": setting_info["description"],
         }
+        module_path = "sim_setting." + role_dict["module_path"]
+        mem = formative_memory_factory.make_memories(profile_cfg)
+        input_args = {
+            "config": profile_cfg,
+            "input_data": role_dict | setting_data,
+            "model": model,
+            "clock": clock,
+            "update_time_interval": time_step,
+            "memory": mem,
+        }
+        store_for_local_post_analysis = mem
 
-        agent_module = importlib.import_module("sim_setting.agent_lib." + role_dict["class"])
-        if not hasattr(agent_module, "Agent"):
-            raise AttributeError("No 'Agent' class found.")
-
-        agent = agent_module.Agent.build(
-            config=profile_cfg,
-            model=model,
-            clock=clock,
-            update_time_interval=time_step,
-            memory=mem,
-            role_and_setting_config=role_and_setting_config,
-        )
-    else:
-        mem = ""
-        agent_module = importlib.import_module("agent_utils." + role_dict["class"])
-        agent = agent_module.Agent(
-            name=role_dict["agent_name"],
-            app=mastodon_apps[role_dict["agent_name"]],
-            posts=profile_cfg,
-        )
-    return agent, mem
+    agent_module = importlib.import_module(module_path)
+    agent = agent_module.AgentBuilder.build(**input_args)
+    return agent, store_for_local_post_analysis
