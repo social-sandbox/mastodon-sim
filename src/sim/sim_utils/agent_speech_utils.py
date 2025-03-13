@@ -13,31 +13,29 @@ DEFAULT_CALL_TO_SPEECH = (
 )
 
 
-def write_seed_toot(players, p_name):
-    for player in players:
-        if player.name == p_name:
-            call_to_speech = DEFAULT_CALL_TO_SPEECH.format(
-                name=player.name,
-            )
-            interaction_premise = f"{player.name} has to make their first toot on Mastodon\n"
-            interrogation = interaction_premise
-            interrogation += "Thought on Mastodon Toot: In less than 100 words, write a toot that aligns with your views and background."
-            player_says = player.act(
-                action_spec=entity.ActionSpec(
-                    call_to_action="Context: " + interrogation + call_to_speech,
-                    output_type=entity.OutputType.FREE,
-                ),
-            )
-            player_says = (
-                player_says.strip(player.name.split()[0])
-                .strip()
-                .strip(player.name.split()[1])
-                .strip()
-                .strip("--")
-                .strip()
-                .strip('"')
-            )
-            return player_says
+def write_seed_toot(agent):
+    call_to_speech = DEFAULT_CALL_TO_SPEECH.format(
+        name=agent._agent_name,
+    )
+    interaction_premise = f"{agent._agent_name} has to make their first toot on Mastodon\n"
+    interrogation = interaction_premise
+    interrogation += "Thought on Mastodon Toot: In less than 100 words, write a toot that aligns with your views and background."
+    agent_says = agent.act(
+        action_spec=entity.ActionSpec(
+            call_to_action="Context: " + interrogation + call_to_speech,
+            output_type=entity.OutputType.FREE,
+        ),
+    )
+    agent_says = (
+        agent_says.strip(agent._agent_name.split()[0])
+        .strip()
+        .strip(agent._agent_name.split()[1])
+        .strip()
+        .strip("--")
+        .strip()
+        .strip('"')
+    )
+    return agent_says
 
 
 class AgentQuery(ABC):
@@ -59,37 +57,37 @@ class AgentQuery(ABC):
                 self.question_template += component["text"]
         self.query_data = query_data
 
-    def form_query_for_player(self, player):
-        call_to_speech = DEFAULT_CALL_TO_SPEECH.format(name=player.name)
-        question = self.question_template.format(playername=player.name)
+    def form_query_for_agent(self, agent):
+        call_to_speech = DEFAULT_CALL_TO_SPEECH.format(name=agent._agent_name)
+        question = self.question_template.format(agentname=agent._agent_name)
         return "Context: " + question + call_to_speech
 
-    def ask(self, player):
-        player_question = self.form_query_for_player(player)
-        player_says = player.act(
+    def ask(self, agent):
+        agent_question = self.form_query_for_agent(agent)
+        agent_says = agent.act(
             action_spec=entity.ActionSpec(
-                call_to_action=player_question, output_type=entity.OutputType.FREE, tag="survey"
+                call_to_action=agent_question, output_type=entity.OutputType.FREE, tag="survey"
             ),
         )
-        return player_says
+        return agent_says
 
     @abstractmethod
-    def parse_answer(self, player_says) -> str:
+    def parse_answer(self, agent_says) -> str:
         """Example of a base operation that all children must implement"""
 
-    def submit(self, player):
-        player_says = self.ask(player)
+    def submit(self, agent):
+        agent_says = self.ask(agent)
         eval_query_return = self.query_data.copy()
-        eval_query_return["query_return"] = self.parse_answer(player_says)
+        eval_query_return["query_return"] = self.parse_answer(agent_says)
         return eval_query_return
 
 
-def deploy_surveys_to_agent(player, eval_queries):
-    eval_query_returns = [eval_query.submit(player) for eval_query in eval_queries]
+def deploy_surveys_to_agent(agent, eval_queries):
+    eval_query_returns = [eval_query.submit(agent) for eval_query in eval_queries]
     return eval_query_returns
 
 
-def deploy_surveys(players, evals, eval_event_logger):
+def deploy_surveys(agents, evals, eval_event_logger):
     query_lib_module = "sim_setting." + evals["query_lib_module"]
     queries_data = evals["queries_data"].values()
     eval_queries = []
@@ -101,22 +99,21 @@ def deploy_surveys(players, evals, eval_event_logger):
 
     with ThreadPoolExecutor() as executor:
         # Parallel surveying
-        eval_query_returns_over_players = {
-            executor.submit(deploy_surveys_to_agent, player, eval_queries): player
-            for player in players
+        eval_query_returns_over_agents = {
+            executor.submit(deploy_surveys_to_agent, agent, eval_queries): agent for agent in agents
         }
 
-        # Write each player's results in parallel
+        # Write each agent's results in parallel
 
-        for eval_query_returns in as_completed(eval_query_returns_over_players):
-            player = eval_query_returns_over_players[eval_query_returns]
-            player_eval_query_returns = eval_query_returns.result()
-            player_results = [
+        for eval_query_returns in as_completed(eval_query_returns_over_agents):
+            agent = eval_query_returns_over_agents[eval_query_returns]
+            agent_eval_query_returns = eval_query_returns.result()
+            agent_results = [
                 {
-                    "source_user": player.name,
-                    "label": player_eval_query_return["query_type"],
-                    "data": player_eval_query_return,
+                    "source_user": agent._agent_name,
+                    "label": agent_eval_query_return["query_type"],
+                    "data": agent_eval_query_return,
                 }
-                for player_eval_query_return in player_eval_query_returns
+                for agent_eval_query_return in agent_eval_query_returns
             ]
-            executor.submit(eval_event_logger.log, player_results)
+            executor.submit(eval_event_logger.log, agent_results)

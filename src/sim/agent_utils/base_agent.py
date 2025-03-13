@@ -388,7 +388,7 @@ class BaseAgent(ABC):
             update_time_interval: Unused (but required by the interface for now)
             role_and_setting_config:
                 -name
-                -player_name
+                -agent_name
                 -description
 
         Returns

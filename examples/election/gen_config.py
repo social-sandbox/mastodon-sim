@@ -158,9 +158,10 @@ def get_news_agent_configs(n_agents, news=None, include_images=True):
     news_agent_configs = []
     for i, news_type in enumerate(news_types):
         agent = news_info[news_type].copy()
-        agent["role"] = {"name": "exogenous", "class": "exogenous_agent"}
-        agent["goal"] = (
-            f"to provide {news_info[news_type]['coverage']} to the users of Storhampton.social."
+        agent["role_dict"] = {"name": "exogenous", "class": "exogenous_agent"}
+        agent["goal"] = None
+        agent["bio"] = (
+            f"Providing {news_info[news_type]['coverage']} to the users of Storhampton.social."  # currently not used since read_bio not one of available actions
         )
         agent["context"] = ""
         agent["seed_toot"] = (
@@ -221,7 +222,7 @@ def generate_output_configs(cfg):
     candidate_configs = []
     for nit, partisan_type in enumerate(PARTISAN_TYPES):
         agent = CANDIDATE_INFO[partisan_type].copy()
-        agent["role"] = {"name": "candidate", "class": "candidate"}
+        agent["role_dict"] = {"name": "candidate", "class": "candidate"}
         agent["goal"] = CANDIDATE_INFO[partisan_type]["name"] + "'s goal is " + candidates_goal
         agent["context"] = ""
         agent["seed_toot"] = ""
@@ -260,7 +261,7 @@ def generate_output_configs(cfg):
         agent["context"] = row["context"]
         agent["party"] = ""  # row.get("Political_Identity", "")
         agent["seed_toot"] = ""
-        agent["role"] = {"name": "voter", "class": "voter"}
+        agent["role_dict"] = {"name": "voter", "class": "voter"}
         agent["goal"] = "Their goal is have a good day and vote in the election."
         voter_configs.append(agent)
 
@@ -282,7 +283,7 @@ def generate_output_configs(cfg):
         malicious_actor_config = {
             "name": malicious_agent_name,
             "context": "has become a hyper-partisan voter eager to help his candidate win by any means necessary.",
-            "role": {
+            "role_dict": {
                 "name": "malicious",
                 "class": "malicious",
                 "supported_candidate": supported_candidate,
@@ -336,7 +337,13 @@ def generate_output_configs(cfg):
         print("Choose valid trait type")
 
     # combine all agent configurations in one list
-    agents["directory"] = voter_configs + candidate_configs + news_agent_configs
+    agents["directory"] = voter_configs + candidate_configs
+    agents["initial_observations"] = [
+        "{name} is at home, they have just woken up.",
+        "{name} remembers they want to update their Mastodon bio.",
+        "{name} remembers they want to read their Mastodon feed to catch up on news",
+    ]
+    agents["directory"] = agents["directory"] + news_agent_configs
 
     # 2) setting configuration------------------------------------------------------
     soc_sys_context = {}
@@ -345,7 +352,7 @@ def generate_output_configs(cfg):
     )
     soc_sys_context["exp_name"] = experiment_name  # name of experiment
     soc_sys_context["custom_call_to_action"] = CUSTOM_CALL_TO_ACTION
-    soc_sys_context["shared_memories_template"] = (
+    soc_sys_context["shared_agent_memories_template"] = (
         (
             SHARED_MEMORIES_TEMPLATE
             + [
@@ -356,6 +363,10 @@ def generate_output_configs(cfg):
         else SHARED_MEMORIES_TEMPLATE
     )
     soc_sys_context["social_media_usage_instructions"] = SOCIAL_MEDIA_USAGE_INSTRUCTIONS
+
+    soc_sys_context["gamemaster_memories"] = [
+        agent["name"] + " is at their private home." for agent in agents["directory"]
+    ] + ["The workday begins for the " + agent["name"] for agent in news_agent_configs]
     soc_sys_context["setting_info"] = {
         "description": "\n".join(
             [CANDIDATE_INFO[p]["policy_proposals"] for p in list(CANDIDATE_INFO.keys())]

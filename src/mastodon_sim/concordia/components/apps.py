@@ -15,19 +15,6 @@ from typing import Any, Literal, get_type_hints
 import docstring_parser  # pytype: disable=import-error  # Fails on GitHub.
 import termcolor
 
-# from election_sim.sim_utils.misc_sim_utils import event_logger
-# event_logger_class = TypeVar('event_logger', bound=event_logger)
-
-# write_path = ""
-
-
-# def set_app_output_write_path(path):
-#     global write_path
-#     write_path = path
-
-
-# file_lock = threading.Lock()
-# region[setup]s
 _DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 _ARGUMENT_REGEX = re.compile(r"(?P<param>\w+):\s*(?P<value>[^\n]+)")

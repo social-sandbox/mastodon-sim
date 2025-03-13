@@ -109,7 +109,7 @@ def stream_filtered_jsonl(
         try:
             record = json.loads(line)
             # Only yield records that match our filters
-            if (selected_name is None or record.get("player_name") == selected_name) and (
+            if (selected_name is None or record.get("agent_name") == selected_name) and (
                 selected_episode is None or record.get("episode_idx") == selected_episode
             ):
                 yield record
