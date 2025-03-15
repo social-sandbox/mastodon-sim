@@ -1,4 +1,5 @@
 import json
+import sys
 import threading
 
 from concordia.utils import html as html_lib
@@ -17,13 +18,27 @@ from concordia.clocks import game_clock
 from concordia.language_model import language_model
 
 
+# def write_item(out_item, output_filename):
+#     with file_lock:
+#         with open(output_filename, "a") as f:
+#             print(json.dumps(out_item), file=f)  # adds the new line character
 def write_item(out_item, output_filename):
-    with file_lock:
-        with open(output_filename, "a") as f:
-            print(json.dumps(out_item), file=f)  # adds the new line character
+    try:
+        with file_lock:
+            with open(output_filename, "a") as f:
+                json_str = json.dumps(out_item)  # Separate this step for debugging
+                print(json_str, file=f)
+                print(
+                    f"Successfully wrote item with type: {out_item.get('event_type')}"
+                )  # Debug print
+    except Exception as e:
+        print(f"Error in write_item: {e}")
+        print(
+            f"Problem item: {type(out_item)}, keys: {out_item.keys() if isinstance(out_item, dict) else 'not a dict'}"
+        )
 
 
-class event_logger:
+class EventLogger:
     def __init__(self, event_type, output_filename):
         self.episode_idx = None
         self.output_filename = output_filename
@@ -41,6 +56,7 @@ class event_logger:
             log_data["event_type"] = self.type
             if self.type == "action":
                 log_data["data"]["suggested_action"] = self.dummy
+
             write_item(log_data, self.output_filename)
 
 
@@ -78,8 +94,10 @@ def post_analysis(env, model, agents, roles, store_data, output_rootname):
     agent_logs = []
     agent_log_names = []
     for agent in agents:
-        name = agent.name
-        detailed_story = "\n".join(memories[agent.name].retrieve_recent(k=1000, add_time=True))
+        name = agent._agent_name
+        detailed_story = "\n".join(
+            memories[agent._agent_name].retrieve_recent(k=1000, add_time=True)
+        )
         summary = ""
         summary = model.sample_text(
             f"Sequence of events that happened to {name}:\n{detailed_story}"
@@ -88,7 +106,7 @@ def post_analysis(env, model, agents, roles, store_data, output_rootname):
             terminators=(),
         )
 
-        all_agent_mem = memories[agent.name].retrieve_recent(k=1000, add_time=True)
+        all_agent_mem = memories[agent._agent_name].retrieve_recent(k=1000, add_time=True)
         all_agent_mem = ["Summary:", summary, "Memories:", *all_agent_mem]
         agent_html = html_lib.PythonObjectToHTMLConverter(all_agent_mem).convert()
         agent_logs.append(agent_html)
@@ -146,3 +164,18 @@ def rebuild_from_saved_checkpoint(
 
     # return agents, clock, model
     return None
+
+
+class Tee:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.file = open(filename, "w")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.file.write(message)
+        self.file.flush()  # Optional: ensures output is written immediately
+
+    def flush(self):
+        self.terminal.flush()
+        self.file.flush()

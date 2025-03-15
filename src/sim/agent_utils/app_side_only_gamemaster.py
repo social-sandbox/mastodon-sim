@@ -87,7 +87,7 @@ class GameMaster:
         """Run a single agent's action and trigger their phone scene."""
         try:
             if self.roles[agent._agent_name] == "exogenous":
-                action = agent.post()
+                action = agent.post(self.phones[agent._agent_name].apps[0])
             else:
                 self.model.meta_data["agent_name"] = agent._agent_name
                 action = agent.act(self.action_spec)

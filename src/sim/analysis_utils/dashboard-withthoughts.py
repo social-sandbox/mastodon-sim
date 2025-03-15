@@ -2,6 +2,7 @@ import argparse
 import base64
 import json
 from collections.abc import Generator
+from pathlib import Path
 from typing import Any
 
 import dash
@@ -10,14 +11,17 @@ import networkx as nx
 import pandas as pd
 import plotly.graph_objs as go
 from dash import Input, Output, State, dcc, html
-from output_proc_utils import post_process_output
 from plotly.subplots import make_subplots
 
 cyto.load_extra_layouts()
 from io import StringIO
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+print("project root: " + str(PROJECT_ROOT))
+from sim.analysis_utils.output_proc_utils import post_process_output
+
 # ---------------------Example-specific code
-EVAL_LABEL = "VotePref"
+PROBE_LABEL = "VotePref"
 custom_names = ["Bill Fredrickson", "Bradley Carter"]
 line_colors = {
     "Bill Fredrickson": "#1f77b4",
@@ -27,12 +31,12 @@ line_colors = {
 node_colors = {"Bill Fredrickson": "#1f77b4", "Bradley Carter": "#ff7f0e", "Other": "#808080"}
 
 
-def eval_plot_preprocessing(eval_data):
+def probe_plot_preprocessing(probe_data):
     candidate1_votes_over_time = []
     candidate2_votes_over_time = []
     non_votes_over_time = []
-    for ep in sorted(eval_data.keys()):
-        ep_votes = eval_data[ep]
+    for ep in sorted(probe_data.keys()):
+        ep_votes = probe_data[ep]
         total_ep_votes = len(ep_votes)
         candidate1_votes = sum(
             1 for vote in ep_votes.values() if vote == custom_names[0].split(" ")[0]
@@ -170,7 +174,7 @@ def compute_positions(graph):
 
 # Serialization function to convert complex data structures into JSON-serializable format
 def serialize_data(
-    follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data
+    follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data
 ):
     return {
         "nodes": list(follow_graph.nodes),
@@ -178,7 +182,7 @@ def serialize_data(
         "interactions_by_episode": interactions_by_episode,
         "active_users_by_episode": {k: list(v) for k, v in active_users_by_episode.items()},
         "toots": toots,
-        "eval_data": eval_data,
+        "probe_data": probe_data,
     }
 
 
@@ -189,13 +193,15 @@ def deserialize_data(serialized):
     follow_graph.add_edges_from(serialized["edges"])
 
     # Convert episode keys back to integers
+    for k, v in serialized["probe_data"].items():
+        print(k)
     interactions_by_episode = {int(k): v for k, v in serialized["interactions_by_episode"].items()}
     active_users_by_episode = {
         int(k): set(v) for k, v in serialized["active_users_by_episode"].items()
     }
     toots = serialized["toots"]
-    eval_data = {int(k): v for k, v in serialized["eval_data"].items()}
-    return follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data
+    probe_data = {k: v for k, v in serialized["probe_data"].items()}
+    return follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data
 
 
 def get_target_user(row):
@@ -298,11 +304,11 @@ def load_data(input_var):
 
     df["data"] = df.data.apply(get_toot_id)
 
-    eval_df, int_df, edge_df = post_process_output(df)
+    probe_df, int_df, edge_df = post_process_output(df)
 
-    # eval_data
-    eval_data = (
-        eval_df.loc[eval_df.label == EVAL_LABEL, ["source_user", "response", "episode"]]
+    # probe_data
+    probe_data = (
+        probe_df.loc[probe_df.label == PROBE_LABEL, ["source_user", "response", "episode"]]
         .groupby("episode")
         .apply(lambda x: dict(zip(x.source_user, x.response, strict=False)))
         .to_dict()
@@ -322,7 +328,7 @@ def load_data(input_var):
     # toot_data
     toot_dict = get_toot_dict(int_df.copy())
 
-    return follow_graph, int_dict, active_users_by_episode, toot_dict, eval_data
+    return follow_graph, int_dict, active_users_by_episode, toot_dict, probe_data
 
 
 # Main entry point
@@ -342,7 +348,7 @@ if __name__ == "__main__":
     # Initialize variables
     if args.output_file:
         # Load the data using the files passed as arguments
-        (follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data) = (
+        (follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data) = (
             load_data(args.output_file)
         )
 
@@ -353,7 +359,7 @@ if __name__ == "__main__":
 
         # Serialize the initial data
         serialized_initial_data = serialize_data(
-            follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data
+            follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data
         )
     else:
         # No initial data provided
@@ -521,9 +527,9 @@ if __name__ == "__main__":
                     # Line graphs container
                     html.Div(
                         [
-                            # eval data line graph
+                            # probe data line graph
                             dcc.Graph(
-                                id="eval-data-line",
+                                id="probe-data-line",
                                 config={"displayModeBar": False},
                                 style={
                                     "height": "220px",
@@ -909,7 +915,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        eval_data_new,
+                        probe_data_new,
                     ) = load_data(app_logger_string)
 
                     # Serialize the new data
@@ -918,7 +924,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        eval_data_new,
+                        probe_data_new,
                     )
                     # *** Add these two lines: parse and store the raw data ***
                     import io
@@ -942,7 +948,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        eval_data_new,
+                        probe_data_new,
                     ) = load_data(app_logger_string)
 
                     # Serialize the new data
@@ -951,7 +957,7 @@ if __name__ == "__main__":
                         interactions_by_episode_new,
                         active_users_by_episode_new,
                         toots_new,
-                        eval_data_new,
+                        probe_data_new,
                     )
                     # *** Add these lines to store the raw file data ***
                     import io
@@ -1036,7 +1042,7 @@ if __name__ == "__main__":
             Output("cytoscape-graph", "elements"),
             Output("cytoscape-graph", "layout"),
             Output("cytoscape-graph", "stylesheet"),
-            Output("eval-data-line", "figure"),
+            Output("probe-data-line", "figure"),
             Output("interactions-line-graph", "figure"),
             Output("current-episode", "children"),
             Output("interactions-window", "children"),  # Added Output
@@ -1062,7 +1068,7 @@ if __name__ == "__main__":
                 [],  # elements
                 {"name": "preset", "positions": {}},  # layout
                 [],  # stylesheet
-                {},  # eval data line
+                {},  # probe data line
                 {},  # interactions-line-graph
                 "Episode: N/A",  # current-episode
                 [],  # interactions-window
@@ -1089,7 +1095,7 @@ if __name__ == "__main__":
             )
 
         # Deserialize the data_store.
-        (follow_graph, interactions_by_episode, active_users_by_episode, toots, eval_data) = (
+        (follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data) = (
             deserialize_data(data_store)
         )
 
@@ -1369,13 +1375,13 @@ if __name__ == "__main__":
                 }
             )
 
-        # Update node border colors based on eval_data
-        episode_eval_data = eval_data.get(selected_episode, {})
-        total_eval_data = len(episode_eval_data)
+        # Update node border colors based on probe_data
+        episode_probe_data = probe_data.get(selected_episode, {})
+        total_probe_data = len(episode_probe_data)
 
         for node in follow_graph.nodes:
-            if node in episode_eval_data:
-                eval_datum = episode_eval_data[node]
+            if node in episode_probe_data:
+                probe_datum = episode_probe_data[node]
                 node_label = node if node in custom_names else "Other"
                 stylesheet.append(
                     {
@@ -1384,16 +1390,16 @@ if __name__ == "__main__":
                     }
                 )
 
-        # Create the line graph showing eval_data over time
-        eval_data_episodes = sorted(eval_data.keys())
+        # Create the line graph showing probe_data over time
+        probe_data_episodes = sorted(probe_data.keys())
 
-        eval_graphs_data, title_label, yaxis_label = eval_plot_preprocessing(eval_data)
+        probe_graphs_data, title_label, yaxis_label = probe_plot_preprocessing(probe_data)
 
-        eval_data_line_fig = go.Figure()
-        for graph_data in eval_graphs_data:
-            eval_data_line_fig.add_trace(
+        probe_data_line_fig = go.Figure()
+        for graph_data in probe_graphs_data:
+            probe_data_line_fig.add_trace(
                 go.Scatter(
-                    x=eval_data_episodes,
+                    x=probe_data_episodes,
                     y=graph_data["data"],
                     mode="lines+markers",
                     name=graph_data["label"],
@@ -1402,7 +1408,7 @@ if __name__ == "__main__":
             )
 
         max_episode = max(list(interactions_by_episode.keys()))
-        eval_data_line_fig.update_layout(
+        probe_data_line_fig.update_layout(
             title={"text": title_label, "font": {"size": 14}},
             xaxis={
                 "title": {"text": "Episode", "font": {"size": 10}},
@@ -1572,7 +1578,7 @@ if __name__ == "__main__":
             layout,
             stylesheet,
             # fig,
-            eval_data_line_fig,
+            probe_data_line_fig,
             interactions_line_fig,
             f"Episode: {selected_episode}",  # Updated episode display
             interactions_content,

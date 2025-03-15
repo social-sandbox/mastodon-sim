@@ -66,7 +66,7 @@ class AgentQuery(ABC):
         agent_question = self.form_query_for_agent(agent)
         agent_says = agent.act(
             action_spec=entity.ActionSpec(
-                call_to_action=agent_question, output_type=entity.OutputType.FREE, tag="survey"
+                call_to_action=agent_question, output_type=entity.OutputType.FREE, tag="query"
             ),
         )
         return agent_says
@@ -77,43 +77,41 @@ class AgentQuery(ABC):
 
     def submit(self, agent):
         agent_says = self.ask(agent)
-        eval_query_return = self.query_data.copy()
-        eval_query_return["query_return"] = self.parse_answer(agent_says)
-        return eval_query_return
+        query_return = self.query_data.copy()
+        query_return["query_return"] = self.parse_answer(agent_says)
+        return query_return
 
 
-def deploy_surveys_to_agent(agent, eval_queries):
-    eval_query_returns = [eval_query.submit(agent) for eval_query in eval_queries]
-    return eval_query_returns
+def deploy_probes_to_agent(agent, queries):
+    query_returns = [query.submit(agent) for query in queries]
+    return query_returns
 
 
-def deploy_surveys(agents, evals, eval_event_logger):
-    query_lib_module = "sim_setting." + evals["query_lib_module"]
-    queries_data = evals["queries_data"].values()
-    eval_queries = []
+def deploy_probes(agents, probes, probe_event_logger):
+    query_lib_module = "sim_setting." + probes["query_lib_module"]
+    queries_data = probes["queries_data"].values()
+    queries = []
     for query_data in queries_data:
         QueryClass = getattr(
             importlib.import_module(query_lib_module), query_data["query_type"]
         )  # "module.submodule"
-        eval_queries.append(QueryClass(query_data))
-
+        queries.append(QueryClass(query_data))
     with ThreadPoolExecutor() as executor:
-        # Parallel surveying
-        eval_query_returns_over_agents = {
-            executor.submit(deploy_surveys_to_agent, agent, eval_queries): agent for agent in agents
+        # Parallel probing
+        query_returns_over_agents = {
+            executor.submit(deploy_probes_to_agent, agent, queries): agent for agent in agents
         }
 
         # Write each agent's results in parallel
-
-        for eval_query_returns in as_completed(eval_query_returns_over_agents):
-            agent = eval_query_returns_over_agents[eval_query_returns]
-            agent_eval_query_returns = eval_query_returns.result()
+        for query_returns in as_completed(query_returns_over_agents):
+            agent = query_returns_over_agents[query_returns]
+            agent_query_returns = query_returns.result()
             agent_results = [
                 {
                     "source_user": agent._agent_name,
-                    "label": agent_eval_query_return["query_type"],
-                    "data": agent_eval_query_return,
+                    "label": agent_query_return["query_type"],
+                    "data": agent_query_return,
                 }
-                for agent_eval_query_return in agent_eval_query_returns
+                for agent_query_return in agent_query_returns
             ]
-            executor.submit(eval_event_logger.log, agent_results)
+            executor.submit(probe_event_logger.log, agent_results)

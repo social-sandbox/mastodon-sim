@@ -4,26 +4,36 @@ News_agent branch
 
 # Mastodon Social Simulation
 
-Generative Agent simulation of a Mastodon social network.
+Yaml (_i.e._ fully text configurable) generative agent simulation of social media using the [Concordia framework](https://github.com/google-deepmind/concordia).
 - 2024 NeurIPS Workshop Paper: [http://arxiv.org/abs/2410.13915](http://arxiv.org/abs/2410.13915).
 - 2025 demo paper (in review)
 
 ## File structure
 Overview
 - `mastodon-sim/src/sim` has multi-LLM-agent simulation code
-- `mastodon-sim/src/mastodon_sim` has social media code
+- `mastodon-sim/src/mastodon_sim` has simulated and deployed social media server code and the simulated experience technology for the agents needed to access it.
 - `mastodon-sim/examples/election` has code that configures an election simulation as an example
-
-`mastodon-sim/src/sim/main.py` runs the simulation configured in `mastodon-sim/examples/election/config_utils/gen_config.py`
+- `conf` contains a nested set of configuration files that set all the options for the simulation
+  - `sim.yaml`
+    - `agents.yaml`
+    - `soc_sys.yaml`
+    - `probes.yaml`
+- `mastodon-sim/src/sim/main.py` runs the simulation configured in `conf`, and also optionally writes `conf` by defining `sim.yaml` and sending it to `mastodon-sim/examples/election/gen_config.py`, which generates the example specific  `agents.yaml`, `soc_sys.yaml`, and `probes.yaml` config files.
 
 Detailed structure:
 <pre>
 mastodon-sim
+├── conf
+│   ├── election.yaml
+|   └── election
+│       ├── agents.yaml
+|       ├── soc_sys.yaml
+|       └── probes.yaml
 ├── examples
 │   └── election
+│       ├── gen_configs.py
 │       ├── config_utils
-│       │   ├── agent_query_lib.py
-│       │   └── gen_config.py
+│       │   └── agent_query_lib.py
 │       ├── input
 │       │   ├── news_data
 │       │   │   ├── news_agent_utils.py
@@ -38,12 +48,17 @@ mastodon-sim
 │       │       └── Top-k_Extraction.py
 │       ├── notebooks
 │       │   ├── basic_output_processing.ipynb
-│       │   ├── basic_sim.ipynb
-│       │   └── run_simulations.ipynb
-│       └── agent_lib
-│           ├── candidate.py
-│           ├── malicious.py
-│           └── voter.py
+│       │   └── basic_sim.ipynb
+│       ├── agent_lib
+│       |   ├── candidate.py
+│       |   ├── malicious.py
+│       |   └── voter.py
+|       └── output
+|           └── run_name_date_time
+|               ├── run_name_date_time.yaml
+|               ├── run_name_date_time_events.jsonl
+|               ├── run_name_date_time_prompts_and_responses.jsonl
+|               └── run_name_date_time_shell_output.log
 └── src
     ├── mastodon_sim
     │   ├── concordia
@@ -88,6 +103,7 @@ mastodon-sim
         │   ├── exogenenous_agent.py
         │   └── online_gamemaster.py
         ├── analysis_utils
+        |   ├── output_proc_utils.py
         │   └── dashboard.py
         └── sim_utils
             ├── agent_speech_utils.py
