@@ -28,28 +28,33 @@ warnings.filterwarnings(action="ignore", category=FutureWarning, module="concord
 from concordia.clocks import game_clock
 from concordia.typing.entity import ActionSpec, OutputType
 
-# sim functions
-from sim_utils import media_utils
-from sim_utils.agent_speech_utils import (
-    deploy_probes,
-    write_seed_toot,
-)
-from sim_utils.concordia_utils import (
-    build_agent_with_memories,
-    generate_concordia_memory_objects,
-    make_profiles,
-)
-from sim_utils.misc_sim_utils import EventLogger, Tee, post_analysis, rebuild_from_saved_checkpoint
-
-# mastodon_sim functions
-from mastodon_sim.concordia import apps
-from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
-from mastodon_sim.mastodon_utils import get_users_from_env
-
 # Go up two levels to set current working directory to project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 print("project root: " + str(PROJECT_ROOT))
 os.chdir(PROJECT_ROOT)
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+# sim functions
+# mastodon_sim functions
+from mastodon_sim.concordia import apps
+from mastodon_sim.mastodon_ops import check_env, get_public_timeline, reset_users, update_bio
+from mastodon_sim.mastodon_utils import get_users_from_env
+from sim.sim_utils import media_utils
+from sim.sim_utils.agent_speech_utils import (
+    deploy_probes,
+    write_seed_toot,
+)
+from sim.sim_utils.concordia_utils import (
+    build_agent_with_memories,
+    generate_concordia_memory_objects,
+    make_profiles,
+)
+from sim.sim_utils.misc_sim_utils import (
+    EventLogger,
+    Tee,
+    post_analysis,
+    rebuild_from_saved_checkpoint,
+)
 
 
 def clear_mastodon_server(max_num_agents):
