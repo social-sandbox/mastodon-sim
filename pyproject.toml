@@ -60,6 +60,8 @@ types-requests = "^2.32.0.20241016"
 portalocker = "^3.1.1"
 numpy = "1.26.4"
 pandas = "2.1.0"
+omegaconf = "^2.3.0"
+pyyaml = "^6.0.2"
 
 [tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
 commitizen = ">=3.21.3"
