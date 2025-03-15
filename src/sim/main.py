@@ -13,7 +13,7 @@ from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
@@ -22,6 +22,7 @@ with warnings.catch_warnings():
 from concordia import __file__ as concordia_location
 
 print(f"importing Concordia from: {concordia_location}")
+warnings.filterwarnings(action="ignore", category=FutureWarning, module="concordia")
 
 # concordia functions
 from concordia.clocks import game_clock
@@ -30,7 +31,7 @@ from concordia.typing.entity import ActionSpec, OutputType
 # sim functions
 from sim_utils import media_utils
 from sim_utils.agent_speech_utils import (
-    deploy_surveys,
+    deploy_probes,
     write_seed_toot,
 )
 from sim_utils.concordia_utils import (
@@ -38,7 +39,7 @@ from sim_utils.concordia_utils import (
     generate_concordia_memory_objects,
     make_profiles,
 )
-from sim_utils.misc_sim_utils import event_logger, post_analysis, rebuild_from_saved_checkpoint
+from sim_utils.misc_sim_utils import EventLogger, Tee, post_analysis, rebuild_from_saved_checkpoint
 
 # mastodon_sim functions
 from mastodon_sim.concordia import apps
@@ -49,12 +50,6 @@ from mastodon_sim.mastodon_utils import get_users_from_env
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 print("project root: " + str(PROJECT_ROOT))
 os.chdir(PROJECT_ROOT)
-
-SIM_EXAMPLE = "election"
-sys.path.insert(0, str(PROJECT_ROOT / "examples" / SIM_EXAMPLE))
-
-# example functions
-from gen_config import generate_output_configs
 
 
 def clear_mastodon_server(max_num_agents):
@@ -156,9 +151,7 @@ def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_descrip
         future.result()  # This will raise any exceptions that occurred during execution, if any
 
     phones = {
-        agent_name: apps.Phone(agent_name, apps=[mastodon_apps[agent_name]])
-        for agent_name, role in roles.items()
-        if role != "exogenous"
+        agent_name: apps.Phone(agent_name, apps=[mastodon_apps[agent_name]]) for agent_name in roles
     }
 
     return mastodon_apps, phones, active_rates
@@ -224,9 +217,7 @@ def run_sim(
 
     # build agent models
     agent_data = agent_settings["directory"]
-    get_idx = lambda name: [ait for ait, agentt in enumerate(agent_data) if agentt["name"] == name][
-        0
-    ]
+    get_idx = lambda name: [ait for ait, agent in enumerate(agent_data) if agent["name"] == name][0]
 
     profiles, roles = make_profiles(agent_data)  # profile format: (agent_config,role)
     role_parameters = setting_info["details"]["role_parameters"]
@@ -245,12 +236,14 @@ def run_sim(
         clock,
     )
 
-    action_event_logger = event_logger("action", output_rootname + "_event_output.jsonl")
+    action_event_logger = EventLogger("action", output_rootname + "_events.jsonl")
     action_event_logger.episode_idx = -1
+
     mastodon_apps, phones, active_rates = set_up_mastodon_app_usage(
         roles, role_parameters, action_event_logger, app_description, use_server
     )
 
+    # build agents
     agents = []
     local_post_analyze_data = {}
     obj_args = (formative_memory_factory, model, clock, time_step, setting_info)
@@ -260,8 +253,10 @@ def run_sim(
             agent, data = agent_obj
             agents.append(agent)
             local_post_analyze_data[agent._agent_name] = data
+    # add agent-specific configuration
     for agent in agents:
         if roles[agent._agent_name] == "exogenous":
+            # assign seed toots of exogenous agents with absolute path to images (if non empty)
             agent.seed_toot = agent_data[get_idx(agent._agent_name)]["seed_toot"]
             for post_text in agent.posts:
                 agent.posts[post_text] = [
@@ -270,6 +265,7 @@ def run_sim(
         else:
             for observation in agent_settings["initial_observations"]:
                 agent.observe(observation.format(name=agent._agent_name))
+
     post_seed_toots(agents, mastodon_apps)
 
     action_spec = ActionSpec(
@@ -297,8 +293,7 @@ def run_sim(
     )
 
     # initialize
-    eval_event_logger = event_logger("eval", output_rootname + "_event_output.jsonl")
-    eval_event_logger.episode_idx = -1
+    probe_event_logger = EventLogger("probe", output_rootname + "_events.jsonl")
 
     if load_from_checkpoint_path:
         (agents, clock) = rebuild_from_saved_checkpoint(
@@ -311,6 +306,34 @@ def run_sim(
         agent._agent_name for agent in agents
     ]  # needed for tagging names to thoughts
     for i in range(num_episodes):
+        action_event_logger.episode_idx = i
+        model.meta_data["episode_idx"] = i
+        probe_event_logger.episode_idx = i
+
+        print(f"Episode: {i}. Deploying survey...", end="")
+        deploy_probes(
+            [agent for agent in agents if roles[agent._agent_name] != "exogenous"],
+            probe_config,
+            probe_event_logger,
+        )
+        print("complete")
+
+        active_agent_names = get_active_agents(active_rates)
+
+        if len(active_agent_names) == 0:
+            clock.advance()
+        else:
+            start_timex = time.time()
+            env.step(active_agents=active_agent_names)
+            end_timex = time.time()
+            with open(
+                output_rootname + "_episode_runtime_logger.txt",
+                "a",
+            ) as f:
+                f.write(
+                    f"Episode with {len(active_agent_names)} finished - took {end_timex - start_timex}\n"
+                )
+
         # save chaeckpoints
         if save_checkpoints:
             for agent_input, agent in zip(agent_data, agents, strict=False):
@@ -326,118 +349,108 @@ def run_sim(
                 with open(file_path, "w") as file:
                     file.write(json.dumps(json_data, indent=4))
 
-        print(f"Episode: {i}. Deploying survey...", end="")
-        eval_event_logger.episode_idx = i
-        action_event_logger.episode_idx = i
-        model.meta_data["episode_idx"] = i
-        deploy_surveys(
-            [agent for agent in agents if roles[agent._agent_name] != "exogenous"],
-            probe_config,
-            eval_event_logger,
-        )
-        print("complete")
-
-        active_agent_names = get_active_agents(active_rates)
-
-        if len(active_agent_names) == 0:
-            clock.advance()
-        else:
-            start_timex = time.time()
-            env.step(active_agents=active_agent_names)
-            end_timex = time.time()
-            with open(
-                output_rootname + "_time_logger.txt",
-                "a",
-            ) as f:
-                f.write(
-                    f"Episode with {len(active_agent_names)} finished - took {end_timex - start_timex}\n"
-                )
     if output_post_analysis:
         post_analysis(env, model, agents, roles, local_post_analyze_data, output_rootname)
 
     #################################################################
 
 
-def generate_default_settings():
-    default_sim_settings = {}
-    default_sim_settings["seed"] = 1  # seed used for python's random module"
-    default_sim_settings["num_agents"] = 20  # number of agents
-    default_sim_settings["num_episodes"] = 1  # number of episodes
-    default_sim_settings["use_server"] = (
+def generate_sim_config(example_name):
+    default_sim_config = {}
+    default_sim_config["seed"] = 1  # seed used for python's random module"
+    default_sim_config["num_agents"] = 20  # number of agents
+    default_sim_config["num_episodes"] = 1  # number of episodes
+    default_sim_config["use_server"] = (
         False  # server (e.g. www.social-sandbox.com, www.socialsandbox2.com)
     )
-    default_sim_settings["use_news_agent"] = (
+    default_sim_config["use_news_agent"] = (
         "with_images"  # use news agent in the simulation 'with_images', else without
     )
-    default_sim_settings["sentence_encoder"] = (
+    default_sim_config["sentence_encoder"] = (
         "sentence-transformers/all-mpnet-base-v2"  # select sentence embedding model
     )
-    default_sim_settings["model"] = "gpt-4o-mini"  # select language model to run sim
-    default_sim_settings["persona_type"] = "Reddit.Big5"  # persona
-    default_sim_settings["run_name"] = "run1"  # experiment label
-    default_sim_settings["platform"] = "Mastodon"
-    default_sim_settings["gamemasters"] = {
+    default_sim_config["model"] = "gpt-4o-mini"  # select language model to run sim
+    default_sim_config["persona_type"] = "Reddit.Big5"  # persona
+    default_sim_config["run_name"] = "run1"  # experiment label
+    default_sim_config["platform"] = "Mastodon"
+    default_sim_config["gamemasters"] = {
         "online_gamemaster": "app_side_only_gamemaster",
         "reallife_gamemaster": None,
     }
-    with open("conf/sim/default.yaml", "w") as outfile:
-        yaml.dump(default_sim_settings, outfile, default_flow_style=False)
-    return default_sim_settings
+    default_sim_config["example_name"] = example_name
+
+    return default_sim_config
 
 
-def generate_config(cfg):
-    soc_sys_settings, probes, agents = generate_output_configs(cfg)
+def generate_remaining_configs_and_store(sim: dict):
+    # example functions
+    example_module = importlib.import_module("sim_setting.gen_config")
+    soc_sys, probes, agents = example_module.generate_output_configs(sim)
 
-    # make output storage directory
-    outdir = Path(f"examples/{SIM_EXAMPLE}/output")
-    outdir.mkdir(exist_ok=True)
-    config_name = f"N{cfg['num_agents']}_T{cfg['num_episodes']}_{cfg['persona_type'].split('.')[0]}_{cfg['persona_type'].split('.')[1]}_{soc_sys_settings['exp_name']}_{agents['inputs']['news_file']}_{cfg['use_news_agent']}_{cfg['run_name']}"
-    cfg["output_rootname"] = str(outdir / config_name)
+    # generate name for run
+    config_name = (
+        f"N{sim['num_agents']}_T{sim['num_episodes']}_{sim['persona_type'].split('.')[0]}_{sim['persona_type'].split('.')[1]}_{soc_sys['exp_name']}_{agents['inputs']['news_file']}_{sim['use_news_agent']}_{sim['run_name']}"
+        + datetime.datetime.now().strftime("_%H_%M_%d_%m_%Y")
+    )
+    outdir = Path(f"examples/{sim['example_name']}/output")
+    sim["output_rootname"] = str(outdir / config_name / config_name)
+
+    # make output storage directory and write single, amalgamated config
     data_config = {
-        "soc_sys_settings": soc_sys_settings,
+        "soc_sys": soc_sys,
         "probes": probes,
         "agents": agents,
-        "sim": cfg,
+        "sim": sim,
     }
+    (outdir / config_name).mkdir(exist_ok=True)
+    with open(sim["output_rootname"] + ".yaml", "w") as outfile:
+        yaml.dump(data_config, outfile, default_flow_style=False)
 
-    if False:
-        # pull out when hydra config solution is implemented
+    # optionally write heirarchy of configs to conf (for users to see sim's configuration options and for use by conf managers, e.g. hydra)
+    if True:
         for name, cfgg in data_config.items():
-            print("writing " + name)
-            with open(output_rootname + "_" + name + ".yaml", "w") as outfile:
+            file_path = "conf/" + sim["example_name"]
+            if name != "sim":
+                file_path = file_path + "/" + name
+            with open(file_path + ".yaml", "w") as outfile:
                 yaml.dump({name: cfgg}, outfile, default_flow_style=False)
-        name = "sim"
-        with open(output_rootname + "_" + name + ".yaml", "w") as outfile:
-            yaml.dump({name: cfg}, outfile, default_flow_style=False)
 
-        config = {}
-        config["defaults"] = ["_self_", {"sim": "default"}] + [
-            config_name + "_" + name for name in data_config
-        ]
-        config["hydra"] = {}
-        config["hydra"]["searchpath"] = [
+        # if False:
+        # pull out when hydra config solution is implemented
+        # config = {}
+        # config["defaults"] = ["_self_", {"sim": "default"}] + [
+        #     config_name + "_" + name for name in data_config
+        # ]
+        sim["hydra"] = {}
+        sim["hydra"]["searchpath"] = [
             str(outdir.resolve()),
         ]
 
-        with open("conf/" + SIM_EXAMPLE + ".yaml", "w") as outfile:
-            yaml.dump(config, outfile, default_flow_style=False)
+        # add more hydra options here
+        # ...
 
-    return data_config
+        # write
+        # with open("conf/" + sim["example_name"] + ".yaml", "w") as outfile:
+        #     yaml.dump(config, outfile, default_flow_style=False)
+
+    return sim["output_rootname"] + ".yaml"
 
 
 def load_config(path):
-    conf = OmegaConf.load(path + ".yaml")
+    conf = OmegaConf.load(path)
+    # convert from DictConfig to dict for timebeing
     return conf
 
 
-def configure_logging():
+def configure_logging(output_rootname):
     # supress verbose printing of hydra's api logging so only warnings (or greater issues) are printed
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    sys.stdout = Tee(output_rootname + "_shelloutput.log")
 
 
-# @hydra.main(version_base=None, config_path="../../conf", config_name=SIM_EXAMPLE)
-def main(cfg):  #: DictConfig):
-    configure_logging()
+# @hydra.main(version_base=None, config_path="../../conf", config_name="sim")
+def main(cfg: DictConfig):
+    configure_logging(cfg.sim.output_rootname)
 
     # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
     if cfg.sim.use_server:
@@ -449,11 +462,6 @@ def main(cfg):  #: DictConfig):
 
     SEED = cfg.sim.seed
     random.seed(SEED)
-
-    # add example module to system modules as "sim_setting"
-    sys.path.insert(0, str(PROJECT_ROOT / "examples"))
-    package = importlib.import_module(SIM_EXAMPLE)
-    sys.modules["sim_setting"] = package
 
     # load language models
     model = select_large_language_model(
@@ -467,16 +475,16 @@ def main(cfg):  #: DictConfig):
     # gamemaster
     gamemaster_settings = {
         "online_gamemaster": cfg.sim.gamemasters.online_gamemaster,
-        "gamemaster_memories": cfg.soc_sys_settings.gamemaster_memories,
+        "gamemaster_memories": cfg.soc_sys.gamemaster_memories,
     }
 
     # agents
     agent_settings = {
         "directory": OmegaConf.to_container(cfg.agents.directory, resolve=True),
         "shared_memories": (
-            cfg.soc_sys_settings.shared_agent_memories_template
-            + [cfg.soc_sys_settings.setting_info.description]
-            + [cfg.soc_sys_settings.social_media_usage_instructions]
+            cfg.soc_sys.shared_agent_memories_template
+            + [cfg.soc_sys.setting_info.description]
+            + [cfg.soc_sys.social_media_usage_instructions]
         ),
         "initial_observations": cfg.agents.initial_observations,
     }
@@ -486,14 +494,14 @@ def main(cfg):  #: DictConfig):
         embedder,
         agent_settings,
         gamemaster_settings,
-        cfg.soc_sys_settings.social_media_usage_instructions,
-        cfg.soc_sys_settings.custom_call_to_action,
-        cfg.soc_sys_settings.setting_info,
-        cfg.probes,
+        cfg.soc_sys.social_media_usage_instructions,
+        cfg.soc_sys.custom_call_to_action,
+        cfg.soc_sys.setting_info,
+        OmegaConf.to_container(cfg.probes, resolve=True),
         cfg.sim.num_episodes,
         cfg.sim.output_rootname,
         cfg.sim.use_server,
-        load_from_checkpoint_path=cfg.load_path,
+        load_from_checkpoint_path=cfg.sim.load_path,
     )
 
 
@@ -501,22 +509,22 @@ if __name__ == "__main__":
     # parse input arguments
     parser = argparse.ArgumentParser(description="input arguments")
     parser.add_argument("--load_path", type=str, default="", help="path to saved checkpoint folder")
+    parser.add_argument(
+        "--example_name", type=str, default="election", help="path to saved checkpoint folder"
+    )
     args = parser.parse_args()
+    sys.path.insert(0, str(PROJECT_ROOT / "examples"))
+    sys.path.insert(0, str(PROJECT_ROOT / "examples" / args.example_name))
+    # add example module to system modules as "sim_setting"
+    package = importlib.import_module(args.example_name)
+    sys.modules["sim_setting"] = package
 
     if args.load_path:
-        # load saved config
-        with open(args.load_path) as stream:
-            try:
-                data_config = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-        data_config["load_path"] = args.load_path
+        config_filepath = args.load_path
     else:
-        cfgg = generate_default_settings()
-        data_config = generate_config(cfgg)
-        with open(data_config["sim"]["output_rootname"] + ".yaml", "w") as outfile:
-            yaml.dump(data_config, outfile, default_flow_style=False)
-        data_config = load_config(data_config["sim"]["output_rootname"])
-        data_config["load_path"] = ""
+        sim_cfg = generate_sim_config(args.example_name)
+        sim_cfg["load_path"] = ""
+        config_filepath = generate_remaining_configs_and_store(sim_cfg)
 
-    main(data_config)
+    config = load_config(config_filepath)
+    main(config)

@@ -263,7 +263,6 @@ def generate_output_configs(cfg):
         voter_configs.append(agent)
 
     # add custom setting-specific agent features
-    malicious_actor_config = None
     if experiment_name == "independent":
         pass
     elif experiment_name == "bias":
@@ -372,7 +371,6 @@ def generate_output_configs(cfg):
             "candidate_info": CANDIDATE_INFO,
             "role_parameters": {
                 "active_rates_per_episode": {
-                    "malicious": 0.9,
                     "candidate": 0.7,
                     "voter": 0.5,
                     "exogenous": 1,
@@ -381,7 +379,10 @@ def generate_output_configs(cfg):
             },
         },
     }
-
+    if experiment_name == "malicious":
+        soc_sys_context["setting_info"]["details"]["role_parameters"]["active_rates_per_episode"][
+            "malicious"
+        ] = 0.9
     # 3) probes configuration------------------------------------------------------
     probes = {}
     queries_data = [

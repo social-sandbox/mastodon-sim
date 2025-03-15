@@ -13,13 +13,13 @@ class AgentModel:
         self.current_post_index = 0
         self.seed_post = ""
 
-    def post(self):
+    def post(self, app):
         post = self.generate_post()
         media = [img_filepath for img_filepath in self.posts[post]]
         if len(media) > 0:
-            self.app.post_toot(self.name, status=post, media_links=media)
+            app.post_toot(self._agent_name, status=post, media_links=media)
         else:
-            self.app.post_toot(self.name, status=post)
+            app.post_toot(self._agent_name, status=post)
         return post
 
     def generate_post(self):

@@ -413,7 +413,7 @@ class MastodonSocialNetworkApp(PhoneApp):
     def _get_username(self, display_name: str) -> str:
         """Get the username for a given display name."""
         username = self._user_mapping.get(display_name)
-        self._print(f"Mapped {display_name} to @{username}", emoji="🔗")
+        # self._print(f"Mapped {display_name} to @{username}", emoji="🔗")
         if not username:
             raise ValueError(f"No username found for display name: {display_name}")
         return username

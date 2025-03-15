@@ -16,6 +16,7 @@ class VotePref(AgentQuery):
                 "dynamic_labels": ["agentname"],
             },
         }
+        # e.g.
         # query_data = {
         #     "query_type": self.name,
         #     "interaction_premise_template": {
@@ -49,6 +50,7 @@ class Favorability(AgentQuery):
                 "dynamic_labels": ["agentname"],
             },
         }
+        # e.g.
         # query_data = {
         #     "query_type": self.name,
         #     "interaction_premise_template": {
@@ -75,6 +77,7 @@ class VoteIntent(AgentQuery):
                 "text": "Friend: In one word, will you cast a vote? (reply yes, or no.)\n",
             }
         }
+        # e.g.
         # query_data = {
         #    "query_type": self.name,
         # }
