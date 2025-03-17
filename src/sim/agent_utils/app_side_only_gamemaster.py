@@ -1,4 +1,5 @@
 import datetime
+import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from concordia.associative_memory import (
@@ -151,3 +152,12 @@ class GameMaster:
         """Run the game for a given number of steps."""
         for _ in range(steps):
             self.step()  # By default, all agents will act unless specified otherwise
+
+    def get_active_agents(self, active_rates):
+        # random model of realworld agent lives (so that going online every delta is a poisson point process)
+        # (active_rate could be a agent engagement component that could be based on a time-varying rate process updated at each episode according to response about how engaged agent is feeling)
+        active_agents = []
+        for agent_name, rate in active_rates.items():
+            if random.random() < rate:
+                active_agents.append(agent_name)
+        return active_agents

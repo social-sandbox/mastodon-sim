@@ -1,5 +1,4 @@
 import json
-import sys
 import threading
 
 from concordia.utils import html as html_lib
@@ -7,6 +6,7 @@ from IPython import display
 
 file_lock = threading.Lock()
 import datetime
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -17,11 +17,18 @@ from concordia.associative_memory import (
 from concordia.clocks import game_clock
 from concordia.language_model import language_model
 
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
+    import sentence_transformers
 
-# def write_item(out_item, output_filename):
-#     with file_lock:
-#         with open(output_filename, "a") as f:
-#             print(json.dumps(out_item), file=f)  # adds the new line character
+
+def get_sentance_encoder(model_name):
+    # Setup sentence encoder
+    st_model = sentence_transformers.SentenceTransformer(model_name)
+    embedder = lambda x: st_model.encode(x, show_progress_bar=False)
+    return embedder
+
+
 def write_item(out_item, output_filename):
     try:
         with file_lock:
@@ -166,16 +173,35 @@ def rebuild_from_saved_checkpoint(
     return None
 
 
-class Tee:
-    def __init__(self, filename):
-        self.terminal = sys.stdout
-        self.file = open(filename, "w")
+# class Tee:
+#     def __init__(self, filename):
+#         self.terminal = sys.stdout
+#         self.file = open(filename, "w")
 
-    def write(self, message):
-        self.terminal.write(message)
-        self.file.write(message)
-        self.file.flush()  # Optional: ensures output is written immediately
+#     def write(self, message):
+#         self.terminal.write(message)
+#         self.file.write(message)
+#         self.file.flush()  # Optional: ensures output is written immediately
 
-    def flush(self):
-        self.terminal.flush()
-        self.file.flush()
+#     def flush(self):
+#         self.terminal.flush()
+#         self.file.flush()
+
+
+class ConfigStore:
+    _instance = None
+    _config = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = ConfigStore()
+        return cls._instance
+
+    @classmethod
+    def set_config(cls, cfg):
+        cls._config = cfg
+
+    @classmethod
+    def get_config(cls):
+        return cls._config
