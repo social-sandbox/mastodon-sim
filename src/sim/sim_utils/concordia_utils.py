@@ -1,4 +1,6 @@
+import concurrent.futures
 import importlib
+import random
 
 from concordia.associative_memory import (
     associative_memory,
@@ -6,6 +8,9 @@ from concordia.associative_memory import (
     formative_memories,
     importance_function,
 )
+
+from mastodon_sim.concordia import apps
+from mastodon_sim.mastodon_ops import update_bio
 
 
 def generate_concordia_memory_objects(
@@ -96,3 +101,71 @@ def build_agent_with_memories(obj_args, profile_item):
     agent_module = importlib.import_module(module_path)
     agent = agent_module.AgentBuilder.build(**input_args)
     return agent, store_for_local_post_analysis
+
+
+def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_description, use_server):
+    active_rates = {}
+    for agent_name, role in roles.items():
+        active_rates[agent_name] = role_parameters["active_rates_per_episode"][role]
+
+    mastodon_apps = {
+        agent_name: apps.MastodonSocialNetworkApp(
+            action_logger=action_logger,
+            perform_operations=use_server,
+            app_description=app_description,
+        )
+        for agent_name in roles
+    }
+    user_mapping = {agent_name.split()[0]: f"user{i + 1:04d}" for i, agent_name in enumerate(roles)}
+    for p in mastodon_apps:
+        mastodon_apps[p].set_user_mapping(user_mapping)
+
+    # initiailize initial social network. Pre-generate unique follow relationships
+    follow_pairs = set()
+    # Now, generate additional follow relationships between agents.
+    role_prob_matrix = role_parameters["initial_follow_prob"]
+    agent_roles = []
+    for agent_i, role_i in roles.items():
+        for agent_j, role_j in roles.items():
+            prob = role_prob_matrix[role_i][role_j]
+            if False:
+                if follower != followee:
+                    # With a 20% chance, create mutual follow relationships.
+                    if random.random() < 0.2:
+                        follow_pairs.add((follower, followee))
+                        follow_pairs.add((followee, follower))
+            # Otherwise, with a create a one-direction follow according to stored probability.
+            if random.random() < prob:
+                follow_pairs.add((agent_i, agent_j))
+
+    # Execute the follow operations concurrently.
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for follower, followee in follow_pairs:
+            # Submit the follow operation from the appropriate mastodon app instance.
+            futures.append(executor.submit(mastodon_apps[follower].follow_user, follower, followee))
+
+    # Wait for all tasks to complete, handling exceptions as needed.
+    for future in concurrent.futures.as_completed(futures):
+        try:
+            future.result()
+        except Exception as e:
+            # If a follow error occurs (e.g. already following), we simply log and ignore it.
+            print(f"Ignoring error: {e}")
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(
+                update_bio, user_mapping[agent_name], display_name=agent_name, bio=""
+            )  # update with generated bios?
+            for agent_name in user_mapping
+        ]
+    # Optionally, wait for all tasks to complete
+    for future in concurrent.futures.as_completed(futures):
+        future.result()  # This will raise any exceptions that occurred during execution, if any
+
+    phones = {
+        agent_name: apps.Phone(agent_name, apps=[mastodon_apps[agent_name]]) for agent_name in roles
+    }
+
+    return mastodon_apps, phones, active_rates
