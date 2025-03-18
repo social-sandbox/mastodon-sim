@@ -76,7 +76,7 @@ def post_seed_toots(agents, mastodon_apps):
         for future in concurrent.futures.as_completed(futures):
             future.result()  # This will raise any exceptions that occurred in the thread, if any
 
-
+            
 def run_sim(
     model,
     embedder,
@@ -266,6 +266,7 @@ def main(cfg: DictConfig):
 
     package = importlib.import_module(cfg.sim.example_name)
     sys.modules["sim_setting"] = package
+
 
     # WARNING: Make sure no one else is running a sim before setting to True since this clears the server!
     if cfg.sim.use_server:

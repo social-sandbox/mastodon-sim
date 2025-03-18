@@ -102,7 +102,6 @@ def build_agent_with_memories(obj_args, profile_item):
     agent = agent_module.AgentBuilder.build(**input_args)
     return agent, store_for_local_post_analysis
 
-
 def set_up_mastodon_app_usage(roles, role_parameters, action_logger, app_description, use_server):
     active_rates = {}
     for agent_name, role in roles.items():
