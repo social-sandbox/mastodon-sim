@@ -184,3 +184,23 @@ class GptLanguageModel(language_model.LanguageModel):
         raise language_model.InvalidResponseError(
             f"Too many multiple choice attempts.\nLast attempt: {sample}, extracted: {answer}"
         )
+
+
+def select_large_language_model(model_name, log_file, debug_mode):
+    if "sonnet" in model_name:
+        GPT_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+        model = amazon_bedrock_model.AmazonBedrockLanguageModel(
+            # -            model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"
+            model_id="claude-3-5-sonnet-latest"  # "anthropic.claude-3-5-sonnet-20240620-v1:0"
+        )
+
+    elif "gpt" in model_name:
+        GPT_API_KEY = os.getenv("OPENAI_API_KEY")
+        if not GPT_API_KEY:
+            raise ValueError("GPT_API_KEY is required.")
+        model = GptLanguageModel(
+            api_key=GPT_API_KEY, model_name=model_name, log_file=log_file, debug=debug_mode
+        )
+    else:
+        raise ValueError("Unknown model name.")
+    return model

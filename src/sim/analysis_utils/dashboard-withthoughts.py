@@ -193,8 +193,6 @@ def deserialize_data(serialized):
     follow_graph.add_edges_from(serialized["edges"])
 
     # Convert episode keys back to integers
-    for k, v in serialized["probe_data"].items():
-        print(k)
     interactions_by_episode = {int(k): v for k, v in serialized["interactions_by_episode"].items()}
     active_users_by_episode = {
         int(k): set(v) for k, v in serialized["active_users_by_episode"].items()
@@ -285,7 +283,6 @@ def load_data(input_var):
 
     names = list(df.source_user.unique())
     name_dict = dict(zip([n.split()[0] for n in names], names, strict=False))
-    print(name_dict)
 
     # replace all first name occurence with fullnames in target field
     def replace_full(data):
@@ -1197,7 +1194,7 @@ if __name__ == "__main__":
                 "selector": ".interaction_edge:hover",
                 "style": {
                     "label": "data(label)",
-                    "font-size": "14px",
+                    "font-size": "18px",
                     "color": "#000000",
                 },
             },

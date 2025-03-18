@@ -1,6 +1,6 @@
 import importlib
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
 from concordia.typing import entity
 
@@ -83,8 +83,16 @@ class AgentQuery(ABC):
 
 
 def deploy_probes_to_agent(agent, queries):
-    query_returns = [query.submit(agent) for query in queries]
-    return query_returns
+    agent_query_returns = [query.submit(agent) for query in queries]
+    agent_results = [
+        {
+            "source_user": agent._agent_name,
+            "label": agent_query_return["query_type"],
+            "data": agent_query_return,
+        }
+        for agent_query_return in agent_query_returns
+    ]
+    probe_event_logger.log(agent_results)
 
 
 def deploy_probes(agents, probes, probe_event_logger):
@@ -96,22 +104,9 @@ def deploy_probes(agents, probes, probe_event_logger):
             importlib.import_module(query_lib_module), query_data["query_type"]
         )  # "module.submodule"
         queries.append(QueryClass(query_data))
+
     with ThreadPoolExecutor() as executor:
         # Parallel probing
         query_returns_over_agents = {
             executor.submit(deploy_probes_to_agent, agent, queries): agent for agent in agents
         }
-
-        # Write each agent's results in parallel
-        for query_returns in as_completed(query_returns_over_agents):
-            agent = query_returns_over_agents[query_returns]
-            agent_query_returns = query_returns.result()
-            agent_results = [
-                {
-                    "source_user": agent._agent_name,
-                    "label": agent_query_return["query_type"],
-                    "data": agent_query_return,
-                }
-                for agent_query_return in agent_query_returns
-            ]
-            executor.submit(probe_event_logger.log, agent_results)

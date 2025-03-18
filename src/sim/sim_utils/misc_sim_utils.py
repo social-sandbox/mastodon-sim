@@ -1,5 +1,5 @@
 import json
-import sys
+import logging
 import threading
 
 from concordia.utils import html as html_lib
@@ -7,6 +7,7 @@ from IPython import display
 
 file_lock = threading.Lock()
 import datetime
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -17,11 +18,33 @@ from concordia.associative_memory import (
 from concordia.clocks import game_clock
 from concordia.language_model import language_model
 
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
+    import sentence_transformers
 
-# def write_item(out_item, output_filename):
-#     with file_lock:
-#         with open(output_filename, "a") as f:
-#             print(json.dumps(out_item), file=f)  # adds the new line character
+
+# Create a custom StreamHandler that redirects stdout to the logger
+class StdoutToLogger:
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ""
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
+
+    def flush(self):
+        pass
+
+
+def get_sentance_encoder(model_name):
+    # Setup sentence encoder
+    st_model = sentence_transformers.SentenceTransformer(model_name)
+    embedder = lambda x: st_model.encode(x, show_progress_bar=False)
+    return embedder
+
+
 def write_item(out_item, output_filename):
     try:
         with file_lock:
@@ -166,16 +189,20 @@ def rebuild_from_saved_checkpoint(
     return None
 
 
-class Tee:
-    def __init__(self, filename):
-        self.terminal = sys.stdout
-        self.file = open(filename, "w")
+class ConfigStore:
+    _instance = None
+    _config = None
 
-    def write(self, message):
-        self.terminal.write(message)
-        self.file.write(message)
-        self.file.flush()  # Optional: ensures output is written immediately
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = ConfigStore()
+        return cls._instance
 
-    def flush(self):
-        self.terminal.flush()
-        self.file.flush()
+    @classmethod
+    def set_config(cls, cfg):
+        cls._config = cfg
+
+    @classmethod
+    def get_config(cls):
+        return cls._config
