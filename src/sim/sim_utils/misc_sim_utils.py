@@ -189,21 +189,6 @@ def rebuild_from_saved_checkpoint(
     return None
 
 
-# class Tee:
-#     def __init__(self, filename):
-#         self.terminal = sys.stdout
-#         self.file = open(filename, "w")
-
-#     def write(self, message):
-#         self.terminal.write(message)
-#         self.file.write(message)
-#         self.file.flush()  # Optional: ensures output is written immediately
-
-#     def flush(self):
-#         self.terminal.flush()
-#         self.file.flush()
-
-
 class ConfigStore:
     _instance = None
     _config = None
