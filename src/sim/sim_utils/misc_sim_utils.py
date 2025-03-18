@@ -1,4 +1,5 @@
 import json
+import logging
 import threading
 
 from concordia.utils import html as html_lib
@@ -20,6 +21,21 @@ from concordia.language_model import language_model
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     import sentence_transformers
+
+
+# Create a custom StreamHandler that redirects stdout to the logger
+class StdoutToLogger:
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ""
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
+
+    def flush(self):
+        pass
 
 
 def get_sentance_encoder(model_name):
