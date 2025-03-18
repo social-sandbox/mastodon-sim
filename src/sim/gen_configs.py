@@ -44,18 +44,26 @@ def generate_remaining_configs(sim: dict):
     soc_sys, probes, agents = example_module.generate_output_configs(sim)
 
     # generate name for run
-    config_label = f"N{sim['num_agents']}_T{sim['num_episodes']}_{sim['persona_type'].split('.')[0]}_{sim['persona_type'].split('.')[1]}_{soc_sys['exp_name']}_{agents['inputs']['news_file']}_{sim['use_news_agent']}_{sim['run_name']}"
-    outdir = Path(f"examples/{sim['example_name']}/output")
-    sim["output_rootname"] = str(
-        outdir / config_label
-    )  # + datetime.datetime.now().strftime("_%H_%M_%d_%m_%Y") / config_name)
+    config_label = "_".join(
+        [
+            "N${sim.num_agents}",
+            "T${sim.num_episodes}",
+            "${sim.persona_type}",
+            "${soc_sys.exp_name}",
+            "${agents.inputs.news_file}",
+            "${sim.use_news_agent}",
+            "${sim.run_name}",
+        ]
+    )
+    # outdir = Path(f"examples/{sim['example_name']}/output")
+    # sim["output_rootname"] = str(outdir / config_label)
 
     # write heirarchy of configs to conf
     data_config = {"soc_sys": soc_sys, "probes": probes, "agents": agents, "sim": sim}
 
     # configure hydra
     ccfg: dict[str, Any] = {}
-    ccfg["defaults"] = {}
+    ccfg["defaults"] = []
     for name, cfgg in data_config.items():
         ccfg["defaults"].append({name: sim["example_name"] + "_" + name})
         output_file = Path("conf/" + name + "/" + sim["example_name"] + "_" + name + ".yaml")
@@ -65,9 +73,13 @@ def generate_remaining_configs(sim: dict):
 
     ccfg["hydra"] = {}
     ccfg["hydra"]["job"] = {}
-    ccfg["hydra"]["job"]["name"] = config_label
+    ccfg["hydra"]["job"]["name"] = config_label + "_" + "${now:%Y-%m-%d_%H-%M-%S}"
     ccfg["hydra"]["run"] = {}
-    ccfg["hydra"]["run"]["dir"] = sim["output_rootname"] + "/{now:%Y-%m-%d_%H-%M-%S}"
+    ccfg["hydra"]["run"]["dir"] = "examples/" + "${sim.example_name}/" + "outputs/" + config_label
+    # +"/"+\
+    #     "${hydra.job.name}"+"_"+\
+    #     "${now:%Y-%m-%d_%H-%M-%S}"
+    # )
     # sim["hydra"]["searchpath"] = [
     #     str(outdir.resolve()),
     # ]

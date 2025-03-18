@@ -13,7 +13,7 @@ from pathlib import Path
 import hydra
 from concordia import __file__ as concordia_location
 from dotenv import load_dotenv
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, open_dict
 
 print(f"importing Concordia from: {concordia_location}")
 warnings.filterwarnings(action="ignore", category=FutureWarning, module="concordia")
@@ -46,6 +46,7 @@ from sim.sim_utils.media_utils import select_large_language_model
 from sim.sim_utils.misc_sim_utils import (
     ConfigStore,
     EventLogger,
+    StdoutToLogger,
     get_sentance_encoder,
     post_analysis,
     rebuild_from_saved_checkpoint,
@@ -91,7 +92,6 @@ def run_sim(
     custom_call_to_action = cfg.soc_sys.custom_call_to_action
     setting_info = cfg.soc_sys.setting_info
     num_episodes = cfg.sim.num_episodes
-    output_rootname = hydra.core.hydra_config.HydraConfig.get()["runtime"]["output_dir"]
     use_server = cfg.sim.use_server
 
     time_step = datetime.timedelta(minutes=30)
@@ -123,7 +123,7 @@ def run_sim(
         clock,
     )
 
-    action_event_logger = EventLogger("action", output_rootname + "_events.jsonl")
+    action_event_logger = EventLogger("action", cfg.sim.output_rootname + "_events.jsonl")
     action_event_logger.episode_idx = -1
 
     mastodon_apps, phones, active_rates = set_up_mastodon_app_usage(
@@ -180,7 +180,7 @@ def run_sim(
     )
 
     # initialize
-    probe_event_logger = EventLogger("probe", output_rootname + "_events.jsonl")
+    probe_event_logger = EventLogger("probe", cfg.sim.output_rootname + "_events.jsonl")
 
     if load_from_checkpoint_path:
         (agents, clock) = rebuild_from_saved_checkpoint(
@@ -214,7 +214,7 @@ def run_sim(
             env.step(active_agents=active_agent_names)
             end_timex = time.time()
             with open(
-                output_rootname + "_episode_runtime_logger.txt",
+                cfg.sim.output_rootname + "_episode_runtime_logger.txt",
                 "a",
             ) as f:
                 f.write(
@@ -224,7 +224,9 @@ def run_sim(
         # save chaeckpoints
         if save_checkpoints:
             for agent_input, agent in zip(agent_data, agents, strict=False):
-                agent_dir = os.path.join(output_rootname + "agent_checkpoints", agent._agent_name)
+                agent_dir = os.path.join(
+                    cfg.sim.output_rootname + "agent_checkpoints", agent._agent_name
+                )
                 os.makedirs(agent_dir, exist_ok=True)
                 file_path = os.path.join(agent_dir, f"Episode_{i}.json")
                 module_path = (
@@ -237,28 +239,31 @@ def run_sim(
                     file.write(json.dumps(json_data, indent=4))
 
     if output_post_analysis:
-        post_analysis(env, model, agents, roles, local_post_analyze_data, output_rootname)
+        post_analysis(env, model, agents, roles, local_post_analyze_data, cfg.sim.output_rootname)
 
 
-# def load_config(path):
-#     conf = OmegaConf.load(path)
-#     # convert from DictConfig to dict for timebeing
-#     return conf
-
-
-def configure_logging():
+def configure_logging(logger):
     # supress verbose printing of hydra's api logging so only warnings (or greater issues) are printed
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    # sys.stdout = Tee(output_rootname + "_shelloutput.log")
+    # Redirect stdout to the logger
+    sys.stdout = StdoutToLogger(logger)
 
 
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig):
+    OmegaConf.set_struct(cfg, True)
+    with open_dict(cfg):
+        cfg.sim.output_rootname = (
+            hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+            + "/"
+            + hydra.core.hydra_config.HydraConfig.get().job.name
+        )
     # make cfg globally accessible
     ConfigStore.set_config(cfg)
 
-    output_rootname = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    configure_logging()
+    logger = logging.getLogger(__name__)
+    configure_logging(logger)
+
     package = importlib.import_module(cfg.sim.example_name)
     sys.modules["sim_setting"] = package
 
@@ -276,7 +281,7 @@ def main(cfg: DictConfig):
 
     # load language models
     model = select_large_language_model(
-        cfg.sim.model, output_rootname + "_prompts_and_responses.jsonl", True
+        cfg.sim.model, cfg.sim.output_rootname + "_prompts_and_responses.jsonl", True
     )
     embedder = get_sentance_encoder(cfg.sim.sentence_encoder)
 
