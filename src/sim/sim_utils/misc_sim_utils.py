@@ -1,9 +1,12 @@
 import json
 import logging
 import threading
+from typing import cast
 
 from concordia.utils import html as html_lib
+from hydra.core.hydra_config import HydraConfig
 from IPython import display
+from omegaconf import DictConfig
 
 file_lock = threading.Lock()
 import datetime
@@ -51,9 +54,7 @@ def write_item(out_item, output_filename):
             with open(output_filename, "a") as f:
                 json_str = json.dumps(out_item)  # Separate this step for debugging
                 print(json_str, file=f)
-                print(
-                    f"Successfully wrote item with type: {out_item.get('event_type')}"
-                )  # Debug print
+                print(f"Successfully wrote item with type: {out_item.get('label')}")  # Debug print
     except Exception as e:
         print(f"Error in write_item: {e}")
         print(
@@ -190,19 +191,25 @@ def rebuild_from_saved_checkpoint(
 
 
 class ConfigStore:
-    _instance = None
-    _config = None
+    _config: DictConfig | None = None
 
     @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = ConfigStore()
-        return cls._instance
-
-    @classmethod
-    def set_config(cls, cfg):
+    def set_config(cls, cfg: DictConfig) -> None:
         cls._config = cfg
 
     @classmethod
-    def get_config(cls):
-        return cls._config
+    def get_config(cls) -> DictConfig:
+        # Try to get from local store first
+        if cls._config is not None:
+            return cls._config
+
+        # Try to get from Hydra
+        try:
+            # Access the config using getattr to avoid mypy error
+            hydra_conf = HydraConfig.get()
+            config = getattr(hydra_conf, "config", None)
+            if config is not None:
+                return cast(DictConfig, config)
+            raise ValueError("Config not found in HydraConfig")
+        except ValueError:
+            raise RuntimeError("Configuration not initialized. Run main script first.")

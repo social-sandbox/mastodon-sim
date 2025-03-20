@@ -35,7 +35,8 @@ def probe_plot_preprocessing(probe_data):
     candidate1_votes_over_time = []
     candidate2_votes_over_time = []
     non_votes_over_time = []
-    for ep in sorted(probe_data.keys()):
+    x_data = sorted(probe_data.keys())
+    for ep in x_data:
         ep_votes = probe_data[ep]
         total_ep_votes = len(ep_votes)
         candidate1_votes = sum(
@@ -55,21 +56,20 @@ def probe_plot_preprocessing(probe_data):
             if total_ep_votes > 0
             else 0
         )
-
     graphs_data = [
         {
             "label": "for " + custom_names[0].split(" ")[0],
-            "data": candidate1_votes_over_time,
+            "data": {"x": x_data, "y": candidate1_votes_over_time},
             "color": line_colors[custom_names[0]],
         },
         {
             "label": "for " + custom_names[1].split(" ")[0],
-            "data": candidate2_votes_over_time,
+            "data": {"x": x_data, "y": candidate2_votes_over_time},
             "color": line_colors[custom_names[1]],
         },
         {
             "label": "did not vote",
-            "data": non_votes_over_time,
+            "data": {"x": x_data, "y": non_votes_over_time},
             "color": line_colors["did not vote"],
         },
     ]
@@ -163,6 +163,36 @@ def create_display(entry):
     )
 
 
+def create_display_plan(entry_plan, entry_acts):
+    return html.Details(
+        [
+            html.Summary(entry_plan),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            # html.Strong("Full Prompt: "),
+                            html.Span(convert_linebreaks("\n- ".join(entry_acts))),
+                        ],
+                        style={"backgroundColor": "#e8f0fe", "padding": "5px", "margin": "5px"},
+                    ),
+                    # html.Div(
+                    #     [html.Strong("Output: "), html.Span(convert_linebreaks(entry["output"]))],
+                    #     style={"backgroundColor": "#e2f7e1", "padding": "5px", "margin": "5px"},
+                    # ),
+                    # *[
+                    #     html.Div([html.Strong(f"{k}: "), html.Span(convert_linebreaks(str(v)))])
+                    #     for k, v in entry.items()
+                    #     if k not in {"prompt", "output"}
+                    # ],
+                ]
+            ),
+        ],
+        style={"backgroundColor": "#f4f4f4", "padding": "10px", "margin": "5px"},
+        open=True,
+    )
+
+
 def compute_positions(graph):
     pos = nx.kamada_kawai_layout(graph, scale=750)
     scaled_pos = {}
@@ -174,7 +204,13 @@ def compute_positions(graph):
 
 # Serialization function to convert complex data structures into JSON-serializable format
 def serialize_data(
-    follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data
+    follow_graph,
+    interactions_by_episode,
+    active_users_by_episode,
+    toots,
+    probe_data,
+    plan_data,
+    act_data,
 ):
     return {
         "nodes": list(follow_graph.nodes),
@@ -183,6 +219,8 @@ def serialize_data(
         "active_users_by_episode": {k: list(v) for k, v in active_users_by_episode.items()},
         "toots": toots,
         "probe_data": probe_data,
+        "plan_data": plan_data,
+        "act_data": act_data,
     }
 
 
@@ -199,7 +237,18 @@ def deserialize_data(serialized):
     }
     toots = serialized["toots"]
     probe_data = {k: v for k, v in serialized["probe_data"].items()}
-    return follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data
+    # plan_data = {int(k): v for k, v in serialized["plan_data"].items()}
+    plan_data = serialized["plan_data"]
+    act_data = serialized["act_data"]
+    return (
+        follow_graph,
+        interactions_by_episode,
+        active_users_by_episode,
+        toots,
+        probe_data,
+        plan_data,
+        act_data,
+    )
 
 
 def get_target_user(row):
@@ -275,6 +324,28 @@ def get_toot_dict(int_df):
     return text_df.text_data.to_dict()
 
 
+def get_plan_dict(plan_df):
+    data = plan_df.groupby("episode")[["source_user", "data"]].apply(lambda x: x.to_dict("records"))
+    return data.to_dict()
+
+
+def get_act_dict(act_df):
+    # data = act_df.groupby(["episode","source_user"])[["source_user","data"]].apply(lambda x: x.to_dict("records"))
+    data_dict = act_df.groupby("episode")[["source_user", "data"]].apply(
+        lambda x: x.to_dict("records")
+    )
+
+    # data_dict={}
+    # for (epi, name), group in data:
+    #     if epi not in data_dict:
+    #         data_dict[epi] = {}
+    #     # print(group['data'].to_list())
+    #     data_dict[epi][name] = group['data']
+    # for (epi, name), group in data:
+    #     print(data_dict[epi])
+    return data_dict.to_dict()
+
+
 def load_data(input_var):
     if len(input_var) < 500:
         df = pd.read_json(input_var, lines=True)
@@ -301,9 +372,11 @@ def load_data(input_var):
 
     df["data"] = df.data.apply(get_toot_id)
 
-    probe_df, int_df, edge_df = post_process_output(df)
+    probe_df, int_df, edge_df, plan_df, act_df = post_process_output(df)
 
     # probe_data
+    num_entries = len(probe_df.loc[probe_df.label == PROBE_LABEL])
+    print(str(num_entries) + " probe entries!")
     probe_data = (
         probe_df.loc[probe_df.label == PROBE_LABEL, ["source_user", "response", "episode"]]
         .groupby("episode")
@@ -325,7 +398,22 @@ def load_data(input_var):
     # toot_data
     toot_dict = get_toot_dict(int_df.copy())
 
-    return follow_graph, int_dict, active_users_by_episode, toot_dict, probe_data
+    # plan_data
+    plan_dict = get_plan_dict(plan_df.copy())
+
+    # inner action data
+    act_dict = get_act_dict(act_df.copy())
+    print(act_dict[0])
+
+    return (
+        follow_graph,
+        int_dict,
+        active_users_by_episode,
+        toot_dict,
+        probe_data,
+        plan_dict,
+        act_dict,
+    )
 
 
 # Main entry point
@@ -345,9 +433,15 @@ if __name__ == "__main__":
     # Initialize variables
     if args.output_file:
         # Load the data using the files passed as arguments
-        (follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data) = (
-            load_data(args.output_file)
-        )
+        (
+            follow_graph,
+            interactions_by_episode,
+            active_users_by_episode,
+            toots,
+            probe_data,
+            plan_data,
+            act_data,
+        ) = load_data(args.output_file)
 
         # Compute positions
         all_positions = compute_positions(follow_graph)
@@ -356,7 +450,13 @@ if __name__ == "__main__":
 
         # Serialize the initial data
         serialized_initial_data = serialize_data(
-            follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data
+            follow_graph,
+            interactions_by_episode,
+            active_users_by_episode,
+            toots,
+            probe_data,
+            plan_data,
+            act_data,
         )
     else:
         # No initial data provided
@@ -772,9 +872,21 @@ if __name__ == "__main__":
                         step=None,
                         tooltip={"placement": "bottom", "always_visible": True},
                     ),
-                    # After dashboard-upload-section, add:
                     html.Hr(style={"margin": "20px 0"}),  # Separator
-                    # JSONL Viewer Section
+                    # Plan Viewer Section
+                    html.Div(
+                        [
+                            html.H2(
+                                "Agent Plans",
+                                style={"textAlign": "center"},
+                            ),
+                            html.Div(id="plan-output"),
+                        ],
+                        id="plan-viewer-section",
+                        style={"padding": "20px"},
+                    ),
+                    html.Hr(style={"margin": "20px 0"}),  # Separator
+                    # Thoughts Viewer Section
                     html.Div(
                         [
                             dcc.Upload(
@@ -840,6 +952,44 @@ if __name__ == "__main__":
 
         except Exception as e:
             print(f"Error processing JSONL: {e!s}")
+            return None
+
+    @app.callback(
+        Output("plan-output", "children"),
+        [
+            Input("data-store", "data"),
+            Input("episode-slider", "value"),
+        ],
+        prevent_initial_call=True,
+    )
+    def process_plan_data(data, selected_episode):
+        """Process plan data with filtering."""
+        if data is None:
+            print("plan contents is None")
+            return None
+        if not data:
+            print("PLan Contents is empty")
+
+        plan_data = data["plan_data"][str(selected_episode)]
+        act_data = data["act_data"][str(selected_episode)]
+        print(act_data)
+        try:
+            # Stream and filter the data, collecting only matching records
+            objs = []
+            for entry in plan_data:
+                act_agent_data = [
+                    entry_act["data"]
+                    for entry_act in act_data
+                    if entry_act["source_user"] == entry["source_user"]
+                ]
+                print(act_agent_data)
+                objs.append(
+                    create_display_plan(entry["data"], act_agent_data)
+                )  # entry_acts[entry['source_user']]))
+            return objs
+
+        except Exception as e:
+            print(f"Error processing plans: {e!s}")
             return None
 
     @app.callback(
@@ -913,6 +1063,8 @@ if __name__ == "__main__":
                         active_users_by_episode_new,
                         toots_new,
                         probe_data_new,
+                        plan_data_new,
+                        act_data_new,
                     ) = load_data(app_logger_string)
 
                     # Serialize the new data
@@ -922,6 +1074,8 @@ if __name__ == "__main__":
                         active_users_by_episode_new,
                         toots_new,
                         probe_data_new,
+                        plan_data_new,
+                        act_data_new,
                     )
                     # *** Add these two lines: parse and store the raw data ***
                     import io
@@ -946,6 +1100,8 @@ if __name__ == "__main__":
                         active_users_by_episode_new,
                         toots_new,
                         probe_data_new,
+                        plan_data_new,
+                        act_data_new,
                     ) = load_data(app_logger_string)
 
                     # Serialize the new data
@@ -955,6 +1111,8 @@ if __name__ == "__main__":
                         active_users_by_episode_new,
                         toots_new,
                         probe_data_new,
+                        plan_data_new,
+                        act_data_new,
                     )
                     # *** Add these lines to store the raw file data ***
                     import io
@@ -973,10 +1131,15 @@ if __name__ == "__main__":
 
         except Exception as e:
             if triggered_id == "submit-button":
-                return dash.no_update, f"Error uploading initial data: {e!s}", ""
+                return (
+                    dashboard_title_with_filename,
+                    dash.no_update,
+                    f"Error uploading initial data: {e!s}",
+                    "",
+                )
             if triggered_id == "upload-button-dashboard":
                 return dash.no_update, "", f"Error uploading dashboard data: {e!s}"
-            return dash.no_update, "", ""
+            return dashboard_title_with_filename, dash.no_update, "", ""
 
     @app.callback(Output("heatmap-graph", "figure"), Input("data-store", "data"))
     def update_heatmap(data_store):
@@ -988,15 +1151,17 @@ if __name__ == "__main__":
         raw_data = data_store["raw_data"]
         df = pd.DataFrame(raw_data)
 
-        # If the "data" column is stored as a string, parse it into a dict.
-        if not df.empty and isinstance(df.iloc[0]["data"], str):
-            df["data"] = df["data"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
-
         # Filter for records with event_type "action" that have a non-null suggested_action.
         dft = df[
             (df["event_type"] == "action")
-            & (df["data"].apply(lambda x: x.get("suggested_action") is not None))
-        ].copy()
+            & (df["label"] != "episode_plan")
+            & (df["label"] != "inner_actions")
+        ]
+        # If the "data" column is stored as a string, parse it into a dict.
+        if not df.empty and isinstance(df.iloc[0]["data"], str):
+            dft["data"] = dft["data"].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
+        dft = dft[dft["data"].apply(lambda x: x.get("suggested_action") is not None)].copy()
 
         if dft.empty:
             return go.Figure(
@@ -1092,9 +1257,15 @@ if __name__ == "__main__":
             )
 
         # Deserialize the data_store.
-        (follow_graph, interactions_by_episode, active_users_by_episode, toots, probe_data) = (
-            deserialize_data(data_store)
-        )
+        (
+            follow_graph,
+            interactions_by_episode,
+            active_users_by_episode,
+            toots,
+            probe_data,
+            plan_data,
+            act_data,
+        ) = deserialize_data(data_store)
 
         # Compute positions based on the current follow_graph
         all_positions = compute_positions(follow_graph)
@@ -1388,7 +1559,6 @@ if __name__ == "__main__":
                 )
 
         # Create the line graph showing probe_data over time
-        probe_data_episodes = sorted(probe_data.keys())
 
         probe_graphs_data, title_label, yaxis_label = probe_plot_preprocessing(probe_data)
 
@@ -1396,8 +1566,8 @@ if __name__ == "__main__":
         for graph_data in probe_graphs_data:
             probe_data_line_fig.add_trace(
                 go.Scatter(
-                    x=probe_data_episodes,
-                    y=graph_data["data"],
+                    x=graph_data["data"]["x"],
+                    y=graph_data["data"]["y"],
                     mode="lines+markers",
                     name=graph_data["label"],
                     line=dict(color=graph_data["color"]),

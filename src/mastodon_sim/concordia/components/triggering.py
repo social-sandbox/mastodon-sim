@@ -27,6 +27,7 @@ from concordia.typing import component
 from concordia.utils import helper_functions
 
 from mastodon_sim.concordia.components import apps, logging, scene
+from sim.sim_utils.misc_sim_utils import ConfigStore
 
 
 class SceneTriggeringComponent(component.Component):
@@ -136,7 +137,6 @@ class SceneTriggeringComponent(component.Component):
         print("Built phone scene")
         with self._clock.higher_gear():
             scene_output = phone_scene.run_episode()
-
         for event in scene_output:
             player.observe(event)
             self._memory.add(event)
@@ -192,6 +192,8 @@ class BasicSceneTriggeringComponent(component.Component):
         self._memory_factory = memory_factory
         self._memory = memory
         self._logger = logging.Logger(log_color, verbose, semi_verbose)
+        cfg = ConfigStore.get_config()
+        self._max_steps = cfg.soc_sys.max_inepisode_tries
 
     def name(self):  # noqa: D102
         return "State of phone"
@@ -207,8 +209,13 @@ class BasicSceneTriggeringComponent(component.Component):
         )
         print("Built phone scene")
         with self._clock.higher_gear():
-            scene_output = phone_scene.run_episode()
-
+            scene_output = phone_scene.run_episode(max_steps=self._max_steps)
+        self._phone.apps[0].action_logger.log(
+            [
+                {"source_user": player._agent_name, "label": "inner_actions", "data": action}
+                for action in phone_scene._components["PhoneComponent"]._state
+            ]
+        )
         for event in scene_output:
             player.observe(f"[Conducted action] {event}")
             self._memory.add(event)

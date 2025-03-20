@@ -53,7 +53,7 @@ class GameMaster:
         self.importance_model = importance_model
         self.importance_model_gm = importance_model_gm
         self.agent_components = self._create_agent_components()
-        self.log = []
+        self.log_data = []
 
     def _create_agent_components(self):
         """Create a unique SceneTriggeringComponent for each agent."""
@@ -95,12 +95,8 @@ class GameMaster:
             event_statement = f"{agent._agent_name} acted: {action}"  # the
             print(event_statement)
             # 2. Log the action (ensure this is thread-safe)
-            self.log.append(
-                {
-                    "agent": agent._agent_name,
-                    "action": action,
-                    "timestamp": self.clock.now(),
-                }
+            self.log_data.append(
+                {"source_user": agent._agent_name, "label": "episode_plan", "data": action}
             )
 
             # 3. Trigger the phone scene for this agent using their unique component

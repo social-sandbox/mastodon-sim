@@ -4,7 +4,37 @@ import datetime
 import json
 
 # general instructions
-CUSTOM_CALL_TO_ACTION = """
+CALL_TO_ACTION = """
+## Available Actions
+1. Post a toot
+2. Reply to a toot (requires Toot ID)
+3. Boost a toot (requires Toot ID + content)
+4. Like a toot (requires Toot ID)
+
+## Core Rules
+- Never repeat recent actions
+- Provide specific details (app, Toot IDs)
+- Follow suggested action unless engagement suggests otherwise
+- Base decisions on character's values and goals
+- Use direct replies for responses, not new posts
+
+## Primary Question and Instructions
+Based on {name}'s goal and the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage], what SINGLE specific action would they take now on the storhampton.social Mastodon app?
+
+Think through:
+1. Current motivation and context
+2. Available (not repeat) actions and their impact
+3. Alignment with character values
+4. Specific details needed (IDs, content)
+
+Provide your response with:
+1. Motivation explanation
+2. Specific action details
+3. Required context/content
+
+List of previous actions (tagged as [Action done on phone]) so as not to repeat:
+"""
+EPISODE_CALL_TO_ACTION = """
 {name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
 
 Describe the kinds of social media engagement {name} receives and how they engage with the content of other users within this time period, in particular what social media actions they take.
@@ -347,7 +377,9 @@ def generate_output_configs(cfg):
         "election"  # name of setting (setting specific code in examples/{sim_setting})
     )
     soc_sys_context["exp_name"] = experiment_name  # name of experiment
-    soc_sys_context["custom_call_to_action"] = CUSTOM_CALL_TO_ACTION
+    soc_sys_context["episode_call_to_action"] = EPISODE_CALL_TO_ACTION
+    soc_sys_context["call_to_action"] = CALL_TO_ACTION
+    soc_sys_context["max_inepisode_tries"] = 20
     soc_sys_context["shared_agent_memories_template"] = (
         (
             SHARED_MEMORIES_TEMPLATE

@@ -89,7 +89,7 @@ def run_sim(
 ):
     cfg = ConfigStore.get_config()
     app_description = cfg.soc_sys.social_media_usage_instructions
-    custom_call_to_action = cfg.soc_sys.custom_call_to_action
+    episode_call_to_action = cfg.soc_sys.episode_call_to_action
     setting_info = cfg.soc_sys.setting_info
     num_episodes = cfg.sim.num_episodes
     use_server = cfg.sim.use_server
@@ -156,16 +156,16 @@ def run_sim(
     post_seed_toots(agents, mastodon_apps)
 
     action_spec = ActionSpec(
-        call_to_action=custom_call_to_action,
+        call_to_action=episode_call_to_action,
         output_type=OutputType.FREE,
         tag="action",
     )
 
-    # Experimental version (custom call to action and thought chains)
-    gamemaster_module = importlib.import_module(
+    # Experimental version (epsiode call to action and thought chains)
+    online_gamemaster_module = importlib.import_module(
         "agent_utils." + gamemaster_settings["online_gamemaster"]
     )
-    env = gamemaster_module.GameMaster(
+    env = online_gamemaster_module.GameMaster(
         model=model,
         memory=gamemaster_memory,
         phones=phones,
@@ -196,6 +196,7 @@ def run_sim(
         action_event_logger.episode_idx = i
         model.meta_data["episode_idx"] = i
         probe_event_logger.episode_idx = i
+        env.log = []
 
         print(f"Episode: {i}. Deploying survey...", end="")
         deploy_probes(
@@ -212,6 +213,8 @@ def run_sim(
         else:
             start_timex = time.time()
             env.step(active_agents=active_agent_names)
+            action_event_logger.log(env.log_data)
+
             end_timex = time.time()
             with open(
                 cfg.sim.output_rootname + "_episode_runtime_logger.txt",

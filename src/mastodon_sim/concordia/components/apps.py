@@ -254,6 +254,7 @@ class PhoneApp(metaclass=abc.ABCMeta):
     simulation with @app_action.
     """
 
+    action_logger: Any = None
     _log_color: COLOR_TYPE = "blue"
 
     @abc.abstractmethod

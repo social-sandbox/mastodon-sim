@@ -82,7 +82,7 @@ class AgentQuery(ABC):
         return query_return
 
 
-def deploy_probes_to_agent(agent, queries):
+def deploy_probes_to_agent(agent, queries, probe_event_logger):
     agent_query_returns = [query.submit(agent) for query in queries]
     agent_results = [
         {
@@ -108,5 +108,6 @@ def deploy_probes(agents, probes, probe_event_logger):
     with ThreadPoolExecutor() as executor:
         # Parallel probing
         query_returns_over_agents = {
-            executor.submit(deploy_probes_to_agent, agent, queries): agent for agent in agents
+            executor.submit(deploy_probes_to_agent, agent, queries, probe_event_logger): agent
+            for agent in agents
         }
