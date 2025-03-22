@@ -3,41 +3,16 @@
 import datetime
 import json
 
-# general instructions
-CALL_TO_ACTION = """
-## Available Actions
-1. Post a toot
-2. Reply to a toot (requires Toot ID)
-3. Boost a toot (requires Toot ID + content)
-4. Like a toot (requires Toot ID)
-
-## Core Rules
-- Never repeat recent actions
-- Provide specific details (app, Toot IDs)
-- Follow suggested action unless engagement suggests otherwise
-- Base decisions on character's values and goals
-- Use direct replies for responses, not new posts
-
-## Primary Question and Instructions
-Based on {name}'s goal and the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage], what SINGLE specific action would they take now on the storhampton.social Mastodon app?
-
-Think through:
-1. Current motivation and context
-2. Available (not repeat) actions and their impact
-3. Alignment with character values
-4. Specific details needed (IDs, content)
-
-Provide your response with:
-1. Motivation explanation
-2. Specific action details
-3. Required context/content
-
-List of previous actions (tagged as [Action done on phone]) so as not to repeat:
-"""
+# plan-making instructions
 EPISODE_CALL_TO_ACTION = """
-{name} will open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
+{name} has decided to open the Storhampton.social Mastodon app to engage with other Storhampton residents on the platform for the next {timedelta}, starting by checking their home timeline.
 
-Describe the kinds of social media engagement {name} receives and how they engage with the content of other users within this time period, in particular what social media actions they take.
+Describe the motivation that will drive {name}'s attention during this activity and the actions they are likely to take on the app during this period as a result.
+For example: Are they looking to be entertained? Are they curious about what others are posting?
+Do they simply want to post something that's been on their mind?
+
+Use {name}'s memories and observations and in particular, the kinds of social media engagement {name} has received recently and how they have engaged with the content of other users previously.
+
 Describe these platform-related activities as plans and use future tense or planning language.
 Be specific, creative, and detailed in your description.
 Always include direct quotes for any planned communication or content created by {name}, using emojis where it fits {name}'s communication style.
@@ -52,14 +27,47 @@ Here are the kinds of actions to include, and what they accomplish:
 - Boosting a Mastodon post: {name} sees a toot that they want to share with their own followers so they boost it. (Return Toot ID and the exact contents of the toot to be boosted.)
 - Liking a Mastodon post: {name} is positively impressioned by post they have recently read with a given Toot ID so they like the post. (Return toot ID of the post you want to like)
 
-Here's an example description for a hypothetical Storhampton resident, specifically a programmer named Sarah:
+Here's an example description for a hypothetical Storhampton resident, specifically a computer programmer named Sarah:
 
-"Sarah will check her home timeline on Storhampton.social and plans to engage posts about the upcoming election.
-Then she will post the following toot reflecting what she has observed in light of her interests:
+"Sarah has been anxious about the election and decides she wants to go on Storhampton.social to make a post about issues she wants the community to think about as they vote.
+In particular, she will post the following toot reflecting what she has observed in light of her interests:
 'Has anyone heard anything from the candidates about teaching technology to kids in our community?
 I just think this is such an important issue for us. The next generation of Storhamptons needs employable skills!
 Curious what others think. 🤔
 #StorhamptonElection #STEM'".
+"""
+
+# action instructions
+CALL_TO_ACTION = """
+## Available Actions
+1. Post a toot
+2. Reply to a toot (requires Toot ID)
+3. Boost a toot (requires Toot ID + content)
+4. Like a toot (requires Toot ID)
+
+## Core Rules
+- Never repeat the exact same action
+- Provide specific details
+- Use only already mentioned details/do not make them up (valid examples: Toot IDs obtained from the read timeline; users mentioned in observations)
+- Follow the suggested action unless responding to engagement by other users
+- Base actions on character's values and goals
+- Use direct replies for responses, not new posts
+
+## Primary Question and Instructions
+Based on {name}'s goal, the content of the current plan for phone usage, tagged as [Planned Actions for upcoming Phone Usage], as well as list of actions already taken in this episode, what SINGLE specific action would they take now on the storhampton.social Mastodon app?
+
+Think through:
+1. Current motivation and context
+2. Available (i.e. not repeated) actions and their impact
+3. Alignment with character values
+4. Specific details needed (IDs, content)
+
+Provide your response with:
+1. Motivation/explanation
+2. Specific action details
+3. Required context/content
+
+List of actions already taken in this episode (tagged as [Action done on phone]) so as not to repeat:
 """
 
 SETTING_BACKGROUND = [
@@ -364,11 +372,18 @@ def generate_output_configs(cfg):
 
     # combine all agent configurations in one list
     agents["directory"] = voter_configs + candidate_configs
+
+    # settings that differ between news and non-news agents:
     agents["initial_observations"] = [
         "{name} is at home, they have just woken up.",
         "{name} remembers they want to update their Mastodon bio.",
         "{name} remembers they want to read their Mastodon feed to catch up on news",
     ]
+    gamemaster_memories = [
+        agent["name"] + " is at their private home." for agent in agents["directory"]
+    ] + ["The workday begins for the " + agent["name"] for agent in news_agent_configs]
+
+    # join non-news and news agents
     agents["directory"] = agents["directory"] + news_agent_configs
 
     # 2) setting configuration------------------------------------------------------
@@ -392,9 +407,7 @@ def generate_output_configs(cfg):
     )
     soc_sys_context["social_media_usage_instructions"] = SOCIAL_MEDIA_USAGE_INSTRUCTIONS
 
-    soc_sys_context["gamemaster_memories"] = [
-        agent["name"] + " is at their private home." for agent in agents["directory"]
-    ] + ["The workday begins for the " + agent["name"] for agent in news_agent_configs]
+    soc_sys_context["gamemaster_memories"] = gamemaster_memories
     soc_sys_context["setting_info"] = {
         "description": "\n".join(
             [CANDIDATE_INFO[p]["policy_proposals"] for p in list(CANDIDATE_INFO.keys())]

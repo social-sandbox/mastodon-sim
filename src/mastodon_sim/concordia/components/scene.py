@@ -167,7 +167,6 @@ class _PhoneComponent(component.Component):
         app = self._phone.apps[0]
 
         if self._state == []:
-            self._state.append(f"- {self._player.name} retrieved their timeline")
             p_username = app.public_get_username(self._player.name.split()[0])
             timeline = mastodon_ops.get_own_timeline(p_username, limit=10)
 
@@ -214,6 +213,7 @@ class _PhoneComponent(component.Component):
                     print(media_desc)
                 output_now += f"User: {post['account']['display_name']} (@{post['account']['username']})\nContent: {_clean_html(post['content'])}\n{media_desc}\nToot ID: {post['id']}"
 
+            self._state.append(f"- {self._player.name} retrieved their timeline")
             self._player.observe(f"[Action done on phone]: Retrieved timeline: \n{output_now}")
             return [f"[Action done on phone]: Retrieved timeline: \n{output_now}"]
 
@@ -230,6 +230,9 @@ class _PhoneComponent(component.Component):
         )
         # print(check_dup)
         if check_dup:
+            self._state.append(
+                "- (attempt failed: duplicated a previously taken action)" + event_statement.strip()
+            )
             self._player.observe(
                 f"[Action done on phone]: The following phone action was not conducted because it has already been taken - {event_statement}"
             )
@@ -237,17 +240,17 @@ class _PhoneComponent(component.Component):
                 f"[Action done on phone]: The following phone action was not conducted because it has already been taken - {event_statement}"
             ]
 
-        self._state.append(event_statement.strip())
+        self._state.append("(attempt successful)" + event_statement.strip())
         action_names = [a.name for a in app.actions()]
         chain_of_thought.statement(app.description())
         action_index = chain_of_thought.multiple_choice_question(
             " ".join(
                 [
                     "In the above transcript, what action did the user perform?",
-                    "Pick the one that is the most specific and the given information is sufficient to perform it.",
-                    "If the transcript mentions multiple actions, pick one that contribute content, like making a post or reply.",
+                    "Pick the one that is the most specific and has sufficient information to perform it.",
+                    "If the transcript mentions multiple actions, pick one that contributes content, like making a post or reply.",
                     "Remember that the get_own_timeline shows all posts from people the user follows and should be chosen when the user mentions viewing their timeline.",
-                    "Example: If the user mentions checking out other artists, but doesn't mention who, do not conduct that action.",
+                    "Example: If the user mentions checking out other artists, but doesn't mention who, do not pick that action.",
                 ]
             ),
             answers=action_names,
@@ -287,7 +290,7 @@ class _PhoneComponent(component.Component):
         print("Continuing action!")
         action = app.actions()[action_index]
 
-        # # pull out suggested action from action_suggester logging channge to store in output
+        # # pull out suggested action from action_suggester logging change to store in output
         app.action_logger.dummy = self._player._log["ActionSuggester"]["Selected action"]
 
         try:

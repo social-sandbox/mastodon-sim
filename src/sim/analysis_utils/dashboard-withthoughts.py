@@ -171,20 +171,10 @@ def create_display_plan(entry_plan, entry_acts):
                 [
                     html.Div(
                         [
-                            # html.Strong("Full Prompt: "),
                             html.Span(convert_linebreaks("\n- ".join(entry_acts))),
                         ],
                         style={"backgroundColor": "#e8f0fe", "padding": "5px", "margin": "5px"},
                     ),
-                    # html.Div(
-                    #     [html.Strong("Output: "), html.Span(convert_linebreaks(entry["output"]))],
-                    #     style={"backgroundColor": "#e2f7e1", "padding": "5px", "margin": "5px"},
-                    # ),
-                    # *[
-                    #     html.Div([html.Strong(f"{k}: "), html.Span(convert_linebreaks(str(v)))])
-                    #     for k, v in entry.items()
-                    #     if k not in {"prompt", "output"}
-                    # ],
                 ]
             ),
         ],
@@ -325,24 +315,16 @@ def get_toot_dict(int_df):
 
 
 def get_plan_dict(plan_df):
-    data = plan_df.groupby("episode")[["source_user", "data"]].apply(lambda x: x.to_dict("records"))
+    data = plan_df.groupby("episode")[["source_user", "data"]].apply(
+        lambda x: sorted(x.to_dict("records"), key=lambda d: d["source_user"])
+    )
     return data.to_dict()
 
 
 def get_act_dict(act_df):
-    # data = act_df.groupby(["episode","source_user"])[["source_user","data"]].apply(lambda x: x.to_dict("records"))
     data_dict = act_df.groupby("episode")[["source_user", "data"]].apply(
         lambda x: x.to_dict("records")
     )
-
-    # data_dict={}
-    # for (epi, name), group in data:
-    #     if epi not in data_dict:
-    #         data_dict[epi] = {}
-    #     # print(group['data'].to_list())
-    #     data_dict[epi][name] = group['data']
-    # for (epi, name), group in data:
-    #     print(data_dict[epi])
     return data_dict.to_dict()
 
 
@@ -403,7 +385,6 @@ def load_data(input_var):
 
     # inner action data
     act_dict = get_act_dict(act_df.copy())
-    print(act_dict[0])
 
     return (
         follow_graph,
@@ -419,7 +400,7 @@ def load_data(input_var):
 # Main entry point
 if __name__ == "__main__":
     # Set up argument parsing
-    parser = argparse.ArgumentParser(description="Run the Dash app with specific data files.")
+    parser = argparse.ArgumentParser(description="Run the Dash app with specific data file.")
     parser.add_argument(
         "--output_file",
         type=str,
@@ -464,23 +445,280 @@ if __name__ == "__main__":
 
     app = dash.Dash(__name__)
 
+    # Define custom CSS for the entire app
+    app.index_string = """
+    <!DOCTYPE html>
+    <html>
+        <head>
+            {%metas%}
+            <title>{%title%}</title>
+            {%favicon%}
+            {%css%}
+            <style>
+
+                /* Reset browser defaults */
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    height: 100%;
+                    overflow-x: hidden;
+                }
+                /* Set default font for entire dashboard */
+                * {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    box-sizing: border-box;
+                }
+
+                /* Container styling for the entire app */
+                .dashboard-container {
+                    max-width: none;
+                    margin: 0 auto;
+                    padding: 10px;
+                    width: 100vw;
+                    background-color: #f9f9f9;
+                }
+
+                /* Header styling */
+                .dashboard-header {
+                    margin-bottom: 20px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #ddd;
+                    width=100%;
+                }
+
+                /* Plot container styling */
+                .plot-container {
+                    background-color: white;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 10px ; /*!important Reduced from 50px */
+                    padding: 20px; /* !important Reduced from 150px */
+                    margin-bottom: 20px;
+                    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
+                    height: 400px; /* Increased from 350px */
+                    width: 100%;
+                    margin: 0 auto;
+                }
+
+                /* Plot title styling */
+                .plot-title {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: #333;
+                    margin-bottom: 10px;
+                    height: 20px; /* Fixed height for title */
+                }
+
+                /* Row styling for multiple plots */
+                .plot-row {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 20px;
+                    width: 100%
+                }
+
+                /* Column styling for three equal columns */
+                .plot-col-third {
+                    flex: 1 1 calc(33.333% - 20px);
+                    min-width: 250px;
+                }
+
+                /* Critical CSS to fix the plot width issues */
+                .js-plotly-plot, .plot-container .js-plotly-plot, #graph-div {
+                    width: 100%; /* !important;*/
+                }
+
+                .dash-graph {
+                    height: 300px !important; /* Increased from 250px */
+                    width: 100%; /*!important;*/
+                }
+
+                /* Fix for SVG elements inside plots */
+                .main-svg, .svg-container {
+                    width: 100%vw /*!important;*/
+                }
+
+                /* For the new cyto-div row */
+                .cyto-div-row {
+                    display: flex;
+                    gap: 20px;
+                    margin-bottom: 20px;
+                    transition: all 0.3s ease;
+                }
+
+                /* Cytoscape container - will adapt based on if detail panel is shown */
+                .cyto-container {
+                    flex: 1;
+                    min-height: 400px;
+                    background-color: white;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 5px;
+                    padding: 0px;
+                    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
+                }
+
+                /* Detail panel container */
+                .detail-container {
+                    flex: 0 0 30%;  /* Fixed width when visible */
+                    background-color: white;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 5px;
+                    padding: 15px;
+                    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
+                    overflow: auto;
+                }
+
+            </style>
+        </head>
+        <body>
+            {%app_entry%}
+            <footer>
+                {%config%}
+                {%scripts%}
+                {%renderer%}
+            </footer>
+        </body>
+    </html>
+    """
     # Create the layout with conditional sections
     app.layout = html.Div(
-        [
-            html.H1(
-                id="dashboard-title", children="Social Sandbox Dashboard"
-            ),  # Add this line before the dashboard div
+        className="dashboard-container",
+        children=[
+            # Title
+            html.Div(
+                className="dashboard-header",
+                children=[html.H1(id="dashboard-title", children="Social Sandbox Dashboard")],
+            ),
+            html.Div(
+                children=[
+                    # Filename
+                    html.Div(
+                        children=[
+                            html.H3(id="dashboard-showfilename"),
+                        ],
+                        style={
+                            "display": "inline-block",
+                            "float": "left",
+                            "width": "80%",
+                            "padding": "10px 0",
+                            "white-space": "pre-wrap",
+                            "word-wrap": "break-word",  # This is the proper way to handle word wrapping
+                            "overflow-wrap": "break-word",  # Adding this for better browser compatibility
+                        },
+                    ),
+                    # Upload components and Submit button
+                    html.Div(
+                        children=[
+                            html.Div(
+                                [
+                                    html.Label(
+                                        "Upload another output file: ",
+                                        style={
+                                            "display": "inline-block",
+                                            "marginRight": "10px",
+                                            "verticalAlign": "middle",
+                                            "fontWeight": "500",
+                                            "white-space": "pre-wrap",
+                                            "word-wrap": "break-word",  # This is the proper way to handle word wrapping
+                                            "overflow-wrap": "break-word",  # Adding this for better browser compatibility
+                                        },
+                                    ),
+                                    dcc.Upload(
+                                        id="upload-app-logger-dashboard",
+                                        children=html.Div(
+                                            [
+                                                html.Span(
+                                                    "Select File",
+                                                    style={
+                                                        "fontWeight": "500",
+                                                        "fontSize": "14px",
+                                                        "fontFamily": "inherit",
+                                                        "color": "#333",
+                                                        "textDecoration": "none",
+                                                    },
+                                                )
+                                            ],
+                                            style={
+                                                "padding": "8px 15px",
+                                            },
+                                        ),
+                                        style={
+                                            "display": "inline-block",
+                                            "borderWidth": "1px",
+                                            "borderStyle": "solid",
+                                            "borderColor": "#ccc",
+                                            "borderRadius": "4px",
+                                            "backgroundColor": "#f8f9fa",
+                                            "cursor": "pointer",
+                                            "marginRight": "10px",
+                                            "verticalAlign": "middle",
+                                            "boxShadow": "0 1px 2px rgba(0,0,0,0.05)",
+                                            "transition": "background-color 0.3s",
+                                            "color": "#333",
+                                        },
+                                        multiple=False,
+                                    ),
+                                    html.Button(
+                                        "Upload File",
+                                        id="upload-button-dashboard",
+                                        n_clicks=0,
+                                        style={
+                                            "display": "inline-block",
+                                            "verticalAlign": "middle",
+                                            "padding": "8px 15px",
+                                            "borderWidth": "1px",
+                                            "borderStyle": "solid",
+                                            "borderColor": "#ccc",
+                                            "borderRadius": "4px",
+                                            "backgroundColor": "#f8f9fa",
+                                            "cursor": "pointer",
+                                            "fontWeight": "500",
+                                            "fontSize": "14px",
+                                            "fontFamily": "inherit",
+                                            "boxShadow": "0 1px 2px rgba(0,0,0,0.05)",
+                                            "transition": "background-color 0.3s",
+                                            "color": "#333",
+                                        },
+                                    ),
+                                ],
+                                style={
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "justifyContent": "flex-end",
+                                    "flexWrap": "nowrap",
+                                    "padding": "10px 0",
+                                },
+                            )
+                        ],
+                        style={
+                            "display": "inline-block",
+                            "float": "right",
+                            "width": "20%",
+                            "paddingRight": "5px",
+                        },
+                    ),
+                ],
+                id="dashboard-upload-section",
+                style={
+                    "width": "100%",
+                    "overflow": "hidden",
+                    "borderBottom": "1px solid #eee",
+                    "marginBottom": "20px",
+                    "paddingBottom": "5px",
+                },
+            ),
             # Store component to hold serialized data
             dcc.Store(id="data-store", data=serialized_initial_data),
-            # Upload Screen
+            # upload screen
             html.Div(
+                className="dashboard-container",
                 id="upload-screen",
                 children=[
                     # Upload Output Log
                     html.Div(
                         [
                             html.Label(
-                                "Upload an output file:",
+                                "Upload an events file ('run_name_events.jsonl'):",
                                 style={
                                     "font-size": "18px",
                                     "font-weight": "bold",
@@ -495,7 +733,7 @@ if __name__ == "__main__":
                                     [
                                         "Drag and Drop or ",
                                         html.A(
-                                            "Select Files",
+                                            "Select File",
                                             style={
                                                 "color": "#1a73e8",
                                                 "text-decoration": "underline",
@@ -554,11 +792,6 @@ if __name__ == "__main__":
                     ),
                 ],
                 style={
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "alignItems": "center",
-                    "justifyContent": "center",
-                    "height": "100vh",
                     "background-color": "#f0f2f5",  # Light gray background for better contrast
                     "padding": "20px",
                 },
@@ -566,165 +799,161 @@ if __name__ == "__main__":
             # Dashboard
             html.Div(
                 id="dashboard",  # Added 'dashboard' id here
+                # className='dashboard-container',
                 children=[
-                    # Upload components and Submit button added at the bottom
+                    # One row with three equal-width plots
                     html.Div(
-                        [
+                        className="plot-row",
+                        children=[
+                            # First plot
                             html.Div(
-                                [
-                                    html.Label("Upload an output file:"),
-                                    dcc.Upload(
-                                        id="upload-app-logger-dashboard",
-                                        children=html.Div([html.A("Select Files")]),
-                                        style={
-                                            "width": "50px",
-                                            "height": "24px",
-                                            "lineHeight": "15px",
-                                            "borderWidth": "2px",
-                                            "borderStyle": "dashed",
-                                            "borderRadius": "2px",
-                                            "textAlign": "center",
-                                            "background-color": "#f0f0f0",
-                                            "cursor": "pointer",
-                                            "padding": "7px",
-                                        },
-                                        multiple=False,
-                                    ),
+                                className="plot-col-third",
+                                children=[
+                                    html.Div(
+                                        className="plot-container",
+                                        children=[
+                                            html.Div(
+                                                className="plot-title",
+                                                children="Vote Distribution Over Time",
+                                            ),
+                                            # probe data line graph
+                                            dcc.Graph(
+                                                className="dash-graph",
+                                                id="probe-data-line",
+                                                config={"displayModeBar": False},
+                                                style={
+                                                    "display": "inline-block",
+                                                },
+                                                responsive=True,
+                                            ),
+                                        ],
+                                    )
                                 ],
-                                className="upload-component",
                             ),
+                            # Second plot
                             html.Div(
-                                [
-                                    html.Button(
-                                        "Upload Files",
-                                        id="upload-button-dashboard",
-                                        n_clicks=0,
-                                        style={
-                                            "width": "70px",
-                                            "height": "40px",
-                                            "lineHeight": "15px",
-                                            "padding": "7px",
-                                            "margin-top": "20px",
-                                        },
-                                    ),
+                                className="plot-col-third",
+                                children=[
+                                    html.Div(
+                                        className="plot-container",
+                                        children=[
+                                            html.Div(
+                                                className="plot-title",
+                                                children="Interactions Over Time",
+                                            ),
+                                            # Interactions count line graph
+                                            dcc.Graph(
+                                                id="interactions-line-graph",
+                                                className="dash-graph",
+                                                config={"displayModeBar": False},
+                                                style={
+                                                    "display": "inline-block",
+                                                },
+                                                responsive=True,
+                                            ),
+                                        ],
+                                    )
                                 ],
-                                className="upload-button-container",
+                            ),  # Third plot
+                            html.Div(
+                                className="plot-col-third",
+                                children=[
+                                    html.Div(
+                                        className="plot-container",
+                                        children=[
+                                            html.Div(
+                                                className="plot-title",
+                                                children="Action Alignment Histogram",
+                                            ),
+                                            # Heatmap graph
+                                            dcc.Graph(
+                                                id="heatmap-graph",
+                                                className="dash-graph",
+                                                config={"displayModeBar": False},
+                                                style={
+                                                    "display": "inline-block",
+                                                },
+                                                responsive=True,
+                                            ),
+                                        ],
+                                    )
+                                ],
                             ),
                         ],
-                        style={
-                            "display": "flex",
-                            "justify-content": "space-around",
-                            # 'flex-wrap': 'wrap',
-                            "gap": "20px",
-                            "margin-top": "20px",
-                            "margin-bottom": "20px",
-                        },
-                        id="dashboard-upload-section",
                     ),
-                    # Line graphs container
-                    html.Div(
-                        [
-                            # probe data line graph
-                            dcc.Graph(
-                                id="probe-data-line",
-                                config={"displayModeBar": False},
-                                style={
-                                    "height": "220px",
-                                    "width": "32%",
-                                    "display": "inline-block",
-                                },
-                            ),
-                            # Interactions count line graph
-                            dcc.Graph(
-                                id="interactions-line-graph",
-                                config={"displayModeBar": False},
-                                style={
-                                    "height": "170px",
-                                    "width": "32%",
-                                    "display": "inline-block",
-                                },
-                            ),
-                            # Heatmap graph
-                            dcc.Graph(
-                                id="heatmap-graph",
-                                config={"displayModeBar": False},
-                                style={
-                                    "height": "250px",
-                                    "width": "32%",
-                                    "display": "inline-block",
-                                },
-                            ),
-                        ],
-                        style={
-                            "display": "flex",
-                            "justify-content": "space-between",
-                            "margin-top": "15px",
-                            "margin-bottom": "20px",
-                        },
-                    ),
+                    html.Br(),
+                    html.Br(),
                     # Main content: Cytoscape graph and interactions window
                     html.Div(
-                        [
+                        html.H2("Interaction Network"),
+                        className="dashboard-container",
+                        style={"padding": "0px"},
+                    ),
+                    html.Div(
+                        className="cyto-div-row",
+                        children=[
+                            # Flex container for Cytoscape
                             html.Div(
-                                [
-                                    dcc.Dropdown(
-                                        id="name-selector",
-                                        options=[],  # To be populated by callback
-                                        value=None,
-                                        placeholder="Select Name",
-                                        clearable=True,
+                                className="cyto-container",
+                                children=[
+                                    html.Div(
+                                        [
+                                            dcc.Dropdown(
+                                                id="name-selector",
+                                                options=[],  # To be populated by callback
+                                                value=None,
+                                                placeholder="Select Name",
+                                                clearable=True,
+                                                style={
+                                                    "padding": "10px",
+                                                    "font-size": "16px",
+                                                    "font-weight": "bold",
+                                                    "width": "200px",
+                                                    "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                                                },
+                                            ),
+                                            # dcc.Dropdown(
+                                            #     id="mode-dropdown",
+                                            #     options=[
+                                            #         {"label": "Universal View", "value": "normal"},
+                                            #         {"label": "Active View", "value": "focused"},
+                                            #     ],
+                                            #     value="normal",
+                                            #     clearable=False,
+                                            #     style={
+                                            #         "padding": "10px",
+                                            #         "font-size": "16px",
+                                            #         "font-weight": "bold",
+                                            #         "width": "200px",
+                                            #         "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
+                                            #     },
+                                            # ),
+                                        ],
+                                        # style={
+                                        #     "position": "absolute",
+                                        #     "top": "10px",  # Aligns at the top of the graph
+                                        #     "left": "10px",  # Aligns on the left
+                                        #     "display": "flex",
+                                        #     "gap": "10px",  # Space between the two dropdowns
+                                        #     "z-index": "1000",  # Ensure it's above the Cytoscape graph
+                                        # },
+                                    ),
+                                    # Episode number display (top-right)
+                                    html.Div(
+                                        id="current-episode",
                                         style={
+                                            # "float":"right"
+                                            "position": "absolute",
+                                            "top": "10px",
+                                            "right": "10px",
                                             "padding": "10px",
-                                            "font-size": "16px",
+                                            "font-size": "20px",
                                             "font-weight": "bold",
-                                            "width": "200px",
+                                            "background-color": "#ffcc99",  # Optional: add a background color
                                             "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
                                         },
+                                        children="",
                                     ),
-                                    # dcc.Dropdown(
-                                    #     id="mode-dropdown",
-                                    #     options=[
-                                    #         {"label": "Universal View", "value": "normal"},
-                                    #         {"label": "Active View", "value": "focused"},
-                                    #     ],
-                                    #     value="normal",
-                                    #     clearable=False,
-                                    #     style={
-                                    #         "padding": "10px",
-                                    #         "font-size": "16px",
-                                    #         "font-weight": "bold",
-                                    #         "width": "200px",
-                                    #         "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
-                                    #     },
-                                    # ),
-                                ],
-                                style={
-                                    "position": "absolute",
-                                    "top": "10px",  # Aligns at the top of the graph
-                                    "left": "10px",  # Aligns on the left
-                                    "display": "flex",
-                                    "gap": "10px",  # Space between the two dropdowns
-                                    "z-index": "1000",  # Ensure it's above the Cytoscape graph
-                                },
-                            ),
-                            # Episode number display (top-right)
-                            html.Div(
-                                id="current-episode",
-                                style={
-                                    "position": "absolute",
-                                    "top": "10px",
-                                    "right": "10px",
-                                    "padding": "10px",
-                                    "font-size": "20px",
-                                    "font-weight": "bold",
-                                    "background-color": "#ffcc99",  # Optional: add a background color
-                                    "z-index": "1000",  # Ensure it stays on top of the Cytoscape graph
-                                },
-                                children="",
-                            ),
-                            # Flex container for Cytoscape and Interactions Window
-                            html.Div(
-                                [
                                     cyto.Cytoscape(
                                         id="cytoscape-graph",
                                         elements=[],  # To be populated by callback
@@ -823,44 +1052,48 @@ if __name__ == "__main__":
                                             },
                                         ],
                                     ),
-                                    # Interactions Window
+                                ],
+                            ),
+                            # Flex container for Interactions Window
+                            html.Div(
+                                className="detail-container hidden",
+                                id="detail-panel",
+                                children=[
+                                    html.H3("Platform Interactions"),
                                     html.Div(
-                                        [
-                                            html.H3("Platform Interactions"),
-                                            html.Div(
-                                                id="interactions-window",
-                                                style={"overflowY": "auto", "height": "580px"},
-                                            ),
-                                        ],
-                                        style={
-                                            "width": "0%",  # Initial width set to 0%
-                                            "height": "600px",
-                                            "padding": "10px",
-                                            "border-left": "1px solid #ccc",
-                                            "background-color": "#f9f9f9",
-                                            "transition": "width 0.5s",  # Smooth width transition
-                                            "overflow": "hidden",
-                                        },
-                                        id="interactions-container",
+                                        id="interactions-window",
+                                        style={"overflowY": "auto", "height": "500px"},
                                     ),
                                 ],
-                                style={
-                                    "display": "flex",
-                                    "flexDirection": "row",
-                                    "height": "600px",
-                                    "transition": "all 0.5s ease",  # Smooth transition for all properties
-                                },
+                                # style={
+                                #     # "width": "0%",  # Initial width set to 0%
+                                #     "height": "600px",
+                                #     "padding": "0px",
+                                #     "border-left": "1px solid #ccc",
+                                #     "background-color": "#f9f9f9",
+                                #     "transition": "width 0.5s",  # Smooth width transition
+                                #     "overflow": "hidden",
+                                #     "display": "none"
+                                # },
+                                # id="interactions-container",
                             ),
+                            # style={
+                            #     "display": "flex",
+                            #     "flexDirection": "row",
+                            #     "height": "600px",
+                            #     "transition": "all 0.5s ease",  # Smooth transition for all properties
+                            # },
                         ],
-                        style={
-                            "position": "relative",
-                            "height": "600px",
-                            "margin-top": "10px",
-                            "margin-bottom": "20px",
-                            "width": "70%",
-                            "margin": "auto",
-                        },
                     ),
+                    # style={
+                    #     "position": "relative",
+                    #     "height": "600px",
+                    #     "margin-top": "10px",
+                    #     "margin-bottom": "20px",
+                    #     "width": "100%",
+                    #     "margin": "auto",
+                    # },
+                    # ),
                     html.Label("Select Episode:"),
                     # Episode slider
                     dcc.Slider(
@@ -877,7 +1110,7 @@ if __name__ == "__main__":
                     html.Div(
                         [
                             html.H2(
-                                "Agent Plans",
+                                "Agent Plans For This Episode",
                                 style={"textAlign": "center"},
                             ),
                             html.Div(id="plan-output"),
@@ -921,8 +1154,8 @@ if __name__ == "__main__":
                 style={"display": "none"},  # Initially hidden; shown when data is available
             ),
             # Hidden div for error messages (specific to dashboard uploads)
-            html.Div(id="error-message", style={"color": "red", "textAlign": "center"}),
-        ]
+            html.Div(id="error-message", style={"color": "red"}),
+        ],
     )
 
     @app.callback(
@@ -972,7 +1205,6 @@ if __name__ == "__main__":
 
         plan_data = data["plan_data"][str(selected_episode)]
         act_data = data["act_data"][str(selected_episode)]
-        print(act_data)
         try:
             # Stream and filter the data, collecting only matching records
             objs = []
@@ -982,7 +1214,6 @@ if __name__ == "__main__":
                     for entry_act in act_data
                     if entry_act["source_user"] == entry["source_user"]
                 ]
-                print(act_agent_data)
                 objs.append(
                     create_display_plan(entry["data"], act_agent_data)
                 )  # entry_acts[entry['source_user']]))
@@ -1016,7 +1247,7 @@ if __name__ == "__main__":
     # Combined Callback for Initial and Dashboard Uploads
     @app.callback(
         [
-            Output("dashboard-title", "children"),
+            Output("dashboard-showfilename", "children"),
             Output("data-store", "data"),
             Output("upload-error-message", "children"),
             Output("error-message", "children"),
@@ -1049,7 +1280,7 @@ if __name__ == "__main__":
 
         triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
-        dashboard_title_with_filename = "Social Sandbox Dashboard: " + app_logger_filename_initial
+        dashboard_title_with_filename = "File:\n" + app_logger_filename_initial
         try:
             if triggered_id == "submit-button":
                 if app_logger_contents_initial is not None:
@@ -1125,7 +1356,7 @@ if __name__ == "__main__":
                         "Social Sandbox Dashboard: " + app_logger_filename_dashboard
                     )
                     return dashboard_title_with_filename, serialized_new_data, "", ""
-                raise ValueError("Output Log files required for dashboard upload.")
+                raise ValueError("Output Log file required for dashboard upload.")
 
             raise dash.exceptions.PreventUpdate
 
@@ -1189,11 +1420,10 @@ if __name__ == "__main__":
         )
 
         heatmap_fig.update_layout(
-            title={"text": "Action alignment distribution", "font": {"size": 14}},
             xaxis_title="Suggested Action",
             yaxis_title="Chosen Action",
-            margin=dict(l=40, r=40, t=40, b=40),
-            height=270,
+            margin=dict(l=30, r=100, t=10, b=30),
+            font=dict(family="Segoe UI"),
         )
 
         return heatmap_fig
@@ -1208,8 +1438,9 @@ if __name__ == "__main__":
             Output("interactions-line-graph", "figure"),
             Output("current-episode", "children"),
             Output("interactions-window", "children"),  # Added Output
-            Output("interactions-container", "style"),  # Added Output to control width
-            Output("cytoscape-graph", "style"),  # Added Output to control width
+            Output("detail-panel", "className"),
+            # Output("interactions-container", "style"),  # Added Output to control width
+            # Output("cytoscape-graph", "style"),  # Added Output to control width
             Output("episode-slider", "min"),
             Output("episode-slider", "max"),
             Output("episode-slider", "value"),
@@ -1234,21 +1465,7 @@ if __name__ == "__main__":
                 {},  # interactions-line-graph
                 "Episode: N/A",  # current-episode
                 [],  # interactions-window
-                {
-                    "width": "0%",  # Collapsed width
-                    "height": "600px",
-                    "padding": "10px",
-                    "border-left": "1px solid #ccc",
-                    "background-color": "#f9f9f9",
-                    "transition": "width 0.5s",  # Smooth width transition
-                    "overflow": "hidden",
-                },  # interactions-container
-                {
-                    "width": "100%",  # Full width
-                    "height": "600px",
-                    "background-color": "#e1e1e1",
-                    "transition": "width 0.5s",  # Smooth width transition
-                },  # cytoscape-style
+                "detail-container",  # hidden',
                 0,  # slider min
                 0,  # slider max
                 0,  # slider value
@@ -1395,10 +1612,16 @@ if __name__ == "__main__":
             },
         ]
 
-        # Determine the sizing of the interactions window and Cytoscape graph
+        # define effects if a agent name is selected
         interactions_content = []
 
+        interactions_window_classname = (
+            "detail-container" if selected_name else "detail-container hidden"
+        )
+        print(interactions_window_classname)
         if selected_name:
+            # Pullout and format the content of the interactions window
+
             # Get interactions where source is selected_name in selected_episode
             interactions = [
                 interaction
@@ -1473,44 +1696,9 @@ if __name__ == "__main__":
                 interactions_content.append(
                     html.P("No interactions found for this agent in the selected episode.")
                 )
-        else:
-            interactions_content.append(html.P("Select an agent to view their interactions."))
 
-        if selected_name:
-            interactions_style = {
-                "width": "30%",  # Expanded width
-                "height": "600px",
-                "padding": "10px",
-                "border-left": "1px solid #ccc",
-                "background-color": "#f9f9f9",
-                "transition": "width 0.5s",  # Smooth width transition
-                "overflow": "auto",
-            }
-            cytoscape_style = {
-                "width": "70%",  # Reduced width
-                "height": "600px",
-                "background-color": "#e1e1e1",
-                "transition": "width 0.5s",  # Smooth width transition
-            }
-        else:
-            interactions_style = {
-                "width": "0%",  # Collapsed width
-                "height": "600px",
-                "padding": "10px",
-                "border-left": "1px solid #ccc",
-                "background-color": "#f9f9f9",
-                "transition": "width 0.5s",  # Smooth width transition
-                "overflow": "hidden",
-            }
-            cytoscape_style = {
-                "width": "100%",  # Full width
-                "height": "600px",
-                "background-color": "#e1e1e1",
-                "transition": "width 0.5s",  # Smooth width transition
-            }
-
-        # Highlight selected node and the nodes they follow
-        if selected_name:
+            # Effects on the graph
+            # Highlight selected node and the nodes they follow
             # Find the nodes that the selected node follows (outgoing edges)
             follows = list(follow_graph.successors(selected_name))
             # Define the selector for the selected node and its followees
@@ -1532,6 +1720,41 @@ if __name__ == "__main__":
                     },
                 }
             )
+        else:
+            interactions_content.append(html.P("Select an agent to view their interactions."))
+
+        # if selected_name:
+        #     interactions_style = {
+        #         "width": "30%",  # Expanded width
+        #         "height": "600px",
+        #         "padding": "10px",
+        #         "border-left": "1px solid #ccc",
+        #         "background-color": "#f9f9f9",
+        #         "transition": "width 0.5s",  # Smooth width transition
+        #         "overflow": "auto",
+        #     }
+        #     cytoscape_style = {
+        #         "width": "70%",  # Reduced width
+        #         "height": "600px",
+        #         "background-color": "#e1e1e1",
+        #         "transition": "width 0.5s",  # Smooth width transition
+        #     }
+        # else:
+        #     interactions_style = {
+        #         "width": "0%",  # Collapsed width
+        #         "height": "600px",
+        #         "padding": "10px",
+        #         "border-left": "1px solid #ccc",
+        #         "background-color": "#f9f9f9",
+        #         "transition": "width 0.5s",  # Smooth width transition
+        #         "overflow": "hidden",
+        #     }
+        #     cytoscape_style = {
+        #         "width": "100%",  # Full width
+        #         "height": "600px",
+        #         "background-color": "#e1e1e1",
+        #         "transition": "width 0.5s",  # Smooth width transition
+        #     }
 
         # Show interaction edges for the selected episode
         for episode in interactions_by_episode.keys():
@@ -1571,26 +1794,32 @@ if __name__ == "__main__":
                     mode="lines+markers",
                     name=graph_data["label"],
                     line=dict(color=graph_data["color"]),
+                    cliponaxis=False,
                 )
             )
 
         max_episode = max(list(interactions_by_episode.keys()))
         probe_data_line_fig.update_layout(
-            title={"text": title_label, "font": {"size": 14}},
             xaxis={
-                "title": {"text": "Episode", "font": {"size": 10}},
-                "tickfont": {"size": 8},
+                "title": {"text": "Episode"},
                 "range": [-1, max_episode + 1],
                 "dtick": 1,
+                "showgrid": False,
             },
+            font=dict(family="Segoe UI"),
             yaxis={
-                "title": {"text": yaxis_label, "font": {"size": 10}},
-                "tickfont": {"size": 8},
+                "title": {"text": yaxis_label},
                 "range": [0, 100],
+                "dtick": 20,
+                "showgrid": True,
+                "gridcolor": "#f0f0f0",
             },
-            height=200,
-            margin=dict(l=40, r=40, t=20, b=10),
-            legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
+            width=100,
+            margin=dict(l=30, r=50, t=30, b=0),
+            legend=dict(orientation="h", x=0.5, y=-0.4, xanchor="center", bgcolor="rgba(0,0,0,0)"),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            autosize=False,
         )
 
         # Create the line graph showing interactions over time
@@ -1639,6 +1868,7 @@ if __name__ == "__main__":
                 name="Likes",
                 line=dict(color="#2ca02c"),  # Green
                 marker=dict(symbol="circle", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -1650,6 +1880,7 @@ if __name__ == "__main__":
                 name="Boosts",
                 line=dict(color="#ff7f0e"),  # Orange
                 marker=dict(symbol="square", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -1661,6 +1892,7 @@ if __name__ == "__main__":
                 name="Replies",
                 line=dict(color="#9467bd"),  # Purple
                 marker=dict(symbol="diamond", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -1672,6 +1904,7 @@ if __name__ == "__main__":
                 name="Posts",
                 line=dict(color="#1f77b4"),  # Blue
                 marker=dict(symbol="triangle-up", size=6),
+                cliponaxis=False,
             ),
             secondary_y=False,
         )
@@ -1684,6 +1917,7 @@ if __name__ == "__main__":
                 mode="lines",
                 name="Active User Fraction",
                 line=dict(color="gray"),
+                cliponaxis=False,
             ),
             secondary_y=True,
         )
@@ -1693,11 +1927,11 @@ if __name__ == "__main__":
 
         # Update both y-axes
         interactions_line_fig.update_yaxes(
-            title_text="Action Rate of Active Users",
+            title_text="Interactions/ Num. Agents",  # "Action Rate of Active Users",
             range=y_axis_range,
             secondary_y=False,
             showgrid=True,
-            gridcolor="lightgray",
+            gridcolor="#f0f0f0",
         )
 
         interactions_line_fig.update_yaxes(
@@ -1705,29 +1939,25 @@ if __name__ == "__main__":
             range=[0, 1],
             secondary_y=True,
             showgrid=False,  # Typically, grid lines are only on the primary y-axis
-            gridcolor="lightgray",
+            gridcolor="#f0f0f0",
         )
 
         interactions_line_fig.update_layout(
-            title={"text": "Interactions Over Time", "font": {"size": 14}},
+            # title={"text": "Interactions Over Time", "font": {"size": 14}},
             xaxis={
-                "title": {"text": "Episode", "font": {"size": 10}},
-                "tickfont": {"size": 8},
-                "range": [-1, max_episode + 1],
+                "title": {"text": "Episode"},  # , "font": {"size": 10}},
+                # "tickfont": {"size": 8},
+                "range": [-1, max(int_episodes)],
                 "dtick": 1,
             },
-            yaxis={
-                "title": {"text": "Interactions/ Num. Agents", "font": {"size": 10}},
-                "tickfont": {"size": 8},
-            },
-            height=200,
-            margin=dict(l=40, r=40, t=20, b=10),
-            showlegend=True,
-            legend=dict(orientation="h", x=0.5, y=-0.25, xanchor="center"),
+            font=dict(family="Segoe UI"),
+            width=50,
+            margin=dict(l=30, r=80, t=80, b=0),
+            legend=dict(orientation="h", x=0.5, y=-1, xanchor="center"),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            autosize=False,
         )
-
-        # Adjust the x-axis range to include all episodes
-        interactions_line_fig.update_xaxes(range=[-1, max(int_episodes) + 1])
 
         # Update the name-selector dropdown options
         unique_names = sorted(follow_graph.nodes)
@@ -1744,13 +1974,11 @@ if __name__ == "__main__":
             elements,  # Updated elements
             layout,
             stylesheet,
-            # fig,
             probe_data_line_fig,
             interactions_line_fig,
             f"Episode: {selected_episode}",  # Updated episode display
             interactions_content,
-            interactions_style,
-            cytoscape_style,
+            interactions_window_classname,
             slider_min,
             slider_max,
             slider_value,
@@ -1759,4 +1987,4 @@ if __name__ == "__main__":
         )
 
     # Run the Dash app
-    app.run_server(debug=True)
+    app.run_server(debug=False)

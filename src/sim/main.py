@@ -196,7 +196,7 @@ def run_sim(
         action_event_logger.episode_idx = i
         model.meta_data["episode_idx"] = i
         probe_event_logger.episode_idx = i
-        env.log = []
+        env.log_data = []
 
         print(f"Episode: {i}. Deploying survey...", end="")
         deploy_probes(

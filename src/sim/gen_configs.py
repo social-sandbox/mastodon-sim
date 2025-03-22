@@ -36,7 +36,7 @@ def generate_sim_config(example_name):
     return default_sim_config
 
 
-def generate_remaining_configs(sim: dict):
+def generate_remaining_and_write_configs(sim: dict):
     sys.path.insert(0, str(PROJECT_ROOT / "examples" / sim["example_name"]))
 
     # example functions
@@ -89,5 +89,5 @@ def generate_remaining_configs(sim: dict):
 
 if __name__ == "__main__":
     example_name = "election"
-    cfg = generate_sim_config(example_name)
-    generate_remaining_configs(cfg)
+    sim_cfg = generate_sim_config(example_name)
+    generate_remaining_and_write_configs(sim_cfg)
