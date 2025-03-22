@@ -41,7 +41,7 @@ Simulation output is a set of files located in the respective examples folder, h
 
 `mastodon-sim/src/sim/analysis_utils/dashboard-withthoughts.py` is a dashboard script that loads a browser-based dashboard from which output data files are loaded in and automated analytics including social networks are presented for the user to analyze the results. Here is a snapshot:
 
-![alt text](https://github.com/social-sandbox/mastodon-sim/blob/main/docs/img/dashboard_snapshot.png?raw=true)
+![alt text](https://github.com/social-sandbox/mastodon-sim/blob/main/docs/img/dashboard_screenshot.png?raw=true)
 
 ## Detailed file structure:
 <pre>
