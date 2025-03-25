@@ -1084,6 +1084,12 @@ if __name__ == "__main__":
                             #     "transition": "all 0.5s ease",  # Smooth transition for all properties
                             # },
                         ],
+                        style={
+                            "display": "flex",
+                            "flexDirection": "row",
+                            "height": "600px",
+                            "transition": "all 0.5s ease",  # Smooth transition for all properties
+                        },
                     ),
                     # style={
                     #     "position": "relative",
