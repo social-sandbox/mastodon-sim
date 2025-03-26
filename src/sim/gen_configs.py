@@ -32,6 +32,11 @@ def generate_sim_config(example_name):
     }
     default_sim_config["example_name"] = example_name
     default_sim_config["load_path"] = ""
+    default_sim_config["roleplaying_instructions"] = """
+    <system>
+    You are simulating {agent_name}, a character in a social science experiment. Always use third-person limited perspective when describing {agent_name}'s thoughts and actions. Your goal is to determine the single most appropriate action {agent_name} would take next on a social media platform.
+    </system>
+    """
 
     return default_sim_config
 

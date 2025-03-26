@@ -1,5 +1,6 @@
 import ast
 import datetime
+import importlib
 import json
 import random
 import re
@@ -26,6 +27,8 @@ from concordia.typing import entity_component, logging
 from concordia.utils import helper_functions
 from concordia.utils import measurements as measurements_lib
 
+# locally defined components
+# from sim_settings.agent_utils.components.instructions import Instructions
 DEFAULT_PRE_ACT_KEY = "Action"
 DEFAULT_ACTION_PROBABILITIES = {
     # High frequency actions
@@ -407,18 +410,18 @@ class BaseAgentBuilder(ABC):
             ],  # cls._get_component_name()=Instructions
             ["OverarchingGoal", "OVERARCHING GOAL"],  # cls._get_component_name()=Constant
             ["Observation", "OBSERVATIONS\n"],  # cls._get_component_name()=Observation
-            [
-                "ObservationSummary",
-                "SUMMARY OF RECENT OBSERVATIONS\n",
-            ],  # cls._get_component_name()=ObservationSummary
+            # [
+            #     "ObservationSummary",
+            #     "SUMMARY OF RECENT OBSERVATIONS\n",
+            # ],  # cls._get_component_name()=ObservationSummary
             [
                 "TimeDisplay",
                 "CURRENT DATE AND TIME\n",
             ],  #  cls._get_component_name()=ReportFunction
-            [
-                "AllSimilarMemories",
-                "RECALLED MEMORIES AND OBSERVATIONS\n",
-            ],  # cls._get_component_name()=AllSimilarMemories,
+            # [
+            #     "AllSimilarMemories",
+            #     "RECALLED MEMORIES AND OBSERVATIONS\n",
+            # ],  # cls._get_component_name()=AllSimilarMemories,
             [
                 "IdentityWithoutPreAct",
                 "IDENTITY CHARACTERISTICS\n" + config.context,
@@ -433,10 +436,10 @@ class BaseAgentBuilder(ABC):
         component_order = [item[0] for item in names]
 
         dependencies = {
-            "AllSimilarMemories": {
-                "ObservationSummary": pre_act_keys_dict["ObservationSummary"],
-                "TimeDisplay": "current date and time is",
-            },
+            # "AllSimilarMemories": {
+            #     "ObservationSummary": pre_act_keys_dict["ObservationSummary"],
+            #     "TimeDisplay": "current date and time is",
+            # },
             "SelfPerception": {
                 "IdentityWithoutPreAct": "Persona"  # why not pre_Act_key here?
             },
@@ -454,7 +457,12 @@ class BaseAgentBuilder(ABC):
             # Add component-specific settings and assign constructor
             if name == "Instructions":
                 settings["agent_name"] = agent_name
-                component_constructor = ext_components.instructions.Instructions
+                # component_constructor = ext_components.instructions.Instructions
+                Instructions = importlib.import_module(
+                    "sim.agent_utils.components.instructions"
+                ).Instructions
+                component_constructor = Instructions
+
             elif name == "OverarchingGoal":
                 settings["state"] = goal
                 component_constructor = ext_components.constant.Constant
