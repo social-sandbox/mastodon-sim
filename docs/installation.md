@@ -3,10 +3,13 @@
 ## Prerequisites
 
 - Python 3.11 or newer
-- `uv` 0.10 or newer
+- `uv` 0.10 or newer for contributor/dev setup only
 
 If `uv` is not installed yet, use one of the installation methods from the
 [uv documentation](https://docs.astral.sh/uv/getting-started/installation/).
+
+`uv` is not required for a normal runtime install via `pip`; it is only needed
+for the repository contributor workflow and local development environment.
 
 ## Installing the Library
 
@@ -44,7 +47,11 @@ pip install "silisocs[all,aws]"             # all extras + AWS
 
 The installed package ships a runnable base configuration (`silisocs/conf/`: a
 generic twitter-like world). After `pip install silisocs`, run it directly
-from any directory, no `--config-path` required:
+from any directory, no `--config-path` required.
+
+This example uses the OpenAI-compatible model, so you must set the required
+API key in your environment or `.env` file before running it; see
+[Environment Variables](#environment-variables).
 
 ```sh
 silisocs num_agents=6 num_steps=5 \
